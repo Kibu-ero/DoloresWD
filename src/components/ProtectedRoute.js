@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import axios from "axios";
+import apiClient from "../api/client";
 
 function ProtectedRoute({ allowedRoles }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -16,7 +16,7 @@ function ProtectedRoute({ allowedRoles }) {
     }
 
     try {
-      const response = await axios.get("http://localhost:3001/api/auth/verify", {
+      const response = await apiClient.get("/auth/verify", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setIsAuthenticated(response.data.valid);
