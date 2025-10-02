@@ -306,16 +306,8 @@ const UserNavbar = () => {
       // Remove confirmPassword from the data sent to server
       const { confirmPassword, ...registrationData } = formData;
       
-      const response = await fetch("http://localhost:3001/api/auth/register", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(registrationData)
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Registration failed");
+      const response = await apiClient.post("/auth/register", registrationData);
+      const data = response.data;
 
       console.log('🔍 Registration Response:', data);
       console.log('🔍 requiresOTP:', data.requiresOTP);
@@ -335,8 +327,8 @@ const UserNavbar = () => {
         // Start polling for approval status
         const interval = setInterval(async () => {
           try {
-            const checkResponse = await fetch(`http://localhost:3001/api/customers`);
-            const customers = await checkResponse.json();
+            const checkResponse = await apiClient.get(`/customers`);
+            const customers = checkResponse.data;
             const user = customers.find(c => c.phone_number === formData.phoneNumber);
             
             if (user && user.status === 'Approved') {
