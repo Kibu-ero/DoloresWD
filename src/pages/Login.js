@@ -12,6 +12,21 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
+  // If user navigates back to the login page, automatically log them out
+  // and clear any cached auth state
+  useEffect(() => {
+    const existingToken = localStorage.getItem("token");
+    if (existingToken) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("user");
+    }
+    // Prevent returning to a cached authenticated page via back/forward
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -33,24 +48,25 @@ const Login = () => {
       console.log("Login success, role:", role);
       console.log("User in localStorage:", JSON.parse(localStorage.getItem('user')));
 
+      // Replace history so the Back button won't return to the login page
       switch (role.toLowerCase()) {
         case "admin":
-          navigate("/dashboard");
+          navigate("/dashboard", { replace: true });
           break;
         case "cashier":
-          navigate("/cashier-dashboard");
+          navigate("/cashier-dashboard", { replace: true });
           break;
         case "customer":
-          navigate("/customer-dashboard");
+          navigate("/customer-dashboard", { replace: true });
           break;
         case "encoder":
-          navigate("/encoder-dashboard");
+          navigate("/encoder-dashboard", { replace: true });
           break;
         case "finance_officer":
-          navigate("/finance-dashboard");
+          navigate("/finance-dashboard", { replace: true });
           break;
         default:
-          navigate("/unauthorized");
+          navigate("/unauthorized", { replace: true });
       }
     } catch (error) {
       setError(error.response?.data?.message || "Login failed. Please try again.");
