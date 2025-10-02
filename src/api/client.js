@@ -1,9 +1,7 @@
 import axios from 'axios';
 
-// Prefer env var set on Vercel. In local dev, fall back to localhost.
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL ||
-  (process.env.NODE_ENV === 'development' ? 'http://localhost:3001/api' : '/api');
+// Force all environments to use the Vercel proxy path
+const API_BASE_URL = '/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
