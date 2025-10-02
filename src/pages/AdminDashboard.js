@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { formatCurrency } from '../utils/currencyFormatter';
+import apiClient from "../api/client";
 import { FiUsers, FiActivity, FiMenu, FiX, FiHome, FiFileText, FiBarChart2, FiEdit, FiShield, FiSettings, FiLogOut, FiAlertTriangle, FiDollarSign } from 'react-icons/fi';
 import Billing from "./Billing";
 import Customers from "./Customers";
@@ -34,9 +35,8 @@ const DashboardContent = ({ displayName }) => {
   const [approveMsg, setApproveMsg] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/dashboard/dashboard-stats")
-      .then(res => res.json())
-      .then(data => setStats(data))
+    apiClient.get("/dashboard/dashboard-stats")
+      .then(res => setStats(res.data))
       .catch(() => setStats({ employees: 0, revenue: 0, pending: 0 }));
     // Fetch pending users
     fetchPendingUsers();
@@ -45,7 +45,7 @@ const DashboardContent = ({ displayName }) => {
   const fetchPendingUsers = async () => {
     setLoadingPending(true);
     try {
-      const res = await axios.get("http://localhost:3001/api/customers");
+      const res = await apiClient.get("/customers");
       setPendingUsers(res.data.filter(u => u.status === 'Pending'));
     } catch (err) {
       setPendingUsers([]);
