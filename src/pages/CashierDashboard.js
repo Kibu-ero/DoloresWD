@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../api/client';
 import {
   FiHome,
   FiUsers,
@@ -111,9 +111,7 @@ const CashierDashboard = () => {
     }
 
     try {
-      const response = await axios.get('http://localhost:3001/api/cashier-billing/unpaid', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await apiClient.get('/cashier-billing/unpaid');
       
       console.log('API Response:', response);
       console.log('Fetched bills from backend:', response.data.bills);
@@ -208,9 +206,7 @@ const CashierDashboard = () => {
 
     try {
       // Use the same endpoint as admin since we fixed the role middleware
-      const response = await axios.get('http://localhost:3001/api/uploads/all', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.get('/uploads/all');
       setFiles(response.data);
     } catch (err) {
       console.error('Error fetching payment proofs:', err);
@@ -235,9 +231,7 @@ const CashierDashboard = () => {
       const token = localStorage.getItem('token');
       
       // First get the bill information for this file
-      const billInfo = await axios.get(`http://localhost:3001/api/uploads/file/${selectedFile.id}/bill`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const billInfo = await apiClient.get(`/uploads/file/${selectedFile.id}/bill`);
       const billId = billInfo.data.bill_id;
       
       await axios.put(`http://localhost:3001/api/cashier-billing/bills/${billId}/status`, 
@@ -263,9 +257,7 @@ const CashierDashboard = () => {
       const token = localStorage.getItem('token');
       
       // First get the bill information for this file
-      const billInfo = await axios.get(`http://localhost:3001/api/uploads/file/${selectedFile.id}/bill`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const billInfo = await apiClient.get(`/uploads/file/${selectedFile.id}/bill`);
       const billId = billInfo.data.bill_id;
       
       await axios.put(`http://localhost:3001/api/cashier-billing/bills/${billId}/status`, 
@@ -338,13 +330,7 @@ const CashierDashboard = () => {
       
       console.log('Payment Details:', paymentData);
 
-      const response = await axios.post(
-        'http://localhost:3001/api/cashier-billing/add',
-        paymentData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await apiClient.post('/cashier-billing/add', paymentData);
 
       if (response.data.success) {
         showNotification(`Payment recorded successfully! Change: ${formatCurrency(change)}`, 'success', 'Success');
@@ -846,7 +832,7 @@ const CashierDashboard = () => {
               
               <div className="mb-4 flex flex-col items-center">
                 <img
-                  src={`http://localhost:3001/uploads/payment-proofs/${selectedFile.file_path}`}
+                  src={`/api/uploads/payment-proofs/${selectedFile.file_path}`}
                   alt="Payment Proof"
                   className="rounded-lg shadow border-2 border-blue-200 max-h-80 object-contain"
                   style={{ background: '#f8fafc', maxWidth: '100%' }}
@@ -859,7 +845,7 @@ const CashierDashboard = () => {
                   <FiFileText className="w-16 h-16 mx-auto mb-2" />
                   <p>File preview not available</p>
                   <a
-                    href={`http://localhost:3001/uploads/payment-proofs/${selectedFile.file_path}`}
+                    href={`/api/uploads/payment-proofs/${selectedFile.file_path}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-400 hover:text-blue-300 underline mt-2 inline-block"
