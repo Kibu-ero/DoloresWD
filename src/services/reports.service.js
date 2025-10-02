@@ -4,6 +4,50 @@ import axios from 'axios';
 const API_URL = '/reports';
 
 class ReportsService {
+  // Collection summary with grouping
+  static async getCollectionSummary(startDate, endDate, groupBy = 'day') {
+    const response = await apiClient.get(`${API_URL}/collection-summary`, {
+      params: { startDate, endDate, groupBy },
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    return response.data;
+  }
+
+  // Outstanding balances
+  static async getOutstanding(startDate, endDate) {
+    const response = await apiClient.get(`${API_URL}/outstanding`, {
+      params: { startDate, endDate },
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    return response.data;
+  }
+
+  // Revenue report
+  static async getRevenue(startDate, endDate) {
+    const response = await apiClient.get(`${API_URL}/revenue`, {
+      params: { startDate, endDate },
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    return response.data;
+  }
+
+  // Monthly statistics
+  static async getMonthlyStats(startDate, endDate) {
+    const response = await apiClient.get(`${API_URL}/monthly-stats`, {
+      params: { startDate, endDate },
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    return response.data;
+  }
+
+  // Ledger
+  static async getLedger(startDate, endDate, customerId) {
+    const response = await apiClient.get(`${API_URL}/ledger`, {
+      params: { startDate, endDate, customerId },
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    return response.data;
+  }
   // Get overview report
   static async getOverviewReport(startDate, endDate) {
     try {
