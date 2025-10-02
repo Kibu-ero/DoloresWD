@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { FiSearch, FiUser, FiUserCheck, FiUserX, FiPlus, FiLoader, FiX, FiEdit2, FiPhone, FiMail, FiHome, FiCalendar, FiClock } from "react-icons/fi";
+import apiClient from '../api/client';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -43,11 +44,8 @@ const Customers = () => {
   const fetchCustomers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:3001/api/customers");
-      if (!response.ok) {
-        throw new Error("Failed to fetch customers");
-      }
-      const data = await response.json();
+      const response = await apiClient.get("/customers");
+      const data = response.data;
       setCustomers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching customers:", error);
@@ -59,19 +57,9 @@ const Customers = () => {
   const updateCustomerStatus = async (customerId, newStatus) => {
     try {
       setIsUpdating(true);
-      const response = await fetch(`http://localhost:3001/api/customers/${customerId}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      const response = await apiClient.put(`/customers/${customerId}/status`, { status: newStatus });
 
-      if (!response.ok) {
-        throw new Error("Failed to update customer status");
-      }
-
-      const updatedCustomer = await response.json();
+      const updatedCustomer = response.data;
       setCustomers(customers.map(customer => 
         customer.id === updatedCustomer.id ? updatedCustomer : customer
       ));
