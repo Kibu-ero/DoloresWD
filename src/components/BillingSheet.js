@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiDownload, FiPrinter, FiRefreshCw } from 'react-icons/fi';
-import axios from 'axios';
+import apiClient from '../api/client';
 import { formatCurrency } from '../utils/currencyFormatter';
 
 const BillingSheet = ({ 
@@ -33,7 +33,7 @@ const BillingSheet = ({
       setError(null);
 
       // Fetch all bills for the specified month/year
-      const response = await axios.get(`http://localhost:3001/api/billing`);
+      const response = await apiClient.get(`/billing`);
       const allBills = response.data;
 
       console.log('Fetched bills:', allBills);
