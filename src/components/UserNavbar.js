@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiLogIn, FiUserPlus, FiCheckCircle, FiArrowLeft, FiArrowRight, FiEye, FiEyeOff, FiXCircle } from "react-icons/fi";
 import RegistrationVerification from "./RegistrationVerification";
+import apiClient from "../api/client";
 
 const UserNavbar = () => {
   const navigate = useNavigate();
@@ -366,19 +367,12 @@ const UserNavbar = () => {
     setOtpSuccess("");
 
     try {
-      const response = await fetch("http://localhost:3001/api/otp/verify-registration", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phoneNumber: registrationPhoneNumber,
-          otp: otpCode
-        })
+      const response = await apiClient.post("/otp/verify-registration", {
+        phoneNumber: registrationPhoneNumber,
+        otp: otpCode
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "OTP verification failed");
+      const data = response.data;
 
       setOtpSuccess("Account verified successfully!");
       
@@ -405,19 +399,12 @@ const UserNavbar = () => {
     setOtpSuccess("");
 
     try {
-      const response = await fetch("http://localhost:3001/api/otp/resend", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phoneNumber: registrationPhoneNumber,
-          purpose: 'registration'
-        })
+      const response = await apiClient.post("/otp/resend", {
+        phoneNumber: registrationPhoneNumber,
+        purpose: 'registration'
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to resend OTP");
+      const data = response.data;
 
       setOtpSuccess("New OTP sent!");
     } catch (err) {
