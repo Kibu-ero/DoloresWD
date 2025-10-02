@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api/client';
 
 const OTPLogin = ({ onLoginSuccess }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -16,7 +16,7 @@ const OTPLogin = ({ onLoginSuccess }) => {
     setSuccess('');
 
     try {
-      const response = await axios.post('http://localhost:3001/api/otp/send', {
+      const response = await apiClient.post('/otp/send', {
         phoneNumber,
         purpose: 'login'
       });
@@ -37,7 +37,7 @@ const OTPLogin = ({ onLoginSuccess }) => {
     setSuccess('');
 
     try {
-      const response = await axios.post('http://localhost:3001/api/otp/verify', {
+      const response = await apiClient.post('/otp/verify', {
         phoneNumber,
         otp,
         purpose: 'login'
@@ -62,7 +62,7 @@ const OTPLogin = ({ onLoginSuccess }) => {
     setSuccess('');
 
     try {
-      await axios.post('http://localhost:3001/api/otp/resend', {
+      await apiClient.post('/otp/resend', {
         phoneNumber,
         purpose: 'login'
       });
