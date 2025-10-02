@@ -71,6 +71,15 @@ const Reports = () => {
   const [timePeriod, setTimePeriod] = useState('custom'); // daily, weekly, monthly, yearly, custom
   const [groupBy, setGroupBy] = useState('day'); // day, week, month, year
   const [selectedCustomerForLedger, setSelectedCustomerForLedger] = useState('');
+
+  // Helper function to format dates in local time (avoid UTC conversion)
+  const formatDateLocal = (date) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   const [customers, setCustomers] = useState([]);
   const [showLedger, setShowLedger] = useState(false);
   const [selectedMonthForBillingSheet, setSelectedMonthForBillingSheet] = useState('DECEMBER');
@@ -104,13 +113,13 @@ const Reports = () => {
 
     switch (period) {
       case 'today':
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = formatDateLocal(today);
         return { from: todayStr, to: todayStr };
       
       case 'yesterday':
         const yesterday = new Date(today);
         yesterday.setDate(date - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const yesterdayStr = formatDateLocal(yesterday);
         return { from: yesterdayStr, to: yesterdayStr };
       
       case 'this-week':
@@ -137,8 +146,8 @@ const Reports = () => {
         const monthStart = new Date(year, month, 1);
         const monthEnd = new Date(year, month + 1, 0);
         return {
-          from: monthStart.toISOString().split('T')[0],
-          to: monthEnd.toISOString().split('T')[0]
+          from: formatDateLocal(monthStart),
+          to: formatDateLocal(monthEnd)
         };
       
       case 'last-month':
