@@ -29,8 +29,6 @@ const sidebarLinks = [
   { label: "Receive Payments", icon: <FiCreditCard />, tab: "receive" },
   { label: "Payment Proofs", icon: <FiFileText />, tab: "proofs" },
   { label: "Generate Reports", icon: <FiBarChart2 />, tab: "report" },
-  { label: "Update Billing Status", icon: <FiActivity />, tab: "status" },
-  { label: "Settings", icon: <FiSettings />, tab: "settings" },
 ];
 
 const CashierDashboard = () => {
@@ -179,7 +177,9 @@ const CashierDashboard = () => {
   const openPaymentModal = (bill) => {
     setSelectedBill(bill);
     setAmountPaid('');
-    setIsSenior(false);
+    // Automatically check if customer is senior citizen based on customer data
+    const isCustomerSenior = bill.customer_age >= 60 || bill.is_senior_citizen === true;
+    setIsSenior(isCustomerSenior);
     setChange(0);
     setShowModal(true);
   };
@@ -192,6 +192,27 @@ const CashierDashboard = () => {
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
     documentTitle: 'Payment Receipt',
+    pageStyle: `
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        .receipt-print-area, .receipt-print-area * {
+          visibility: visible;
+        }
+        .receipt-print-area {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+        }
+        .receipt-modal-header,
+        .receipt-overlay,
+        .receipt-container {
+          display: none !important;
+        }
+      }
+    `,
   });
 
   // File viewing functions
@@ -502,7 +523,7 @@ const CashierDashboard = () => {
                         : "N/A";
                         
                       return (
-                        <tr key={bill.id} className="hover:bg-[#2d3250]">
+                        <tr key={bill.id} className="hover:bg-blue-50 transition-colors duration-200">
                           <td className="py-2 px-2 sm:px-4 border-b border-gray-800">{bill.id}</td>
                           <td className="py-2 px-2 sm:px-4 border-b border-gray-800">
                             <div className="font-medium">{bill.customer_name || 'Unknown'}</div>
@@ -525,7 +546,7 @@ const CashierDashboard = () => {
                           </td>
                           <td className="py-2 px-2 sm:px-4 border-b border-gray-800">
                             <button
-                              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200 font-medium"
                               onClick={() => openPaymentModal(bill)}
                             >
                               Pay Now
@@ -544,20 +565,6 @@ const CashierDashboard = () => {
         return <AdminFileReview />;
       case 'report':
         return <Reports />;
-      case 'status':
-        return (
-          <div className="bg-white/80 rounded-xl shadow p-8">
-            <h3 className="text-xl font-semibold text-blue-800 mb-4">Update Billing Status</h3>
-            <p className="text-gray-700">Billing status update functionality coming soon...</p>
-          </div>
-        );
-      case 'settings':
-        return (
-          <div className="bg-white/80 rounded-xl shadow p-8">
-            <h3 className="text-xl font-semibold text-blue-800 mb-4">Settings</h3>
-            <p className="text-gray-700">Settings functionality coming soon...</p>
-          </div>
-        );
       default:
         return null;
     }
@@ -671,6 +678,13 @@ const CashierDashboard = () => {
                       ✓ Payment Approved
                     </div>
                     <button
+                      onClick={handlePrint}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center"
+                    >
+                      <FiDownload className="w-4 h-4 mr-2" />
+                      Print Receipt
+                    </button>
+                    <button
                       onClick={() => setShowReceipt(false)}
                       className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100"
                       title="Close Receipt"
@@ -702,12 +716,14 @@ const CashierDashboard = () => {
                 </div>
                 
                 <div className="receipt-content">
-                  <CustomerReceipt
-                    customerId={receiptDetails.bill.customer_id}
-                    billId={receiptDetails.bill.id}
-                    paymentId={receiptDetails.payment?.id}
-                    onClose={() => setShowReceipt(false)}
-                  />
+                  <div className="receipt-print-area" ref={receiptRef}>
+                    <CustomerReceipt
+                      customerId={receiptDetails.bill.customer_id}
+                      billId={receiptDetails.bill.id}
+                      paymentId={receiptDetails.payment?.id}
+                      onClose={() => setShowReceipt(false)}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -717,9 +733,9 @@ const CashierDashboard = () => {
         {showModal && selectedBill && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-2 sm:p-0">
             <div className="bg-white rounded-xl shadow-xl p-4 sm:p-8 max-w-md w-full relative">
-              <h2 className="text-xl font-bold mb-4 text-white">Payment Confirmation</h2>
+              <h2 className="text-xl font-bold mb-4 text-gray-900">Payment Confirmation</h2>
               
-              <div className="mb-4 text-gray-300">
+              <div className="mb-4 text-gray-700">
                 <div className="flex justify-between mb-2">
                   <span className="font-medium">Billing ID:</span>
                   <span>{selectedBill.id}</span>
@@ -751,17 +767,17 @@ const CashierDashboard = () => {
                 
                 {isSenior && (
                   <div className="flex justify-between mb-2 text-green-400">
-                    <span className="font-medium">With Senior Discount (20%):</span>
+                    <span className="font-medium">Senior Citizen Discount (20%):</span>
                     <span>{formatCurrency(calculateDiscountedAmount(selectedBill, true))}</span>
                   </div>
                 )}
               </div>
               
               <label className="block mb-4">
-                <span className="block mb-1 font-medium text-gray-300">Amount Paid:</span>
+                <span className="block mb-1 font-medium text-gray-700">Amount Paid:</span>
                 <input
                   type="number"
-                  className="border border-gray-700 bg-[#1a1f2e] text-white p-2 w-full rounded"
+                  className="border border-gray-300 bg-white text-gray-900 p-2 w-full rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={amountPaid}
                   step="0.01"
                   min="0"
@@ -774,22 +790,8 @@ const CashierDashboard = () => {
                 />
               </label>
               
-              <label className="flex items-center mb-4 text-gray-300">
-                <input
-                  type="checkbox"
-                  className="mr-2"
-                  checked={isSenior}
-                  onChange={(e) => {
-                    setIsSenior(e.target.checked);
-                    const paid = parseFloat(amountPaid) || 0;
-                    const discountedAmount = calculateDiscountedAmount(selectedBill, e.target.checked);
-                    setChange(paid - discountedAmount);
-                  }}
-                />
-                <span>Senior Citizen (20% Discount)</span>
-              </label>
               
-              <div className="flex justify-between mb-4 font-bold text-gray-300">
+              <div className="flex justify-between mb-4 font-bold text-gray-700">
                 <span>Change:</span>
                 <span className={change >= 0 ? 'text-green-400' : 'text-red-400'}>
                   {formatCurrency(change)}
@@ -798,13 +800,13 @@ const CashierDashboard = () => {
               
               <div className="flex justify-end gap-2">
                 <button
-                  className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors duration-200"
                   onClick={() => setShowModal(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
                   onClick={handlePayment}
                   disabled={change < 0 || isNaN(parseFloat(amountPaid)) || parseFloat(amountPaid) <= 0}
                 >
