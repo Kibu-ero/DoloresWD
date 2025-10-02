@@ -194,7 +194,8 @@ const EncoderDashboard = () => {
       fetchBills();
       if (selectedCustomer) {
         await fetchLastBill(selectedCustomer);
-        setPreviousReading(currentReading);
+        // Refresh previous reading from the database to get the latest bill
+        await fetchPreviousReading(selectedCustomer);
       }
     } catch (err) {
       setNotification("Failed to generate bill: " + (err.response?.data?.message || err.message));
