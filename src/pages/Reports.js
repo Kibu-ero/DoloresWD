@@ -313,14 +313,134 @@ const Reports = () => {
     }
   };
 
-  // Export to PDF (simple, can be expanded per report type)
+  // Export to PDF with proper title and formatting
   const exportPDF = () => {
+    if (!data.length) {
+      alert('No data to export');
+      return;
+    }
+
     const doc = new jsPDF();
-    if (!data.length) return;
-    const columns = Object.keys(data[0]);
-    const rows = data.map(row => columns.map(col => row[col]));
-    doc.autoTable({ head: [columns], body: rows });
-    doc.save(`${activeTab}_report.pdf`);
+    
+    // Find the current report label
+    const currentReport = availableReports.find(report => report.key === activeTab);
+    const reportTitle = currentReport ? currentReport.label : `${activeTab} Report`;
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text(reportTitle, 20, 20);
+    
+    // Add subtitle with date range
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    const dateRange = from && to ? `Period: ${from} to ${to}` : 'All Time';
+    doc.text(dateRange, 20, 30);
+    
+    // Add current date/time
+    const currentDate = new Date().toLocaleDateString('en-PH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    doc.text(`Generated on: ${currentDate}`, 20, 36);
+    
+    // Prepare table data
+    const columns = Object.keys(data[0]).map(col => {
+      // Convert column names to user-friendly labels
+      switch(col) {
+        case 'date': return 'Date';
+        case 'totalcollected': return 'Total Collected';
+        case 'paymentcount': return 'Payment Count';
+        case 'averageamount': return 'Average Amount';
+        case 'source': return 'Payment Source';
+        case 'customername': return 'Customer Name';
+        case 'amountdue': return 'Amount Due';
+        case 'due_date': return 'Due Date';
+        case 'daysoverdue': return 'Days Overdue';
+        case 'lastpayment': return 'Last Payment';
+        case 'month': return 'Month';
+        case 'totalrevenue': return 'Total Revenue';
+        case 'collectedamount': return 'Collected Amount';
+        case 'billedamount': return 'Billed Amount';
+        case 'collectionrate': return 'Collection Rate (%)';
+        case 'activecustomers': return 'Active Customers';
+        case 'totalbilled': return 'Total Billed';
+        case 'totalcollected': return 'Total Collected';
+        case 'unpaidbills': return 'Unpaid Bills';
+        case 'averagebillamount': return 'Average Bill Amount';
+        default: return col.charAt(0).toUpperCase() + col.slice(1);
+      }
+    });
+    
+    const rows = data.map(row => 
+      Object.keys(data[0]).map(col => {
+        const value = row[col];
+        // Format values appropriately
+        if (col.includes('date') && value) {
+          return new Date(value).toLocaleDateString('en-PH');
+        } else if (col.includes('amount') || col.includes('collected') || col.includes('billed')) {
+          return typeof value === 'number' ? formatCurrency(value) : value;
+        } else if (col.includes('rate') && typeof value === 'number') {
+          return `${value.toFixed(2)}%`;
+        }
+        return value;
+      })
+    );
+    
+    // Add summary if applicable
+    const summary = calculateSummary();
+    let startY = 45;
+    
+    if (summary && Object.keys(summary).length > 0) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Summary:', 20, startY);
+      startY += 8;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      Object.entries(summary).forEach(([key, value]) => {
+        const label = columns[Object.keys(data[0]).indexOf(key)] || key;
+        const formattedValue = key.includes('amount') || key.includes('total') || key.includes('collected') || key.includes('billed') 
+          ? formatCurrency(value) 
+          : value;
+        doc.text(`${label}: ${formattedValue}`, 20, startY);
+        startY += 6;
+      });
+      startY += 10;
+    }
+    
+    // Add the table
+    doc.autoTable({
+      head: [columns],
+      body: rows,
+      startY: startY,
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [66, 139, 202], // Blue header
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      margin: { top: startY, right: 20, bottom: 20, left: 20 }
+    });
+    
+    // Add page number and footer
+    const finalY = doc.internal.pageSize.height - 15;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Dolores Water District - Billing System', 20, finalY);
+    doc.text(`Page 1`, doc.internal.pageSize.width - 30, finalY, { align: 'right' });
+    
+    doc.save(`${activeTab}_report_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   // Calculate summary statistics for collections
