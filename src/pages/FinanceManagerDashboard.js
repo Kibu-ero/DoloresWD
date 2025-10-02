@@ -69,6 +69,7 @@ const FinanceManagerDashboard = () => {
   };
 
   useEffect(() => { refresh(); }, []);
+  useEffect(() => { refresh(); }, [activeTab, groupBy, fromDate, toDate]);
 
   const logout = () => {
     localStorage.removeItem('token');
@@ -160,21 +161,119 @@ const FinanceManagerDashboard = () => {
       <div className="mt-6 bg-white rounded-xl shadow p-4 overflow-x-auto">
         {tableRows.length === 0 ? (
           <div className="text-gray-500">No data.</div>
+        ) : activeTab === 'Collection Summary' ? (
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-3 py-2">Period</th>
+                <th className="text-left px-3 py-2">Total Collected</th>
+                <th className="text-left px-3 py-2">Payment Count</th>
+                <th className="text-left px-3 py-2">Average Amount</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {tableRows.map((r, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="px-3 py-2">{r.period || r.date}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.totalCollected || r.totalcollected || 0))}</td>
+                  <td className="px-3 py-2">{r.paymentCount || r.paymentcount || 0}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.averageAmount || r.averageamount || 0))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : activeTab === 'Outstanding Balances' ? (
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-3 py-2">Customer</th>
+                <th className="text-left px-3 py-2">Account</th>
+                <th className="text-left px-3 py-2">Amount Due</th>
+                <th className="text-left px-3 py-2">Due Date</th>
+                <th className="text-left px-3 py-2">Days Overdue</th>
+                <th className="text-left px-3 py-2">Last Payment</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {tableRows.map((r, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="px-3 py-2">{r.customername || r.customerName}</td>
+                  <td className="px-3 py-2">{r.accountnumber || r.accountNumber}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.amountdue || r.amountDue || 0))}</td>
+                  <td className="px-3 py-2">{(r.due_date || r.dueDate || '').toString().slice(0,10)}</td>
+                  <td className="px-3 py-2">{r.daysoverdue || r.daysOverdue || 0}</td>
+                  <td className="px-3 py-2">{(r.lastpayment || r.lastPayment || '').toString().slice(0,10)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : activeTab === 'Revenue Report' ? (
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-3 py-2">Month</th>
+                <th className="text-left px-3 py-2">Total Revenue</th>
+                <th className="text-left px-3 py-2">Collected Amount</th>
+                <th className="text-left px-3 py-2">Billed Amount</th>
+                <th className="text-left px-3 py-2">Collection Rate (%)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {tableRows.map((r, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="px-3 py-2">{(r.month || '').toString().slice(0,10)}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.totalrevenue || r.totalRevenue || 0))}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.collectedamount || r.collectedAmount || 0))}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.billedamount || r.billedAmount || 0))}</td>
+                  <td className="px-3 py-2">{Number(r.collectionrate || r.collectionRate || 0).toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : activeTab === 'Monthly Statistics' ? (
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-3 py-2">Month</th>
+                <th className="text-left px-3 py-2">Active Customers</th>
+                <th className="text-left px-3 py-2">Total Billed</th>
+                <th className="text-left px-3 py-2">Total Collected</th>
+                <th className="text-left px-3 py-2">Unpaid Bills</th>
+                <th className="text-left px-3 py-2">Average Bill</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {tableRows.map((r, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="px-3 py-2">{(r.month || '').toString().slice(0,10)}</td>
+                  <td className="px-3 py-2">{r.activecustomers || r.activeCustomers || 0}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.totalbilled || r.totalBilled || 0))}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.totalcollected || r.totalCollected || 0))}</td>
+                  <td className="px-3 py-2">{r.unpaidbills || r.unpaidBills || 0}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.averagebillamount || r.averageBillAmount || 0))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         ) : (
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {Object.keys(tableRows[0]).map((h) => (
-                  <th key={h} className="text-left px-3 py-2 font-medium text-gray-700">{h}</th>
-                ))}
+                <th className="text-left px-3 py-2">Customer</th>
+                <th className="text-left px-3 py-2">Meter #</th>
+                <th className="text-left px-3 py-2">Total Billed</th>
+                <th className="text-left px-3 py-2">Total Paid</th>
+                <th className="text-left px-3 py-2">Outstanding</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {tableRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-gray-50">
-                  {Object.values(row).map((v, i) => (
-                    <td key={i} className="px-3 py-2 whitespace-nowrap">{String(v)}</td>
-                  ))}
+              {tableRows.map((r, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="px-3 py-2">{r.customer_name || r.customerName}</td>
+                  <td className="px-3 py-2">{r.meter_number || r.meter_number}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.total_billed || r.total_billed || r.total_billed_amount || r.total_billed || 0))}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.total_paid || r.total_paid_amount || r.total_paid || 0))}</td>
+                  <td className="px-3 py-2">{formatCurrency(Number(r.outstanding_balance || r.outstanding || 0))}</td>
                 </tr>
               ))}
             </tbody>
