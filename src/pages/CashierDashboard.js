@@ -234,7 +234,7 @@ const CashierDashboard = () => {
       const billInfo = await apiClient.get(`/uploads/file/${selectedFile.id}/bill`);
       const billId = billInfo.data.bill_id;
       
-      await axios.put(`http://localhost:3001/api/cashier-billing/bills/${billId}/status`, 
+      await apiClient.put(`/cashier-billing/bills/${billId}/status`, 
         { status: "Paid" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -260,7 +260,7 @@ const CashierDashboard = () => {
       const billInfo = await apiClient.get(`/uploads/file/${selectedFile.id}/bill`);
       const billId = billInfo.data.bill_id;
       
-      await axios.put(`http://localhost:3001/api/cashier-billing/bills/${billId}/status`, 
+      await apiClient.put(`/cashier-billing/bills/${billId}/status`, 
         { status: "Rejected" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
