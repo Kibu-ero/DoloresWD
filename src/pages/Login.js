@@ -14,18 +14,35 @@ const Login = () => {
 
   // If user navigates back to the login page, automatically log them out
   // and clear any cached auth state
-  React.useEffect(() => {
-    const existingToken = localStorage.getItem("token");
-    if (existingToken) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
-      localStorage.removeItem("user");
-    }
-    // Prevent returning to a cached authenticated page via back/forward
+  const clearAuth = React.useCallback(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user");
     if (window.history && window.history.replaceState) {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
+
+  // Initial mount
+  React.useEffect(() => {
+    clearAuth();
+  }, [clearAuth]);
+
+  // Handle bfcache restore and tab visibility
+  React.useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted) clearAuth();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') clearAuth();
+    };
+    window.addEventListener('pageshow', onPageShow);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pageshow', onPageShow);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [clearAuth]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
