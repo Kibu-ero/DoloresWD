@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import apiClient from "../api/client";
 
 const ManageEmployees = () => {
   const [formData, setFormData] = useState({
@@ -22,7 +22,7 @@ const ManageEmployees = () => {
     setMessage("");
 
     try {
-      const response = await axios.post("http://localhost:3001/api/employees", formData);
+      const response = await apiClient.post("/employees", formData);
       setMessage(response.data.message);
       setFormData({
         firstName: "",
