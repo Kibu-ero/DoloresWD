@@ -12,6 +12,7 @@ const FinanceManagerDashboard = () => {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [stats, setStats] = useState({ totalCollected: 0, averageAmount: 0, paymentCount: 0 });
+  const [activeTab, setActiveTab] = useState('Collection Summary');
 
   const refresh = async () => {
     // Placeholder: wire to your reports API
@@ -38,8 +39,15 @@ const FinanceManagerDashboard = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow p-3 md:p-4 mb-4 flex flex-wrap gap-2">
-        {['Collection Summary','Outstanding Balances','Revenue Report','Monthly Statistics','Approval Logs','Transaction Logs','Customer Ledger','Daily Collector Billing Sheet'].map((tab) => (
-          <span key={tab} className="px-3 py-2 rounded-lg bg-blue-100 text-blue-800 text-sm font-medium">{tab}</span>
+        {['Collection Summary','Outstanding Balances','Revenue Report','Monthly Statistics','Customer Ledger','Daily Collector Billing Sheet'].map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className={`${activeTab === tab ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'} px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400`}
+          >
+            {tab}
+          </button>
         ))}
       </div>
 
