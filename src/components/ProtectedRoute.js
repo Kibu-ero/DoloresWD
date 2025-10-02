@@ -34,6 +34,27 @@ function ProtectedRoute({ allowedRoles }) {
     verifyToken();
   }, [location.pathname]); // Re-run verification when route changes
 
+  // Re-verify when navigating with back/forward (bfcache) or tab visibility changes
+  useEffect(() => {
+    const handlePageShow = (event) => {
+      // If page was restored from bfcache, re-verify auth
+      if (event.persisted) {
+        verifyToken();
+      }
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        verifyToken();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
   if (isAuthenticated === null) {
     return <div>Loading...</div>;
   }
