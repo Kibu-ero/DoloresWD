@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { formatCurrency } from '../utils/currencyFormatter';
 import apiClient from "../api/client";
-import { FiUsers, FiActivity, FiMenu, FiX, FiHome, FiFileText, FiBarChart2, FiEdit, FiShield, FiSettings, FiLogOut, FiAlertTriangle, FiDollarSign } from 'react-icons/fi';
+import { FiUsers, FiActivity, FiMenu, FiX, FiHome, FiFileText, FiBarChart2, FiEdit, FiShield, FiSettings, FiLogOut, FiAlertTriangle } from 'react-icons/fi';
 import Billing from "./Billing";
 import Customers from "./Customers";
 import SystemSettings from "./SystemSettings";
@@ -18,7 +18,7 @@ const sidebarLinks = [
   { label: "Billing", icon: <FiFileText /> },
   { label: "Customers", icon: <FiUsers /> },
   { label: "Employees", icon: <FiUsers /> },
-  { label: "Credit Manager", icon: <FiDollarSign /> },
+  { label: "Credit Manager", icon: <span className="text-lg font-bold">₱</span> },
   { label: "Penalty Manager", icon: <FiAlertTriangle /> },
   { label: "Reports", icon: <FiBarChart2 /> },
   { label: "Proof of Payment", icon: <FiEdit /> },
@@ -57,7 +57,7 @@ const DashboardContent = ({ displayName }) => {
   const handleApprove = async (userId) => {
     setApproveMsg("");
     try {
-      const res = await axios.post("http://localhost:3001/api/auth/approve-registration", { userId });
+      const res = await apiClient.post("/auth/approve-registration", { userId });
       setApproveMsg(res.data.message || 'User approved.');
       fetchPendingUsers();
     } catch (err) {
