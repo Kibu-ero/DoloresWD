@@ -126,38 +126,6 @@ const UserDashboard = () => {
             </motion.div>
           </div>
 
-          {/* Additional Info Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            viewport={{ once: true }}
-            className="mt-16 text-center"
-          >
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white">
-              <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
-              <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-                Experience the difference with our premium water services. Contact us today for reliable, 
-                high-quality water solutions tailored to your needs.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-blue-50 transition-colors duration-300"
-                >
-                  Call Now
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-colors duration-300"
-                >
-                  Send Email
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
     </div>
