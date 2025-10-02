@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FiSearch, FiFilter, FiCalendar, FiUser, FiFileText, FiActivity, FiRefreshCw, FiDownload } from "react-icons/fi";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import apiClient from '../api/client';
 
 const AuditLogs = () => {
   const [auditLogs, setAuditLogs] = useState([]);
@@ -35,12 +36,8 @@ const AuditLogs = () => {
       if (filters.start_date) queryParams.append('start', filters.start_date);
       if (filters.end_date) queryParams.append('end', filters.end_date);
 
-      const response = await fetch(`http://localhost:3001/api/audit-logs?${queryParams}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch audit logs');
-      }
-      
-      const data = await response.json();
+      const response = await apiClient.get(`/audit-logs?${queryParams}`);
+      const data = response.data;
       // Normalize details to object when JSON string
       const normalized = (Array.isArray(data) ? data : []).map(row => ({
         ...row,
