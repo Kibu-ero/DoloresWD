@@ -9,21 +9,62 @@ const FinanceManagerDashboard = () => {
   const navigate = useNavigate();
   const [range, setRange] = useState('custom');
   const [groupBy, setGroupBy] = useState('daily');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  // Default to last 30 days
+  const toIso = (d) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+  const today = new Date();
+  const last30 = new Date();
+  last30.setDate(today.getDate() - 30);
+  const [fromDate, setFromDate] = useState(toIso(last30));
+  const [toDate, setToDate] = useState(toIso(today));
   const [stats, setStats] = useState({ totalCollected: 0, averageAmount: 0, paymentCount: 0 });
+  const [tableRows, setTableRows] = useState([]);
   const [activeTab, setActiveTab] = useState('Collection Summary');
 
   const refresh = async () => {
     try {
-      const data = await ReportsService.getOverviewReport(fromDate || undefined, toDate || undefined);
-      setStats({
-        totalCollected: Number(data?.totalCollected || 0),
-        averageAmount: Number(data?.averageAmount || 0),
-        paymentCount: Number(data?.paymentCount || 0)
-      });
+      // Load current tab dataset first (also derive KPIs from it)
+      if (activeTab === 'Collection Summary') {
+        const res = await ReportsService.getCollectionSummary(fromDate, toDate, groupBy);
+        const rows = res?.data || res || [];
+        setTableRows(rows);
+        // derive KPIs
+        const totalCollected = rows.reduce((s, r) => s + Number(r.totalcollected || r.totalCollected || 0), 0);
+        const paymentCount = rows.reduce((s, r) => s + Number(r.paymentcount || r.paymentCount || 0), 0);
+        const averageAmount = rows.length ? rows.reduce((s, r) => s + Number(r.averageamount || r.averageAmount || 0), 0) / rows.length : 0;
+        setStats({ totalCollected, paymentCount, averageAmount });
+      } else if (activeTab === 'Outstanding Balances') {
+        const res = await ReportsService.getOutstanding(fromDate, toDate);
+        setTableRows(res || []);
+        setStats((prev) => ({ ...prev }));
+      } else if (activeTab === 'Revenue Report') {
+        const res = await ReportsService.getRevenue(fromDate, toDate);
+        setTableRows(res || []);
+      } else if (activeTab === 'Monthly Statistics') {
+        const res = await ReportsService.getMonthlyStats(fromDate, toDate);
+        setTableRows(res || []);
+      } else if (activeTab === 'Customer Ledger') {
+        const res = await ReportsService.getLedger(fromDate, toDate);
+        setTableRows(res || []);
+      } else {
+        setTableRows([]);
+      }
+      // Fallback KPIs from overview if collection-summary is not active
+      if (activeTab !== 'Collection Summary') {
+        const overview = await ReportsService.getOverviewReport(fromDate, toDate);
+        setStats({
+          totalCollected: Number(overview?.totalRevenue || 0),
+          paymentCount: Number(overview?.totalBills || 0),
+          averageAmount: 0
+        });
+      }
     } catch (_) {
       setStats({ totalCollected: 0, averageAmount: 0, paymentCount: 0 });
+      setTableRows([]);
     }
   };
 
@@ -110,9 +151,35 @@ const FinanceManagerDashboard = () => {
           <div>
             <p className="text-xs uppercase text-gray-500">AverageAmount</p>
             <p className="text-3xl font-bold text-blue-900">{formatCurrency(stats.averageAmount)}</p>
-          </div>
+      </div>
           <span className="text-2xl">₱</span>
         </div>
+      </div>
+
+      {/* Data table */}
+      <div className="mt-6 bg-white rounded-xl shadow p-4 overflow-x-auto">
+        {tableRows.length === 0 ? (
+          <div className="text-gray-500">No data.</div>
+        ) : (
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                {Object.keys(tableRows[0]).map((h) => (
+                  <th key={h} className="text-left px-3 py-2 font-medium text-gray-700">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {tableRows.map((row, idx) => (
+                <tr key={idx} className="hover:bg-gray-50">
+                  {Object.values(row).map((v, i) => (
+                    <td key={i} className="px-3 py-2 whitespace-nowrap">{String(v)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
