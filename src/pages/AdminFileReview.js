@@ -152,7 +152,7 @@ const AdminFileReview = () => {
                       View
                     </button>
                     <a
-                      href={`http://localhost:3001/uploads/payment-proofs/${file.file_path}`}
+                      href={`/api/uploads/payment-proofs/${file.file_path}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
@@ -181,7 +181,7 @@ const AdminFileReview = () => {
             <h3 className="text-xl font-bold mb-4 text-blue-900">Payment Proof</h3>
             <div className="mb-4 flex flex-col items-center">
               <img
-                src={`http://localhost:3001/uploads/${selectedFile.file_path}`}
+                src={`/api/uploads/${selectedFile.file_path}`}
                 alt="Payment Proof"
                 className="rounded-lg shadow border-2 border-blue-200 max-h-80 object-contain"
                 style={{ background: '#f8fafc', maxWidth: '100%' }}
