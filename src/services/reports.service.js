@@ -1,4 +1,5 @@
 import apiClient from '../api/client';
+import axios from 'axios';
 
 const API_URL = '/reports';
 
