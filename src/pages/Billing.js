@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from "axios";
+import apiClient from '../api/client';
 import { FiSearch, FiCheckCircle, FiArchive } from "react-icons/fi";
 import { formatCurrency } from '../utils/currencyFormatter';
 import NotificationModal from '../components/common/NotificationModal';
@@ -82,8 +82,8 @@ const Billing = () => {
     const fetchData = async () => {
       try {
         const [billsRes, customersRes] = await Promise.all([
-          axios.get("http://localhost:3001/api/billing"),
-          axios.get("http://localhost:3001/api/billing/customers")
+          apiClient.get("/billing"),
+          apiClient.get("/billing/customers")
         ]);
         setBills(billsRes.data);
         setCustomers(customersRes.data);
@@ -182,7 +182,7 @@ const Billing = () => {
       `Are you sure you want to mark Bill ${billId} as ${status}?`,
       async () => {
         try {
-          await axios.put(`http://localhost:3001/api/billing/${billId}`, { status });
+          await apiClient.put(`/billing/${billId}`, { status });
           setBills(bills.map(bill => 
             bill.bill_id === billId ? { ...bill, status } : bill
           ));
@@ -216,7 +216,7 @@ const Billing = () => {
       const penalty = pendingBillData.billData.penalty_applied ? baseAmount * 0.1 : 0;
       const finalAmount = baseAmount - seniorDiscount + penalty;
 
-      const response = await axios.post("http://localhost:3001/api/billing", {
+      const response = await apiClient.post("/billing", {
         customer_id: pendingBillData.billData.customer_id,
         meter_number: pendingBillData.billData.meter_number,
         previous_reading: pendingBillData.billData.previous_reading,
@@ -258,7 +258,7 @@ const Billing = () => {
       `Are you sure you want to archive Bill ${billId}?`,
       async () => {
         try {
-          await axios.put(`http://localhost:3001/api/billing/${billId}/archive`);
+          await apiClient.put(`/billing/${billId}/archive`);
           setBills(bills.map(bill =>
             bill.bill_id === billId ? { ...bill, archived: true } : bill
           ));
