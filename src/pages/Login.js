@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../api/client";
 import { motion } from "framer-motion";
@@ -14,7 +14,7 @@ const Login = () => {
 
   // If user navigates back to the login page, automatically log them out
   // and clear any cached auth state
-  useEffect(() => {
+  React.useEffect(() => {
     const existingToken = localStorage.getItem("token");
     if (existingToken) {
       localStorage.removeItem("token");
