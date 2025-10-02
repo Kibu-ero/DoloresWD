@@ -40,8 +40,6 @@ const REPORTS_BY_ROLE = {
     { key: 'outstanding', label: 'Outstanding Balances' },
     { key: 'revenue', label: 'Revenue Report' },
     { key: 'monthly-stats', label: 'Monthly Statistics' },
-    { key: 'approvals', label: 'Approval Logs' },
-    { key: 'transactions', label: 'Transaction Logs' },
     { key: 'ledger', label: 'Customer Ledger' },
     { key: 'billing-sheet', label: 'Daily Collector Billing Sheet' },
   ],
