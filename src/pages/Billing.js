@@ -39,8 +39,11 @@ const Billing = () => {
       // Move to Monday (add 2 days)
       dueDate.setDate(dueDate.getDate() + 2);
     }
-    
-    return dueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    // Format as YYYY-MM-DD in LOCAL time to avoid UTC shifting to the 19th
+    const yyyy = dueDate.getFullYear();
+    const mm = String(dueDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(dueDate.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   };
 
   const [bills, setBills] = useState([]);
