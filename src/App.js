@@ -17,7 +17,7 @@ import EncoderDashboard from "./pages/EncoderDashboard";
 import FinanceManagerDashboard from "./pages/FinanceManagerDashboard";
 import BillingSheetDemo from "./pages/BillingSheetDemo";
 import IdleTimeoutProvider from "./components/common/IdleTimeoutProvider";
-import PublicRoute from "./components/PublicRoute";
+// import PublicRoute from "./components/PublicRoute";
 
 function App() {
   return (
@@ -25,8 +25,8 @@ function App() {
       <Router>
         <IdleTimeoutProvider>
           <Routes>
-          <Route path="/" element={<PublicRoute><UserDashboard /></PublicRoute>} />
-          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/" element={<UserDashboard />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* Admin Routes */}
