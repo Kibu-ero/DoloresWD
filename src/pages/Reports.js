@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import axios from 'axios';
+import apiClient from '../api/client';
 import { formatCurrency } from '../utils/currencyFormatter';
 import CustomerLedger from '../components/CustomerLedger';
 import BillingSheet from '../components/BillingSheet';
@@ -90,7 +90,7 @@ const Reports = () => {
   // Fetch customers for ledger
   const fetchCustomers = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/api/customers');
+      const res = await apiClient.get('/customers');
       setCustomers(res.data);
     } catch (err) {
       console.error('Error fetching customers:', err);
@@ -238,7 +238,7 @@ const Reports = () => {
       return;
     }
     
-    let url = `http://localhost:3001/api/reports/${activeTab}`;
+    let url = `/reports/${activeTab}`;
     const params = [];
     if (from) params.push(`startDate=${from}`);
     if (to) params.push(`endDate=${to}`);
@@ -249,9 +249,7 @@ const Reports = () => {
     console.log('User token:', token ? 'Token exists' : 'No token');
     
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      
-      const res = await axios.get(url, config);
+      const res = await apiClient.get(url);
       console.log('Report data received:', res.data);
       
       // Handle enhanced collection summary response format
@@ -288,7 +286,7 @@ const Reports = () => {
   const fetchMeterReadings = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:3001/api/customers');
+      const res = await apiClient.get('/customers');
       setMeterReadings(res.data);
     } catch (err) {
       console.error('Error fetching customers:', err);
@@ -300,7 +298,7 @@ const Reports = () => {
   // Encoder: submit meter reading
   const submitReading = async (customerId, reading) => {
     try {
-      await axios.post(`http://localhost:3001/api/meter-readings`, { customerId, reading });
+      await apiClient.post(`/meter-readings`, { customerId, reading });
       fetchMeterReadings();
     } catch (err) {
       console.error('Error submitting reading:', err);
