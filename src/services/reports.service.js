@@ -1,12 +1,12 @@
-import axios from 'axios';
+import apiClient from '../api/client';
 
-const API_URL = 'http://localhost:3001/api/reports';
+const API_URL = '/reports';
 
 class ReportsService {
   // Get overview report
   static async getOverviewReport(startDate, endDate) {
     try {
-      const response = await axios.get(`${API_URL}/overview`, {
+      const response = await apiClient.get(`${API_URL}/overview`, {
         params: { startDate, endDate },
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -25,7 +25,7 @@ class ReportsService {
       const params = { startDate, endDate };
       if (customerId) params.customerId = customerId;
       
-      const response = await axios.get(`${API_URL}/ledger`, {
+      const response = await apiClient.get(`${API_URL}/ledger`, {
         params,
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -41,7 +41,7 @@ class ReportsService {
   // Get audit logs
   static async getAuditLogs(startDate, endDate) {
     try {
-      const response = await axios.get(`${API_URL}/audit`, {
+      const response = await apiClient.get(`${API_URL}/audit`, {
         params: { startDate, endDate },
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -57,7 +57,7 @@ class ReportsService {
   // Get transaction logs
   static async getTransactionLogs(startDate, endDate) {
     try {
-      const response = await axios.get(`${API_URL}/transactions`, {
+      const response = await apiClient.get(`${API_URL}/transactions`, {
         params: { startDate, endDate },
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -73,7 +73,7 @@ class ReportsService {
   // Get approval logs
   static async getApprovalLogs(startDate, endDate) {
     try {
-      const response = await axios.get(`${API_URL}/approvals`, {
+      const response = await apiClient.get(`${API_URL}/approvals`, {
         params: { startDate, endDate },
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -116,11 +116,7 @@ class ReportsService {
   // Get customers for filter dropdown
   static async getCustomers() {
     try {
-      const response = await axios.get('http://localhost:3001/api/customers', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await apiClient.get('/customers');
       return response.data;
     } catch (error) {
       console.error('Error fetching customers:', error);
