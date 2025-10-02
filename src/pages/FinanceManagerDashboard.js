@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FiRefreshCcw, FiDownload, FiLogOut } from 'react-icons/fi';
-import apiClient from '../api/client';
+import ReportsService from '../services/reports.service';
 import { formatCurrency } from '../utils/currencyFormatter';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,8 +15,16 @@ const FinanceManagerDashboard = () => {
   const [activeTab, setActiveTab] = useState('Collection Summary');
 
   const refresh = async () => {
-    // Placeholder: wire to your reports API
-    setStats({ totalCollected: 32672, averageAmount: 17314.83, paymentCount: 34 });
+    try {
+      const data = await ReportsService.getOverviewReport(fromDate || undefined, toDate || undefined);
+      setStats({
+        totalCollected: Number(data?.totalCollected || 0),
+        averageAmount: Number(data?.averageAmount || 0),
+        paymentCount: Number(data?.paymentCount || 0)
+      });
+    } catch (_) {
+      setStats({ totalCollected: 0, averageAmount: 0, paymentCount: 0 });
+    }
   };
 
   useEffect(() => { refresh(); }, []);
