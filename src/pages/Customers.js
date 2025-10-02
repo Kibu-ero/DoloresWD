@@ -82,32 +82,23 @@ const Customers = () => {
   const handleConfirmAddCustomer = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:3001/api/customers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          first_name: pendingCustomerData.data.firstName,
-          last_name: pendingCustomerData.data.lastName,
-          street: pendingCustomerData.data.street,
-          barangay: pendingCustomerData.data.barangay,
-          city: pendingCustomerData.data.city,
-          province: pendingCustomerData.data.province,
-          birthdate: pendingCustomerData.data.birthdate,
-          meter_number: pendingCustomerData.data.meterNumber,
-          email: pendingCustomerData.data.email,
-          phone_number: pendingCustomerData.data.phoneNumber,
-          password: pendingCustomerData.data.password,
-          status: pendingCustomerData.data.status
-        }),
+      const response = await apiClient.post("/customers", {
+        first_name: pendingCustomerData.data.firstName,
+        last_name: pendingCustomerData.data.lastName,
+        street: pendingCustomerData.data.street,
+        barangay: pendingCustomerData.data.barangay,
+        city: pendingCustomerData.data.city,
+        province: pendingCustomerData.data.province,
+        birthdate: pendingCustomerData.data.birthdate,
+        meter_number: pendingCustomerData.data.meterNumber,
+        email: pendingCustomerData.data.email,
+        phone_number: pendingCustomerData.data.phoneNumber,
+        password: pendingCustomerData.data.password,
+        status: pendingCustomerData.data.status
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to add customer");
-      }
 
-      const addedCustomer = await response.json();
+      const addedCustomer = response.data;
       setCustomers([...customers, addedCustomer]);
       setShowAddModal(false);
       setShowAddConfirmModal(false);
@@ -132,31 +123,21 @@ const Customers = () => {
   const handleConfirmUpdateCustomer = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:3001/api/customers/${pendingCustomerData.data.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          first_name: pendingCustomerData.data.firstName,
-          last_name: pendingCustomerData.data.lastName,
-          street: pendingCustomerData.data.street,
-          barangay: pendingCustomerData.data.barangay,
-          city: pendingCustomerData.data.city,
-          province: pendingCustomerData.data.province,
-          birthdate: pendingCustomerData.data.birthdate,
-          meter_number: pendingCustomerData.data.meterNumber,
-          email: pendingCustomerData.data.email,
-          phone_number: pendingCustomerData.data.phoneNumber,
-          status: pendingCustomerData.data.status
-        }),
+      const response = await apiClient.put(`/customers/${pendingCustomerData.data.id}`, {
+        first_name: pendingCustomerData.data.firstName,
+        last_name: pendingCustomerData.data.lastName,
+        street: pendingCustomerData.data.street,
+        barangay: pendingCustomerData.data.barangay,
+        city: pendingCustomerData.data.city,
+        province: pendingCustomerData.data.province,
+        birthdate: pendingCustomerData.data.birthdate,
+        meter_number: pendingCustomerData.data.meterNumber,
+        email: pendingCustomerData.data.email,
+        phone_number: pendingCustomerData.data.phoneNumber,
+        status: pendingCustomerData.data.status
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update customer");
-      }
-
-      const updatedCustomer = await response.json();
+      const updatedCustomer = response.data;
       setCustomers(customers.map(customer => 
         customer.id === updatedCustomer.id ? updatedCustomer : customer
       ));
@@ -226,9 +207,8 @@ const Customers = () => {
     setHistoryError("");
     setPaymentHistory([]);
     try {
-      const response = await fetch(`http://localhost:3001/api/cashier-billing/customer/${customer.id}`);
-      if (!response.ok) throw new Error("Failed to fetch payment history");
-      const data = await response.json();
+      const response = await apiClient.get(`/cashier-billing/customer/${customer.id}`);
+      const data = response.data;
       setPaymentHistory(Array.isArray(data.payments) ? data.payments : []);
     } catch (err) {
       setHistoryError(err.message || "Unknown error");
