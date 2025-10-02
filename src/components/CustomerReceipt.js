@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiDownload, FiPrinter, FiRefreshCw } from 'react-icons/fi';
 import CustomerService from '../services/customer.service';
 import BillingService from '../services/billing.service';
+import apiClient from '../api/client';
 
 const CustomerReceipt = ({ 
   customerId,
@@ -80,8 +81,8 @@ const CustomerReceipt = ({
       let payment = null;
       if (paymentId && paymentId !== null) {
         try {
-          const paymentResponse = await fetch(`http://localhost:3001/api/cashier-billing/customer/${customerId}`);
-          const paymentData = await paymentResponse.json();
+          const paymentResponse = await apiClient.get(`/cashier-billing/customer/${customerId}`);
+          const paymentData = paymentResponse.data;
           const payments = paymentData.payments || [];
           payment = payments.find(p => p.id === parseInt(paymentId)) || payments[0];
         } catch (err) {
