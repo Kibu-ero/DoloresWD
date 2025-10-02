@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api/client';
 import { useNavigate } from 'react-router-dom';
 
 const RegistrationVerification = ({ phoneNumber, onVerificationSuccess }) => {
@@ -16,7 +16,7 @@ const RegistrationVerification = ({ phoneNumber, onVerificationSuccess }) => {
     setSuccess('');
 
     try {
-      const response = await axios.post('http://localhost:3001/api/otp/verify-registration', {
+      const response = await apiClient.post('/otp/verify-registration', {
         phoneNumber,
         otp
       });
@@ -50,7 +50,7 @@ const RegistrationVerification = ({ phoneNumber, onVerificationSuccess }) => {
     setSuccess('');
 
     try {
-      await axios.post('http://localhost:3001/api/otp/resend', {
+      await apiClient.post('/otp/resend', {
         phoneNumber,
         purpose: 'registration'
       });
