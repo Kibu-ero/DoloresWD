@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../api/client';
 import { formatCurrency } from '../utils/currencyFormatter';
 import { FiLogOut, FiRefreshCw, FiChevronDown, FiChevronUp, FiFileText, FiX, FiCheck } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,19 +43,8 @@ const CustomerDashboard = () => {
         setError('Please log in to view your bills');
         return;
       }
-      const response = await fetch(
-        `http://localhost:3001/api/bills/${customerId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch bills');
-      }
-      const data = await response.json();
+      const response = await apiClient.get(`/bills/${customerId}`);
+      const data = response.data;
       if (data.success) {
         const formattedBills = (data.bills || []).map(bill => ({
           ...bill,
@@ -121,14 +110,12 @@ const CustomerDashboard = () => {
       formData.append('paymentMethod', pendingPaymentData.paymentMethod);
       formData.append('notes', pendingPaymentData.notes);
       formData.append('paymentProof', pendingPaymentData.paymentProof);
-      const response = await fetch('http://localhost:3001/api/payment-submissions/submit', {
-        method: 'POST',
+      const response = await apiClient.post('/payment-submissions/submit', formData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
+          'Content-Type': 'multipart/form-data'
+        }
       });
-      const data = await response.json();
+      const data = response.data;
       if (!data.success) throw new Error(data.message);
       alert('Payment proof submitted successfully!');
       setSelectedBill(null);
