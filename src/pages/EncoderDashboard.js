@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import apiClient from "../api/client";
 import { formatCurrency } from '../utils/currencyFormatter';
 import Reports from "./Reports";
 import { FiHome, FiEdit, FiFileText, FiBarChart2, FiSettings, FiLogOut } from 'react-icons/fi';
@@ -99,7 +99,7 @@ const EncoderDashboard = () => {
 
   const fetchCustomers = async () => {
     try {
-      const res = await axios.get("http://localhost:3001/api/billing/customers");
+      const res = await apiClient.get("/billing/customers");
       setCustomers(res.data);
     } catch (err) {
       setNotification("Failed to fetch customers");
@@ -108,7 +108,7 @@ const EncoderDashboard = () => {
 
   const fetchBills = async () => {
     try {
-      const res = await axios.get("http://localhost:3001/api/billing");
+      const res = await apiClient.get("/billing");
       setBills(res.data);
     } catch (err) {
       setNotification("Failed to fetch bills");
@@ -128,7 +128,7 @@ const EncoderDashboard = () => {
 
   const fetchPreviousReading = async (customerId) => {
     try {
-      const res = await axios.get(`http://localhost:3001/api/billing/customer/${customerId}`);
+      const res = await apiClient.get(`/billing/customer/${customerId}`);
       if (res.data && res.data.length > 0) {
         // Get the latest bill for this customer
         const latestBill = res.data[0];
@@ -143,7 +143,7 @@ const EncoderDashboard = () => {
 
   const fetchLastBill = async (customerId) => {
     try {
-      const res = await axios.get(`http://localhost:3001/api/billing/customer/${customerId}`);
+      const res = await apiClient.get(`/billing/customer/${customerId}`);
       if (res.data && res.data.length > 0) {
         setLastBill(res.data[0]);
       } else {
@@ -183,7 +183,7 @@ const EncoderDashboard = () => {
         current_reading: currentReading,
         due_date: dueDate || calculateDueDate()
       };
-      const res = await axios.post("http://localhost:3001/api/billing", payload);
+      const res = await apiClient.post("/billing", payload);
       setNotification("Bill generated successfully!");
       setCurrentReading("");
       setDueDate("");
