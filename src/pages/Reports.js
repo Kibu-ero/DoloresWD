@@ -86,6 +86,8 @@ const Reports = () => {
   const [selectedYearForBillingSheet, setSelectedYearForBillingSheet] = useState('2024');
   const [selectedCollectorForBillingSheet, setSelectedCollectorForBillingSheet] = useState('DOLORES A');
   const [showBillingSheet, setShowBillingSheet] = useState(false);
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [previewPDF, setPreviewPDF] = useState(null);
 
   // Fetch customers when ledger tab is active
   useEffect(() => {
@@ -313,11 +315,10 @@ const Reports = () => {
     }
   };
 
-  // Export to PDF with proper title and formatting
-  const exportPDF = () => {
+  // Generate PDF content (for both preview and export)
+  const generatePDFContent = () => {
     if (!data.length) {
-      alert('No data to export');
-      return;
+      return null;
     }
 
     const doc = new jsPDF();
@@ -440,7 +441,31 @@ const Reports = () => {
     doc.text('Dolores Water District - Billing System', 20, finalY);
     doc.text(`Page 1`, doc.internal.pageSize.width - 30, finalY, { align: 'right' });
     
+    return doc;
+  };
+
+  // Export PDF directly
+  const exportPDF = () => {
+    const doc = generatePDFContent();
+    if (!doc) {
+      alert('No data to export');
+      return;
+    }
     doc.save(`${activeTab}_report_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  // Preview PDF
+  const previewPDFReport = () => {
+    const doc = generatePDFContent();
+    if (!doc) {
+      alert('No data to preview');
+      return;
+    }
+    
+    // Convert PDF to data URL for preview
+    const pdfDataUrl = doc.output('datauristring');
+    setPreviewPDF(pdfDataUrl);
+    setShowPDFPreview(true);
   };
 
   // Calculate summary statistics for collections
@@ -1014,6 +1039,18 @@ const Reports = () => {
                 </button>
                 
                 <button 
+                  onClick={previewPDFReport} 
+                  className="px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center"
+                  disabled={loading || data.length === 0}
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Preview PDF
+                </button>
+                
+                <button 
                   onClick={exportPDF} 
                   className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center"
                   disabled={loading || data.length === 0}
@@ -1064,6 +1101,78 @@ const Reports = () => {
           </>
         )}
       </div>
+
+      {/* PDF Preview Modal */}
+      {showPDFPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-800">
+                PDF Preview - {availableReports.find(report => report.key === activeTab)?.label || `${activeTab} Report`}
+              </h3>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    const doc = generatePDFContent();
+                    if (doc) {
+                      doc.save(`${activeTab}_report_${new Date().toISOString().split('T')[0]}.pdf`);
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Download PDF
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPDFPreview(false);
+                    setPreviewPDF(null);
+                  }}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {/* PDF Preview Content */}
+            <div className="flex-1 overflow-auto p-4">
+              {previewPDF ? (
+                <iframe
+                  src={previewPDF}
+                  className="w-full h-full border-0 rounded-lg shadow-lg"
+                  title="PDF Preview"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent mb-4"></div>
+                    <p>Loading PDF preview...</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+              <div className="flex justify-end space-x-2">
+                <div className="text-sm text-gray-600 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Preview shows how the PDF will look when downloaded
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
