@@ -202,7 +202,8 @@ const CustomerLedger = ({
       doc.setFont('helvetica', 'normal');
       doc.text(`Account of: ${ledgerData.customer.first_name} ${ledgerData.customer.last_name}`, 20, 40);
       doc.text(`Address: ${ledgerData.customer.street || ''}, ${ledgerData.customer.barangay || ''}, ${ledgerData.customer.city || ''}, ${ledgerData.customer.province || ''}`, 20, 50);
-      doc.text(`Meter Serial No.: ${ledgerData.customer.meter_number || ''}`, 20, 60);
+      doc.text(`Contact Number: ${ledgerData.customer.phone_number || ''}`, 20, 60);
+      doc.text(`Meter Serial No.: ${ledgerData.customer.meter_number || ''}`, 20, 70);
       
       // Prepare table data
       const tableData = ledgerData.ledgerEntries.map(entry => [
@@ -221,7 +222,7 @@ const CustomerLedger = ({
       doc.autoTable({
         head: [['Date', 'Particulars', 'Ref.', 'Meter Reading', 'Consumption', 'DR Billings', 'CR Collections', 'Amount', 'Balance']],
         body: tableData,
-        startY: 70,
+        startY: 80,
         styles: { fontSize: 8 },
         headStyles: { fillColor: [200, 200, 200] },
         columnStyles: {
@@ -364,7 +365,7 @@ const CustomerLedger = ({
               </div>
               <div className="flex">
                 <span className="font-bold w-32">Contact Number:</span>
-                <span className="border-b border-gray-400 w-32"></span>
+                <span className="font-semibold">{ledgerData.customer.phone_number || ''}</span>
               </div>
             </div>
 
