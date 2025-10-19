@@ -366,16 +366,12 @@ const UserNavbar = () => {
 
       const data = response.data;
 
-      setOtpSuccess("Account verified successfully!");
+      setOtpSuccess("Account verified successfully! Redirecting to login...");
       
-      // Store token and user info
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // Redirect to customer dashboard
+      // Redirect to login page after successful verification
       setTimeout(() => {
         closeModal();
-        navigate("/customer-dashboard");
+        navigate("/login");
       }, 2000);
       
     } catch (err) {
