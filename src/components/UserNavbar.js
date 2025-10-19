@@ -764,16 +764,28 @@ const UserNavbar = () => {
             {step === 1 && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Street Address*</label>
-                  <input
-                    type="text"
-                    name="street"
-                    value={formData.street}
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Province*</label>
+                  <select
+                    name="province"
+                    value={formData.province}
                     onChange={handleInputChange}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all duration-200"
-                    placeholder="Enter your street address"
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all duration-200"
                     required
-                  />
+                  >
+                    <option value="Abra">Abra</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">City*</label>
+                  <select
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all duration-200"
+                    required
+                  >
+                    <option value="Dolores">Dolores</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Barangay*</label>
@@ -790,29 +802,17 @@ const UserNavbar = () => {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">City*</label>
-                  <select
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all duration-200"
-                    required
-                  >
-                    <option value="Dolores">Dolores</option>
-                  </select>
-                </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Province*</label>
-                  <select
-                    name="province"
-                    value={formData.province}
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Street Address*</label>
+                  <input
+                    type="text"
+                    name="street"
+                    value={formData.street}
                     onChange={handleInputChange}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all duration-200"
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all duration-200"
+                    placeholder="Enter your street address"
                     required
-                  >
-                    <option value="Abra">Abra</option>
-                  </select>
+                  />
                 </div>
               </div>
             )}
