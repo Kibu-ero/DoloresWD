@@ -43,6 +43,7 @@ const CustomerLedger = ({
       // Fetch customer data
       const customer = await CustomerService.getCustomerById(customerId);
       console.log('Customer data:', customer);
+      console.log('Customer phone_number:', customer.phone_number);
       
       // Fetch all bills for this customer
       const bills = await BillingService.getBillByCustomerId(customerId);
@@ -202,7 +203,7 @@ const CustomerLedger = ({
       doc.setFont('helvetica', 'normal');
       doc.text(`Account of: ${ledgerData.customer.first_name} ${ledgerData.customer.last_name}`, 20, 40);
       doc.text(`Address: ${ledgerData.customer.street || ''}, ${ledgerData.customer.barangay || ''}, ${ledgerData.customer.city || ''}, ${ledgerData.customer.province || ''}`, 20, 50);
-      doc.text(`Contact Number: ${ledgerData.customer.phone_number || ''}`, 20, 60);
+      doc.text(`Contact Number: ${ledgerData.customer.phone_number || 'N/A'}`, 20, 60);
       doc.text(`Meter Serial No.: ${ledgerData.customer.meter_number || ''}`, 20, 70);
       
       // Prepare table data
@@ -365,7 +366,7 @@ const CustomerLedger = ({
               </div>
               <div className="flex">
                 <span className="font-bold w-32">Contact Number:</span>
-                <span className="font-semibold">{ledgerData.customer.phone_number || ''}</span>
+                <span className="font-semibold">{ledgerData.customer.phone_number || 'N/A'}</span>
               </div>
             </div>
 
