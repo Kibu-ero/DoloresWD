@@ -190,8 +190,8 @@ const UserNavbar = () => {
         age--;
       }
       
-      // Validate age is reasonable (between 0 and 120)
-      if (age < 0 || age > 120) {
+      // Validate age is reasonable (between 15 and 120)
+      if (age < 15 || age > 120) {
         setCalculatedAge(null);
         setIsSenior(false);
         return;
@@ -277,8 +277,8 @@ const UserNavbar = () => {
         age--;
       }
       
-      if (age < 0 || age > 120) {
-        setError("Please enter a valid birthdate");
+      if (age < 15 || age > 120) {
+        setError("You must be at least 15 years old to register");
         return false;
       }
     }
@@ -582,7 +582,7 @@ const UserNavbar = () => {
                     name="birthdate"
                     value={formData.birthdate}
                     onChange={handleInputChange}
-                    max={new Date().toISOString().split('T')[0]}
+                    max={new Date(Date.now() - 15 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                     className={`w-full p-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all duration-200 ${
                       formData.birthdate && calculatedAge === null 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -601,7 +601,7 @@ const UserNavbar = () => {
                   {formData.birthdate && calculatedAge === null && (
                     <p className="text-red-500 text-xs mt-1 flex items-center">
                       <FiXCircle className="w-3 h-3 mr-1" />
-                      Please enter a valid birthdate
+                      You must be at least 15 years old to register
                     </p>
                   )}
                 </div>
