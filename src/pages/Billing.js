@@ -327,11 +327,66 @@ const Billing = () => {
     );
   });
 
+  // Group bills by customer to prevent repetition
+  const groupedBills = filteredBills.reduce((acc, bill) => {
+    const customerId = bill.customer_id;
+    if (!acc[customerId]) {
+      acc[customerId] = {
+        customer_id: bill.customer_id,
+        customer_name: bill.customer_name,
+        first_name: bill.first_name,
+        last_name: bill.last_name,
+        meter_number: bill.meter_number,
+        bills: []
+      };
+    }
+    acc[customerId].bills.push(bill);
+    return acc;
+  }, {});
+
+  // Convert grouped bills to array and sort by customer name
+  const uniqueCustomers = Object.values(groupedBills).map(customer => {
+    // Sort bills by creation date (newest first)
+    const sortedBills = customer.bills.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    // Get the latest bill for display
+    const latestBill = sortedBills[0];
+    
+    // Calculate total outstanding amount
+    const totalOutstanding = customer.bills
+      .filter(bill => bill.status === 'Unpaid')
+      .reduce((sum, bill) => sum + (bill.amount_due || 0), 0);
+    
+    // Get status based on latest bill and outstanding amount
+    let status = latestBill.status;
+    if (totalOutstanding > 0 && latestBill.status === 'Paid') {
+      status = 'Partially Paid';
+    }
+    
+    return {
+      customer_id: customer.customer_id,
+      customer_name: customer.customer_name,
+      first_name: customer.first_name,
+      last_name: customer.last_name,
+      meter_number: customer.meter_number,
+      latest_bill: latestBill,
+      total_bills: customer.bills.length,
+      total_outstanding: totalOutstanding,
+      status: status,
+      all_bills: sortedBills
+    };
+  }).sort((a, b) => {
+    // Sort by customer name (last name, first name)
+    const nameA = a.last_name && a.first_name ? `${a.last_name}, ${a.first_name}` : a.customer_name || '';
+    const nameB = b.last_name && b.first_name ? `${b.last_name}, ${b.first_name}` : b.customer_name || '';
+    return nameA.localeCompare(nameB);
+  });
+
   // Archived bills for modal
   const archivedBills = bills.filter(bill => bill.archived);
 
-  const totalPages = Math.ceil(filteredBills.length / itemsPerPage);
-  const paginatedBills = filteredBills.slice(
+  const totalPages = Math.ceil(uniqueCustomers.length / itemsPerPage);
+  const paginatedCustomers = uniqueCustomers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -493,82 +548,95 @@ const Billing = () => {
           <table className="min-w-full divide-y divide-gray-200 text-xs md:text-sm">
             <thead className="bg-white/50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bill ID</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Meter Number</th>
-                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Consumption</th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount Due</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Due Date</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Meter Number</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Latest Bill</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Outstanding</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Bill Count</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white/30 divide-y divide-gray-200">
-              {filteredBills.length > 0 ? (
-                paginatedBills.map((bill) => (
-                  <tr key={bill.bill_id} className="hover:bg-blue-50 transition-colors duration-150">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{bill.bill_id}</td>
+              {uniqueCustomers.length > 0 ? (
+                paginatedCustomers.map((customer) => (
+                  <tr key={customer.customer_id} className="hover:bg-blue-50 transition-colors duration-150">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {bill.last_name && bill.first_name
-                          ? `${bill.last_name}, ${bill.first_name}`
-                          : bill.customer_name
+                        {customer.last_name && customer.first_name
+                          ? `${customer.last_name}, ${customer.first_name}`
+                          : customer.customer_name
                             ? (() => {
-                                const parts = bill.customer_name.split(" ");
-                                return parts.length >= 2 ? `${parts[1]}, ${parts[0]}` : bill.customer_name;
+                                const parts = customer.customer_name.split(" ");
+                                return parts.length >= 2 ? `${parts[1]}, ${parts[0]}` : customer.customer_name;
                               })()
                             : ""}
                       </div>
-                      <div className="text-sm text-gray-500">ID: {bill.customer_id}</div>
+                      <div className="text-sm text-gray-500">ID: {customer.customer_id}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{bill.meter_number}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{Math.round(bill.consumption)} m³</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">{formatCurrency(bill.amount_due)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {new Date(bill.due_date).toLocaleDateString()}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{customer.meter_number}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
+                      <div className="font-medium">#{customer.latest_bill.bill_id}</div>
+                      <div className="text-xs text-gray-500">
+                        {formatCurrency(customer.latest_bill.amount_due)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Due: {new Date(customer.latest_bill.due_date).toLocaleDateString()}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        bill.status === "Paid" 
-                          ? "bg-green-100 text-green-800" 
-                          : bill.status === "Overdue" 
-                          ? "bg-red-100 text-red-800" 
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}>
-                        {bill.status}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+                      {customer.total_outstanding > 0 ? (
+                        <span className="text-red-600 font-semibold">
+                          {formatCurrency(customer.total_outstanding)}
+                        </span>
+                      ) : (
+                        <span className="text-green-600">₱0.00</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {customer.total_bills} bill{customer.total_bills !== 1 ? 's' : ''}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {bill.status !== "Paid" && (
-                        <button
-                          onClick={() => handleStatusChange(bill.bill_id, "Paid")}
-                          className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
-                          title="Mark as Paid"
-                        >
-                          <FiCheckCircle />
-                        </button>
-                      )}
-                      {/* Archive button */}
-                      {!bill.archived && (
-                        <button
-                          onClick={() => handleArchiveBill(bill.bill_id)}
-                          className="ml-2 bg-gray-500 text-white px-3 py-2 rounded-md hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
-                          title="Archive Bill"
-                        >
-                          <FiArchive />
-                        </button>
-                      )}
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        customer.status === "Paid" 
+                          ? "bg-green-100 text-green-800" 
+                          : customer.status === "Overdue" 
+                          ? "bg-red-100 text-red-800" 
+                          : customer.status === "Partially Paid"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}>
+                        {customer.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handleArchiveBill(customer.latest_bill.bill_id)}
+                        className="bg-gray-500 text-white px-3 py-2 rounded-md hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
+                        title="Archive Latest Bill"
+                      >
+                        <FiArchive />
+                      </button>
+                      <button
+                        onClick={() => setShowAddBillModal(true)}
+                        className="ml-2 bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
+                        title="Add New Bill"
+                      >
+                        <FiCheckCircle />
+                      </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <p>No bills found</p>
+                      <p>No customers found</p>
                     </div>
                   </td>
                 </tr>
