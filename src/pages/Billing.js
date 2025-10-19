@@ -564,15 +564,17 @@ const Billing = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
                         {customer.last_name && customer.first_name
-                          ? `${customer.last_name}, ${customer.first_name}`
+                          ? `${customer.last_name}, ${customer.first_name}`.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
                           : customer.customer_name
                             ? (() => {
                                 const parts = customer.customer_name.split(" ");
-                                return parts.length >= 2 ? `${parts[1]}, ${parts[0]}` : customer.customer_name;
+                                if (parts.length >= 2) {
+                                  return `${parts[1]}, ${parts[0]}`.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                                }
+                                return customer.customer_name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
                               })()
                             : ""}
                       </div>
-                      <div className="text-sm text-gray-500">ID: {customer.customer_id}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{customer.meter_number}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
