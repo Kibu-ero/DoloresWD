@@ -3,6 +3,8 @@ import { FiDownload, FiPrinter, FiRefreshCw } from 'react-icons/fi';
 import CustomerService from '../services/customer.service';
 import BillingService from '../services/billing.service';
 import apiClient from '../api/client';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const CustomerLedger = ({ 
   customerId,
@@ -12,6 +14,17 @@ const CustomerLedger = ({
   const [ledgerData, setLedgerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Currency formatting function with commas
+  const formatCurrency = (amount) => {
+    if (!amount || amount === '' || amount === '0.00') return '';
+    const num = parseFloat(amount);
+    if (isNaN(num)) return '';
+    return num.toLocaleString('en-PH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
 
   // Fetch ledger data when component mounts
   useEffect(() => {
@@ -25,16 +38,39 @@ const CustomerLedger = ({
       setLoading(true);
       setError(null);
 
+      console.log('Fetching ledger data for customer:', customerId);
+
       // Fetch customer data
       const customer = await CustomerService.getCustomerById(customerId);
+      console.log('Customer data:', customer);
       
       // Fetch all bills for this customer
       const bills = await BillingService.getBillByCustomerId(customerId);
+      console.log('Bills data:', bills);
       
       // Fetch payment history
-      const paymentResponse = await apiClient.get(`/cashier-billing/customer/${customerId}`);
-      const paymentData = paymentResponse.data;
-      const payments = paymentData.payments || [];
+      let payments = [];
+      try {
+        const paymentResponse = await apiClient.get(`/cashier-billing/customer/${customerId}`);
+        const paymentData = paymentResponse.data;
+        payments = paymentData.payments || [];
+        console.log('Payments data:', payments);
+      } catch (paymentError) {
+        console.log('No payment data found:', paymentError);
+        payments = [];
+      }
+
+      // Fetch online payment submissions if any
+      try {
+        const onlinePaymentsResponse = await apiClient.get(`/payment-submissions/customer/${customerId}`);
+        const onlinePayments = onlinePaymentsResponse.data || [];
+        console.log('Online payments data:', onlinePayments);
+        
+        // Merge online payments with cashier payments
+        payments = [...payments, ...onlinePayments];
+      } catch (onlinePaymentError) {
+        console.log('No online payment data found:', onlinePaymentError);
+      }
 
       // Create ledger entries from bills and payments
       const ledgerEntries = [];
@@ -42,20 +78,24 @@ const CustomerLedger = ({
       // Add bill entries
       bills.forEach(bill => {
         if (bill.bill_id) {
+          const billDate = new Date(bill.created_at);
+          const consumption = bill.current_reading && bill.previous_reading ? 
+            (bill.current_reading - bill.previous_reading) : 0;
+          
           ledgerEntries.push({
-            date: new Date(bill.created_at).toLocaleDateString('en-US', { 
+            date: billDate.toLocaleDateString('en-US', { 
               month: 'numeric', 
               day: 'numeric', 
               year: '2-digit' 
             }),
-            particulars: `${new Date(bill.created_at).toLocaleDateString('en-US', { month: 'long' }).toUpperCase()} ${new Date(bill.created_at).getFullYear()} BILL`,
+            particulars: `${billDate.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()} ${billDate.getFullYear()} BILL`,
             reference: bill.bill_id.toString(),
-            meterReading: bill.current_reading || '0',
-            consumption: bill.consumption || '0',
-            drBillings: bill.amount_due || '0.00',
-            crCollections: '',
-            amount: '',
-            balance: bill.amount_due || '0.00'
+            meterReading: bill.current_reading || '',
+            consumption: consumption || '',
+            drBillings: parseFloat(bill.amount_due || 0),
+            crCollections: 0,
+            amount: 0,
+            balance: 0
           });
 
           // Add penalty row if applicable
@@ -66,10 +106,10 @@ const CustomerLedger = ({
               reference: '',
               meterReading: '',
               consumption: '',
-              drBillings: bill.penalty,
-              crCollections: '',
-              amount: '',
-              balance: '0'
+              drBillings: parseFloat(bill.penalty),
+              crCollections: 0,
+              amount: 0,
+              balance: 0
             });
           }
         }
@@ -78,20 +118,24 @@ const CustomerLedger = ({
       // Add payment entries
       payments.forEach(payment => {
         if (payment.payment_date) {
+          const paymentDate = new Date(payment.payment_date);
+          const amountPaid = parseFloat(payment.amount_paid || 0);
+          const penaltyPaid = parseFloat(payment.penalty_paid || 0);
+          
           ledgerEntries.push({
-            date: new Date(payment.payment_date).toLocaleDateString('en-US', { 
+            date: paymentDate.toLocaleDateString('en-US', { 
               month: 'numeric', 
               day: 'numeric', 
               year: '2-digit' 
             }),
             particulars: 'PAYMENT',
-            reference: payment.receipt_number || payment.id.toString(),
+            reference: payment.receipt_number || payment.id?.toString() || '',
             meterReading: '',
             consumption: '',
-            drBillings: '',
-            crCollections: payment.amount_paid || '0.00',
-            amount: payment.amount_paid || '0.00',
-            balance: '0'
+            drBillings: 0,
+            crCollections: amountPaid,
+            amount: penaltyPaid,
+            balance: 0
           });
         }
       });
@@ -105,23 +149,27 @@ const CustomerLedger = ({
       // Calculate running balance
       let runningBalance = 0;
       ledgerEntries.forEach(entry => {
-        if (entry.drBillings && parseFloat(entry.drBillings) > 0) {
-          runningBalance += parseFloat(entry.drBillings);
-          entry.balance = runningBalance.toFixed(2);
+        if (entry.drBillings > 0) {
+          runningBalance += entry.drBillings;
         }
-        if (entry.crCollections && parseFloat(entry.crCollections) > 0) {
-          runningBalance -= parseFloat(entry.crCollections);
-          entry.balance = runningBalance.toFixed(2);
+        if (entry.crCollections > 0) {
+          runningBalance -= entry.crCollections;
         }
+        if (entry.amount > 0) {
+          runningBalance -= entry.amount; // penalty payments
+        }
+        entry.balance = runningBalance;
       });
 
       const formattedData = {
         customer: customer,
         ledgerEntries: ledgerEntries,
-        totalBillings: ledgerEntries.reduce((sum, entry) => sum + (parseFloat(entry.drBillings) || 0), 0),
-        totalCollections: ledgerEntries.reduce((sum, entry) => sum + (parseFloat(entry.crCollections) || 0), 0),
+        totalBillings: ledgerEntries.reduce((sum, entry) => sum + entry.drBillings, 0),
+        totalCollections: ledgerEntries.reduce((sum, entry) => sum + entry.crCollections + entry.amount, 0),
         currentBalance: runningBalance
       };
+
+      console.log('Formatted ledger data:', formattedData);
 
       setLedgerData(formattedData);
     } catch (err) {
@@ -136,8 +184,72 @@ const CustomerLedger = ({
     window.print();
   };
 
-  const handleDownload = () => {
-    console.log('Download functionality to be implemented');
+  const handleDownload = async () => {
+    if (!ledgerData) return;
+    
+    try {
+      const doc = new jsPDF('l', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      // Add header
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DOLORES WATER DISTRICT', pageWidth / 2, 15, { align: 'center' });
+      doc.text('CUSTOMER LEDGER CARD', pageWidth / 2, 25, { align: 'center' });
+      
+      // Customer information
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Account of: ${ledgerData.customer.first_name} ${ledgerData.customer.last_name}`, 20, 40);
+      doc.text(`Address: ${ledgerData.customer.street || ''}, ${ledgerData.customer.barangay || ''}, ${ledgerData.customer.city || ''}, ${ledgerData.customer.province || ''}`, 20, 50);
+      doc.text(`Meter Serial No.: ${ledgerData.customer.meter_number || ''}`, 20, 60);
+      
+      // Prepare table data
+      const tableData = ledgerData.ledgerEntries.map(entry => [
+        entry.date,
+        entry.particulars,
+        entry.reference,
+        entry.meterReading,
+        entry.consumption,
+        formatCurrency(entry.drBillings),
+        formatCurrency(entry.crCollections),
+        formatCurrency(entry.amount),
+        formatCurrency(entry.balance)
+      ]);
+      
+      // Add table
+      doc.autoTable({
+        head: [['Date', 'Particulars', 'Ref.', 'Meter Reading', 'Consumption', 'DR Billings', 'CR Collections', 'Amount', 'Balance']],
+        body: tableData,
+        startY: 70,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [200, 200, 200] },
+        columnStyles: {
+          5: { halign: 'right' },
+          6: { halign: 'right' },
+          7: { halign: 'right' },
+          8: { halign: 'right' }
+        }
+      });
+      
+      // Add summary
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.text(`Total Billings: ₱${formatCurrency(ledgerData.totalBillings)}`, 20, finalY);
+      doc.text(`Total Collections: ₱${formatCurrency(ledgerData.totalCollections)}`, 20, finalY + 10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Current Balance: ₱${formatCurrency(ledgerData.currentBalance)}`, 20, finalY + 20);
+      
+      // Add signatories
+      doc.setFont('helvetica', 'normal');
+      doc.text('Prepared by: _________________', 20, finalY + 40);
+      doc.text('Approved by: _________________', 20, finalY + 60);
+      
+      // Save the PDF
+      doc.save(`customer-ledger-${ledgerData.customer.first_name}-${ledgerData.customer.last_name}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF. Please try again.');
+    }
   };
 
   const handleRefresh = () => {
@@ -318,16 +430,16 @@ const CustomerLedger = ({
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{entry.meterReading}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{entry.consumption}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-semibold">
-                    {entry.drBillings ? `₱ ${entry.drBillings}` : ''}
+                    {entry.drBillings > 0 ? `₱ ${formatCurrency(entry.drBillings)}` : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-semibold">
-                    {entry.amount ? `₱ ${entry.amount}` : ''}
+                    {entry.amount > 0 ? `₱ ${formatCurrency(entry.amount)}` : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-semibold">
-                    {entry.crCollections ? `₱ ${entry.crCollections}` : ''}
+                    {entry.crCollections > 0 ? `₱ ${formatCurrency(entry.crCollections)}` : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-bold">
-                    {entry.balance ? `₱ ${entry.balance}` : ''}
+                    {entry.balance !== 0 ? `₱ ${formatCurrency(entry.balance)}` : ''}
                   </td>
                 </tr>
               ))}
@@ -385,14 +497,26 @@ const CustomerLedger = ({
               <span className="font-bold">TOTAL:</span>
             </div>
             <div className="text-right">
-              <span className="font-bold">Total Billings: ₱ {ledgerData.totalBillings.toFixed(2)}</span>
+              <span className="font-bold">Total Billings: ₱ {formatCurrency(ledgerData.totalBillings)}</span>
             </div>
             <div className="text-right">
-              <span className="font-bold">Total Collections: ₱ {ledgerData.totalCollections.toFixed(2)}</span>
+              <span className="font-bold">Total Collections: ₱ {formatCurrency(ledgerData.totalCollections)}</span>
             </div>
           </div>
           <div className="mt-2 text-right">
-            <span className="font-bold text-lg">Current Balance: ₱ {ledgerData.currentBalance.toFixed(2)}</span>
+            <span className="font-bold text-lg">Current Balance: ₱ {formatCurrency(ledgerData.currentBalance)}</span>
+          </div>
+          
+          {/* Signatories Section */}
+          <div className="mt-8 grid grid-cols-2 gap-8 text-sm">
+            <div className="text-center">
+              <div className="border-b border-gray-400 w-32 mx-auto mb-2"></div>
+              <span className="font-semibold">Prepared by:</span>
+            </div>
+            <div className="text-center">
+              <div className="border-b border-gray-400 w-32 mx-auto mb-2"></div>
+              <span className="font-semibold">Approved by:</span>
+            </div>
           </div>
         </div>
       </div>
