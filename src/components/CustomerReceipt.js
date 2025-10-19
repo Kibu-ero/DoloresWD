@@ -304,9 +304,9 @@ const CustomerReceipt = ({
           <p className="text-sm text-gray-600">NON VAT Reg. TIN-000-609-549-00000</p>
         </div>
 
-        {/* Official Receipt Title */}
+        {/* Acknowledgement Receipt Title */}
         <div className="text-center py-2 bg-gray-100 border-b border-gray-300">
-          <h2 className="text-xl font-bold text-gray-800">OFFICIAL RECEIPT</h2>
+          <h2 className="text-xl font-bold text-gray-800">ACKNOWLEDGEMENT RECEIPT</h2>
         </div>
 
         {/* Receipt Number and Date */}
@@ -449,16 +449,10 @@ const CustomerReceipt = ({
 
             <div className="mt-6 space-y-3">
               <div className="text-center p-3 bg-gray-100 rounded border">
-                <div className="font-bold text-lg">Amount Received:</div>
+                <div className="font-bold text-lg">Amount Paid:</div>
                 <div className="text-2xl font-bold text-green-700">₱ {receiptData.amountReceived}</div>
               </div>
               
-              {parseFloat(receiptData.changeGiven) > 0 && (
-                <div className="text-center p-2 bg-yellow-100 rounded border">
-                  <div className="font-semibold text-sm">Change Given:</div>
-                  <div className="text-lg font-bold text-yellow-700">₱ {receiptData.changeGiven}</div>
-                </div>
-              )}
               
               <div className="text-sm">
                 <div className="font-semibold">in partial/full payment of:</div>
