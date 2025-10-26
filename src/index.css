@@ -9,6 +9,23 @@
     size: A4;
   }
   
+  /* Hide everything except receipt content */
+  * {
+    visibility: hidden;
+  }
+  
+  .receipt-print-area,
+  .receipt-print-area * {
+    visibility: visible;
+  }
+  
+  .receipt-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
