@@ -10,12 +10,9 @@ const UserDashboard = () => {
       {/* Hero Section with Background Image */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div 
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full bg-contain md:bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('/background.jpg.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
+            backgroundImage: "url('/Background.png')",
           }}
         ></div>
       </section>
@@ -118,4 +115,3 @@ const UserDashboard = () => {
 };
 
 export default UserDashboard;
-
