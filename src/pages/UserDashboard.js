@@ -7,14 +7,17 @@ const UserDashboard = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
       <UserNavbar />
 
-      {/* Hero Section with Background Image */}
+      {/* Hero Section with Background Video */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div 
-          className="absolute inset-0 w-full h-full bg-contain md:bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: "url('/Background.png')",
-          }}
-        ></div>
+        <video 
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/Background.mp4" type="video/mp4" />
+        </video>
       </section>
 
       {/* Contact Information Section */}
