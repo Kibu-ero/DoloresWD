@@ -12,7 +12,7 @@ const UserDashboard = () => {
         <div 
           className="absolute inset-0 w-full h-full object-cover"
           style={{
-            backgroundImage: "url('/background.jpg')",
+            backgroundImage: "url('/background.jpg.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
@@ -118,3 +118,4 @@ const UserDashboard = () => {
 };
 
 export default UserDashboard;
+
