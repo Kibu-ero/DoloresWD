@@ -20,7 +20,7 @@ const CustomerDashboard = () => {
   const [selectedBill, setSelectedBill] = useState(null);
   const [paymentProof, setPaymentProof] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('GCash');
-  const [notes, setNotes] = useState('');
+  const [referenceNumber, setReferenceNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -93,8 +93,8 @@ const CustomerDashboard = () => {
       customerId: customerId,
       amount: billAmount,
       paymentMethod: paymentMethod,
-      notes: notes,
-      paymentProof: paymentProof
+      paymentProof: paymentProof,
+      referenceNumber: referenceNumber
     });
     setShowPaymentConfirmModal(true);
   };
@@ -108,7 +108,7 @@ const CustomerDashboard = () => {
       formData.append('customerId', pendingPaymentData.customerId);
       formData.append('amount', pendingPaymentData.amount);
       formData.append('paymentMethod', pendingPaymentData.paymentMethod);
-      formData.append('notes', pendingPaymentData.notes);
+      formData.append('referenceNumber', pendingPaymentData.referenceNumber);
       formData.append('paymentProof', pendingPaymentData.paymentProof);
       const response = await apiClient.post('/payment-submissions/submit', formData, {
         headers: {
@@ -120,7 +120,7 @@ const CustomerDashboard = () => {
       alert('Payment proof submitted successfully!');
       setSelectedBill(null);
       setPaymentProof(null);
-      setNotes('');
+      setReferenceNumber('');
       setPreviewImage(null);
       setShowPaymentConfirmModal(false);
       setPendingPaymentData(null);
@@ -434,6 +434,24 @@ const CustomerDashboard = () => {
                     </div>
 
                     <div className="sm:col-span-6">
+                      <label htmlFor="referenceNumber" className="block text-sm font-medium text-gray-700">
+                        GCash Reference Number <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="referenceNumber"
+                        value={referenceNumber}
+                        onChange={(e) => setReferenceNumber(e.target.value)}
+                        className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        placeholder="Enter GCash transaction reference number"
+                        required
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Enter the reference number from your GCash transaction receipt
+                      </p>
+                    </div>
+
+                    <div className="sm:col-span-6">
                       <label className="block text-sm font-medium text-gray-700 flex items-center gap-1">
                         Payment Proof (Screenshot)
                         <button
@@ -493,22 +511,6 @@ const CustomerDashboard = () => {
                         </div>
                       </div>
                     </div>
-
-                    <div className="sm:col-span-6">
-                      <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-                        Notes (Optional)
-                      </label>
-                      <div className="mt-1">
-                        <textarea
-                          id="notes"
-                          name="notes"
-                          rows={3}
-                          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border border-gray-300 rounded-lg"
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                        />
-                      </div>
-                    </div>
                   </div>
 
                   <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
@@ -517,7 +519,6 @@ const CustomerDashboard = () => {
                       onClick={() => {
                         setSelectedBill(null);
                         setPaymentProof(null);
-                        setNotes('');
                         setPreviewImage(null);
                       }}
                       className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
@@ -617,9 +618,7 @@ const CustomerDashboard = () => {
                   <div><span className="font-medium">Bill ID:</span> {pendingPaymentData.billId}</div>
                   <div><span className="font-medium">Amount:</span> {formatCurrency(pendingPaymentData.amount)}</div>
                   <div><span className="font-medium">Payment Method:</span> {pendingPaymentData.paymentMethod}</div>
-                  {pendingPaymentData.notes && (
-                    <div><span className="font-medium">Notes:</span> {pendingPaymentData.notes}</div>
-                  )}
+                  <div><span className="font-medium">Reference Number:</span> {pendingPaymentData.referenceNumber}</div>
                   <div><span className="font-medium">Proof File:</span> {pendingPaymentData.paymentProof?.name || 'Uploaded'}</div>
                 </div>
               </div>
