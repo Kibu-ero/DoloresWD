@@ -118,10 +118,16 @@ const CustomerLedger = ({
 
       // Add payment entries
       payments.forEach(payment => {
-        if (payment.payment_date) {
-          const paymentDate = new Date(payment.payment_date);
-          const amountPaid = parseFloat(payment.amount_paid || 0);
+        if (payment.payment_date || payment.created_at) {
+          const paymentDate = new Date(payment.payment_date || payment.created_at);
+          const amountPaid = parseFloat(payment.amount_paid || payment.amount || 0);
           const penaltyPaid = parseFloat(payment.penalty_paid || 0);
+          
+          // Create reference string including GCash reference number if available
+          let referenceString = payment.receipt_number || payment.id?.toString() || '';
+          if (payment.reference_number) {
+            referenceString += referenceString ? ` / ${payment.reference_number}` : payment.reference_number;
+          }
           
           ledgerEntries.push({
             date: paymentDate.toLocaleDateString('en-US', { 
@@ -129,8 +135,8 @@ const CustomerLedger = ({
               day: 'numeric', 
               year: '2-digit' 
             }),
-            particulars: 'PAYMENT',
-            reference: payment.receipt_number || payment.id?.toString() || '',
+            particulars: payment.payment_method ? `PAYMENT (${payment.payment_method.toUpperCase()})` : 'PAYMENT',
+            reference: referenceString,
             meterReading: '',
             consumption: '',
             drBillings: 0,
@@ -210,9 +216,9 @@ const CustomerLedger = ({
       const tableData = ledgerData.ledgerEntries.map(entry => [
         entry.date,
         entry.particulars,
-        entry.reference,
-        entry.meterReading,
-        entry.consumption,
+        entry.reference || '',
+        entry.meterReading || '',
+        entry.consumption || '',
         formatCurrency(entry.drBillings),
         formatCurrency(entry.crCollections),
         formatCurrency(entry.amount),
@@ -236,10 +242,10 @@ const CustomerLedger = ({
       
       // Add summary
       const finalY = doc.lastAutoTable.finalY + 10;
-      doc.text(`Total Billings: ₱${formatCurrency(ledgerData.totalBillings)}`, 20, finalY);
-      doc.text(`Total Collections: ₱${formatCurrency(ledgerData.totalCollections)}`, 20, finalY + 10);
+      doc.text(`Total Billings: ${formatCurrency(ledgerData.totalBillings)}`, 20, finalY);
+      doc.text(`Total Collections: ${formatCurrency(ledgerData.totalCollections)}`, 20, finalY + 10);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Current Balance: ₱${formatCurrency(ledgerData.currentBalance)}`, 20, finalY + 20);
+      doc.text(`Current Balance: ${formatCurrency(ledgerData.currentBalance)}`, 20, finalY + 20);
       
       // Add signatories
       doc.setFont('helvetica', 'normal');
@@ -432,16 +438,16 @@ const CustomerLedger = ({
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{entry.meterReading}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{entry.consumption}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-semibold">
-                    {entry.drBillings > 0 ? `₱ ${formatCurrency(entry.drBillings)}` : ''}
+                    {entry.drBillings > 0 ? formatCurrency(entry.drBillings) : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-semibold">
-                    {entry.amount > 0 ? `₱ ${formatCurrency(entry.amount)}` : ''}
+                    {entry.amount > 0 ? formatCurrency(entry.amount) : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-semibold">
-                    {entry.crCollections > 0 ? `₱ ${formatCurrency(entry.crCollections)}` : ''}
+                    {entry.crCollections > 0 ? formatCurrency(entry.crCollections) : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-bold">
-                    {entry.balance !== 0 ? `₱ ${formatCurrency(entry.balance)}` : ''}
+                    {entry.balance !== 0 ? formatCurrency(entry.balance) : ''}
                   </td>
                 </tr>
               ))}
