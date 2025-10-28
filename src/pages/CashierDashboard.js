@@ -742,7 +742,7 @@ const CashierDashboard = () => {
                 </div>
                 <div className="flex justify-between mb-2">
                   <span className="font-medium">Customer:</span>
-                  <span>{selectedBill.customer_name || 'Unknown'} (ID: {selectedBill.customer_id})</span>
+                  <span>{selectedBill.customer_name || 'Unknown'}</span>
                 </div>
                 {selectedBill.meter_number && (
                   <div className="flex justify-between mb-2">
