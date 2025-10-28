@@ -5,12 +5,12 @@
 /* Print styles for receipts */
 @media print {
   @page {
-    margin: 0.5in;
-    size: A4;
+    margin: 0.25in;
+    size: A4 landscape;
   }
   
   /* Hide everything except receipt and ledger content */
-  body > * {
+  body > *:not(.ledger-wrapper):not(.receipt-print-area) {
     visibility: hidden;
   }
   
@@ -18,6 +18,7 @@
   .receipt-print-area,
   .ledger-wrapper {
     visibility: visible !important;
+    position: relative !important;
   }
   
   .receipt-print-area *,
@@ -25,12 +26,17 @@
     visibility: visible !important;
   }
   
-  
   .receipt-print-area {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+  }
+  
+  .ledger-wrapper {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
   }
   
   body {
@@ -156,15 +162,16 @@
   
   /* Ledger print styles */
 .ledger-container {
-  position: absolute;
-  left: 0;
-  top: 0;
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
   width: 100% !important;
   max-width: none !important;
   margin: 0 !important;
   padding: 0 !important;
   box-shadow: none !important;
-  border: 1px solid #000 !important;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 .ledger-table {
