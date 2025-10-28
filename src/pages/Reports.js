@@ -383,7 +383,11 @@ const Reports = () => {
         if (col.includes('date') && value) {
           return new Date(value).toLocaleDateString('en-PH');
         } else if (col.includes('amount') || col.includes('collected') || col.includes('billed')) {
-          return typeof value === 'number' ? formatCurrency(value) : value;
+          // Format for PDF compatibility - avoid special characters
+          if (typeof value === 'number') {
+            return `PHP ${value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          }
+          return value;
         } else if (col.includes('rate') && typeof value === 'number') {
           return `${value.toFixed(2)}%`;
         }
@@ -406,7 +410,7 @@ const Reports = () => {
       Object.entries(summary).forEach(([key, value]) => {
         const label = columns[Object.keys(data[0]).indexOf(key)] || key;
         const formattedValue = key.includes('amount') || key.includes('total') || key.includes('collected') || key.includes('billed') 
-          ? formatCurrency(value) 
+          ? `PHP ${typeof value === 'number' ? value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`
           : value;
         doc.text(`${label}: ${formattedValue}`, 20, startY);
         startY += 6;
