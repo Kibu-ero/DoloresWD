@@ -712,7 +712,6 @@ const Customers = () => {
             <table className="w-full border-collapse text-xs md:text-sm">
               <thead>
                 <tr className="bg-gray-50 text-gray-600 text-left">
-                  <th className="p-4 font-medium">ID</th>
                   <th className="p-4 font-medium">Name</th>
                   <th className="p-4 font-medium">Address</th>
                   <th className="p-4 font-medium">Contact</th>
@@ -729,9 +728,8 @@ const Customers = () => {
                       key={customer.id} 
                       className="hover:bg-gray-50 transition-all"
                     >
-                      <td className="p-4 text-gray-900">{customer.id}</td>
                       <td className="p-4 font-medium text-gray-900">
-                        <div>{customer.last_name && customer.first_name ? `${customer.last_name}, ${customer.first_name}` : customer.name}</div>
+                        {customer.last_name && customer.first_name ? `${customer.last_name}, ${customer.first_name}` : customer.name}
                         <div className="text-sm text-gray-500 flex items-center mt-1">
                           <FiCalendar className="mr-1" />
                           {new Date(customer.birthdate).toLocaleDateString()}
