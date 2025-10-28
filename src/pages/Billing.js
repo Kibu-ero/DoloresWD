@@ -697,7 +697,7 @@ const Billing = () => {
                   <option value="">Select Customer</option>
                   {customers.map(customer => (
                     <option key={customer.id} value={customer.id}>
-                      {customer.name} (ID: {customer.id}, Meter: {customer.meter_number})
+                      {customer.name} - Meter: {customer.meter_number}
                     </option>
                   ))}
                 </select>
