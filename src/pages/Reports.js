@@ -719,7 +719,7 @@ const Reports = () => {
             <option value="">Choose a customer...</option>
             {customers.map(customer => (
               <option key={customer.id} value={customer.id}>
-                {customer.first_name} {customer.last_name} (ID: {customer.id})
+                {customer.first_name} {customer.last_name}
               </option>
             ))}
           </select>
