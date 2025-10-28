@@ -315,7 +315,7 @@ const CustomerLedger = ({
   }
 
   return (
-    <div className={`bg-white ${isPrintable ? 'p-0' : 'p-6'} max-w-7xl mx-auto`}>
+    <div className={`bg-white ledger-wrapper ${isPrintable ? 'p-0' : 'p-6'} max-w-7xl mx-auto print:p-0 print:max-w-none`}>
       {/* Print/Download buttons - hidden when printing */}
       {!isPrintable && (
         <div className="flex justify-end gap-2 mb-4 print:hidden">
