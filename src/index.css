@@ -5,7 +5,7 @@
 /* Print styles for receipts */
 @media print {
   @page {
-    margin: 0.25in;
+    margin: 0.15in;
     size: A4 landscape;
   }
   
@@ -175,19 +175,62 @@
 }
 
 .ledger-table {
-  font-size: 10px !important;
+  font-size: 8px !important;
   border-collapse: collapse !important;
+  width: 100% !important;
+  table-layout: fixed !important;
 }
 
 .ledger-table th,
 .ledger-table td {
   border: 1px solid #000 !important;
-  padding: 2px 4px !important;
+  padding: 1px 2px !important;
+  word-wrap: break-word !important;
+  overflow: hidden !important;
 }
 
 .ledger-table th {
   background-color: #f3f4f6 !important;
   font-weight: bold !important;
+  font-size: 7px !important;
+}
+
+/* Make specific columns narrower to fit */
+.ledger-table th:nth-child(1), /* Date */
+.ledger-table td:nth-child(1) {
+  width: 8% !important;
+}
+
+.ledger-table th:nth-child(2), /* Particulars */
+.ledger-table td:nth-child(2) {
+  width: 25% !important;
+}
+
+.ledger-table th:nth-child(3), /* Ref */
+.ledger-table td:nth-child(3) {
+  width: 12% !important;
+}
+
+.ledger-table th:nth-child(4), /* Meter Reading */
+.ledger-table td:nth-child(4) {
+  width: 10% !important;
+}
+
+.ledger-table th:nth-child(5), /* Consumption */
+.ledger-table td:nth-child(5) {
+  width: 8% !important;
+}
+
+.ledger-table th:nth-child(6), /* DR Billings */
+.ledger-table td:nth-child(6),
+.ledger-table th:nth-child(7), /* CR Collections Amount */
+.ledger-table td:nth-child(7),
+.ledger-table th:nth-child(8), /* CR Collections (empty) */
+.ledger-table td:nth-child(8),
+.ledger-table th:nth-child(9), /* Balance */
+.ledger-table td:nth-child(9) {
+  width: 9% !important;
+  text-align: right !important;
 }
 
 /* Billing Sheet print styles */
