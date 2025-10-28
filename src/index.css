@@ -10,18 +10,21 @@
   }
   
   /* Hide everything except receipt and ledger content */
-  * {
+  body > * {
     visibility: hidden;
   }
   
+  /* Show specific print areas */
   .receipt-print-area,
-  .receipt-print-area *,
-  .ledger-container,
-  .ledger-container *,
-  .billing-sheet-container,
-  .billing-sheet-container * {
-    visibility: visible;
+  .ledger-wrapper {
+    visibility: visible !important;
   }
+  
+  .receipt-print-area *,
+  .ledger-wrapper * {
+    visibility: visible !important;
+  }
+  
   
   .receipt-print-area {
     position: absolute;
