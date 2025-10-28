@@ -380,8 +380,17 @@ const Reports = () => {
       Object.keys(data[0]).map(col => {
         const value = row[col];
         // Format values appropriately
-        if (col.includes('date') && value) {
-          return new Date(value).toLocaleDateString('en-PH');
+        if ((col.includes('date') || col.includes('created_at') || col.includes('updated_at') || col.includes('submitted_at') || col.includes('payment_date') || col.includes('due_date') || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value))) && value) {
+          try {
+            const date = new Date(value);
+            return isNaN(date.getTime()) ? value : date.toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            });
+          } catch {
+            return value;
+          }
         } else if (col.includes('amount') || col.includes('collected') || col.includes('billed')) {
           // Format for PDF compatibility - avoid special characters
           if (typeof value === 'number') {
@@ -603,9 +612,20 @@ const Reports = () => {
                                 {Number(val).toLocaleString()}
                               </span>
                             </div>
-                          ) : (/date/i.test(col) && val) ? (
+                          ) : ((/date|created_at|updated_at|submitted_at|payment_date|due_date/i.test(col) || /^\d{4}-\d{2}-\d{2}T/.test(val)) && val) ? (
                             <span className="text-gray-700 font-medium">
-                              {new Date(val).toLocaleDateString()}
+                              {(() => {
+                                try {
+                                  const date = new Date(val);
+                                  return isNaN(date.getTime()) ? val : date.toLocaleDateString('en-US', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                  });
+                                } catch {
+                                  return val;
+                                }
+                              })()}
                             </span>
                           ) : (/status/i.test(col)) ? (
                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
