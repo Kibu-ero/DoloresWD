@@ -5,8 +5,13 @@
 /* Print styles for receipts */
 @media print {
   @page {
-    margin: 0.05in;
-    size: A4 landscape;
+    margin: 0;
+    size: landscape;
+  }
+  
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   /* Hide everything except receipt and ledger content */
@@ -177,16 +182,38 @@
 .ledger-wrapper {
   padding: 0 !important;
   margin: 0 !important;
+  width: 100% !important;
+}
+
+/* Make customer info header more compact */
+.ledger-container .grid {
+  gap: 4px !important;
+}
+
+.ledger-container .space-y-3 > * + * {
+  margin-top: 2px !important;
+}
+
+.ledger-container .flex {
+  font-size: 9px !important;
+  line-height: 1.2 !important;
 }
 
 .ledger-container {
-  padding: 4px !important;
+  padding: 0 !important;
   margin: 0 !important;
+  width: 100% !important;
 }
 
 .ledger-container > div:first-child {
+  padding: 2px !important;
+  margin-bottom: 1px !important;
+}
+
+.ledger-container h1 {
+  margin: 0 !important;
   padding: 4px !important;
-  margin-bottom: 2px !important;
+  font-size: 14px !important;
 }
 
 .ledger-table {
