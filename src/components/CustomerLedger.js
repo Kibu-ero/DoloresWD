@@ -205,22 +205,13 @@ const CustomerLedger = ({
       document.body.appendChild(iframe);
 
       const doc = iframe.contentDocument || iframe.contentWindow.document;
+      const headHtml = document.head.innerHTML || '';
+      const extraStyles = '<style>@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;} .ledger-wrapper{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;} .ledger-container{width:100% !important;}</style>';
       doc.open();
-      doc.write('<!doctype html><html><head><meta charset="utf-8"/></head><body></body></html>');
+      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${headHtml}${extraStyles}</head><body></body></html>`);
       doc.close();
 
-      // Clone page styles
-      const head = doc.head;
-      Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).forEach((node) => {
-        head.appendChild(node.cloneNode(true));
-      });
-
-      const style = doc.createElement('style');
-      style.textContent = '@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}';
-      head.appendChild(style);
-
       // Inject cloned ledger
-      head.appendChild(style);
       doc.body.appendChild(ledgerNode.cloneNode(true));
 
       // Print and cleanup
