@@ -22,21 +22,26 @@ const BillingSheet = ({
     totalSurcharge: 0
   });
 
-  // Fetch billing data when component mounts
-  useEffect(() => {
-    fetchBillingData();
-  }, [month, year]);
-
-  const fetchBillingData = async () => {
+  const fetchBillingData = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
       // Fetch prepared daily collector rows from backend
       const monthNum = getMonthNumber(month) + 1; // backend expects 1-12
-      const resp = await apiClient.get(`/reports/daily-collector`, {
-        params: { month: monthNum, year, collector }
-      });
+      
+      // Build params - only include collector if it's provided and not empty
+      const params = { month: monthNum, year };
+      if (collector && collector.trim() !== '') {
+        params.collector = collector;
+      }
+      
+      console.log('Fetching billing data:', params);
+      
+      const resp = await apiClient.get(`/reports/daily-collector`, { params });
+      
+      console.log('Billing data response:', resp.data);
+      
       const rows = Array.isArray(resp.data) ? resp.data : [];
 
       const processedData = rows.map((r, idx) => ({
@@ -81,11 +86,20 @@ const BillingSheet = ({
       setSummary(totals);
     } catch (err) {
       console.error('Error fetching billing data:', err);
-      setError('Failed to load billing data. Please try again.');
+      const errorMessage = err.response?.data?.error || 
+                          err.response?.data?.message || 
+                          err.message || 
+                          'Failed to load billing data. Please try again.';
+      setError(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
-  };
+  }, [month, year, collector]);
+
+  // Fetch billing data when component mounts
+  useEffect(() => {
+    fetchBillingData();
+  }, [fetchBillingData]);
 
   const getMonthNumber = (monthName) => {
     const months = {
@@ -128,14 +142,25 @@ const BillingSheet = ({
   if (error) {
     return (
       <div className="text-center p-8">
-        <p className="text-red-600 mb-4">{error}</p>
-        <button
-          onClick={handleRefresh}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <FiRefreshCw className="w-4 h-4 inline mr-2" />
-          Retry
-        </button>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
+          <h3 className="text-red-800 font-semibold mb-2">Error Loading Billing Sheet</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <div className="text-sm text-gray-600 mb-4">
+            <p>Please check:</p>
+            <ul className="list-disc list-inside mt-2 space-y-1">
+              <li>You are logged in and have proper permissions</li>
+              <li>The month, year, and collector parameters are correct</li>
+              <li>The server is running and accessible</li>
+            </ul>
+          </div>
+          <button
+            onClick={handleRefresh}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <FiRefreshCw className="w-4 h-4 inline mr-2" />
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -182,7 +207,9 @@ const BillingSheet = ({
         {/* Header */}
         <div className="text-center py-4 border-b-2 border-gray-800">
           <h1 className="text-2xl font-bold text-gray-800">DAILY COLLECTOR</h1>
-          <h2 className="text-xl font-semibold text-gray-700">{collector}</h2>
+          <h2 className="text-xl font-semibold text-gray-700">
+            {collector && collector.trim() !== '' ? collector : 'ALL ZONES'}
+          </h2>
         </div>
 
         {/* Title */}
