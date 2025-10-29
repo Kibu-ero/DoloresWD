@@ -402,7 +402,7 @@ const UserNavbar = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-gradient-to-r from-gray-900 to-blue-900 text-white p-4 flex justify-between items-center fixed top-0 w-full z-30 shadow-2xl border-b border-blue-700/30"
+        className="bg-gradient-to-r from-brand-700 to-brand-400 text-white p-4 flex justify-between items-center fixed top-0 w-full z-30 shadow-2xl border-b border-brand-700/30"
       >
         <motion.div 
           whileHover={{ scale: 1.05 }}
@@ -414,7 +414,7 @@ const UserNavbar = () => {
             alt="Dolores Water District Logo"
             className="w-10 h-10 rounded-full object-cover mr-3"
           />
-          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-blue-100">
+          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-100 to-white">
             Dolores Water District
           </h1>
         </motion.div>
@@ -424,7 +424,7 @@ const UserNavbar = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/login")}
-            className="px-5 py-2 bg-transparent border border-blue-400/50 rounded-lg hover:bg-blue-900/50 transition-all duration-300 font-medium text-sm flex items-center gap-2"
+            className="px-5 py-2 bg-transparent border border-brand-400/50 rounded-lg hover:bg-brand-700/40 transition-all duration-300 font-medium text-sm flex items-center gap-2"
           >
             <FiLogIn className="text-lg" />
             Login
@@ -433,7 +433,7 @@ const UserNavbar = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSignUpClick}
-            className="px-5 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 font-medium shadow-lg text-sm flex items-center gap-2"
+            className="px-5 py-2 bg-gradient-to-r from-brand-500 to-brand-700 text-white rounded-lg hover:from-brand-600 hover:to-brand-700 transition-all duration-300 font-medium shadow-lg text-sm flex items-center gap-2"
           >
             <FiUserPlus className="text-lg" />
             Sign Up
@@ -462,7 +462,7 @@ const UserNavbar = () => {
       className="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] border border-gray-100 overflow-hidden flex flex-col"
     >
       {/* Header with gradient */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-6">
+      <div className="bg-gradient-to-r from-brand-500 to-brand-700 px-8 py-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-white">
             Create Your Account
@@ -476,7 +476,7 @@ const UserNavbar = () => {
             </svg>
           </button>
         </div>
-        <p className="text-blue-100 mt-2 text-sm">Join Dolores Water District for seamless billing management</p>
+        <p className="text-brand-50 mt-2 text-sm">Join Dolores Water District for seamless billing management</p>
       </div>
 
       {/* Form Content */}
