@@ -188,7 +188,41 @@ const CustomerLedger = ({
   };
 
   const handlePrint = () => {
-    window.print();
+    try {
+      const ledgerNode = document.querySelector('.ledger-wrapper');
+      if (!ledgerNode) {
+        window.print();
+        return;
+      }
+      const printWindow = window.open('', '_blank', 'width=1200,height=800');
+      if (!printWindow) {
+        window.print();
+        return;
+      }
+      const styles = `
+        <style>
+          @page { size: A4 landscape; margin: 10mm; }
+          html, body { margin: 0; padding: 0; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .ledger-container { width: 100%; border: 2px solid #000; }
+          .ledger-table { width: 100%; border-collapse: collapse; font-size: 9px; table-layout: fixed; }
+          .ledger-table th, .ledger-table td { border: 1px solid #000; padding: 2px 3px; }
+          .ledger-table th { background: #f3f4f6; font-weight: 700; }
+          .text-right { text-align: right; }
+        </style>
+      `;
+      printWindow.document.open();
+      printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"/>${styles}</head><body>${ledgerNode.outerHTML}</body></html>`);
+      printWindow.document.close();
+      // wait for content
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+      };
+    } catch (e) {
+      window.print();
+    }
   };
 
   const handleDownload = async () => {
