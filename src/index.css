@@ -18,29 +18,13 @@
 
   /* Removed rotation fallback; rely on proper @page landscape */
   
-  /* Hide everything, then explicitly reveal print areas to avoid hidden ancestors */
-  body * {
-    visibility: hidden !important;
-  }
-  
-  /* Show specific print areas */
+  /* Do not hide global content to avoid blank pages; ensure ledger renders full width */
   .receipt-print-area,
   .ledger-wrapper {
-    visibility: visible !important;
     position: relative !important;
   }
   
-  .receipt-print-area *,
-  .ledger-wrapper * {
-    visibility: visible !important;
-  }
-  
-  .receipt-print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
+  .receipt-print-area { width: 100%; }
   
   .ledger-wrapper {
     position: relative !important;
