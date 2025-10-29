@@ -87,14 +87,14 @@ const UserDashboard = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true }}
-              className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100"
+              className="bg-brand-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-brand-100"
             >
               <div className="text-center">
-                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiHash className="text-2xl text-blue-600" />
+                <div className="bg-brand-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiHash className="text-2xl text-brand-700" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">CCC Number</h3>
-                <p className="text-3xl font-bold text-blue-600">456</p>
+                <h3 className="text-xl font-semibold text-brand-700 mb-2">CCC Number</h3>
+                <p className="text-3xl font-bold text-brand-700">456</p>
               </div>
             </motion.div>
 
@@ -104,14 +104,14 @@ const UserDashboard = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
-              className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100"
+              className="bg-brand-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-brand-100"
             >
               <div className="text-center">
-                <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiMapPin className="text-2xl text-green-600" />
+                <div className="bg-brand-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiMapPin className="text-2xl text-brand-700" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Address</h3>
-                <p className="text-gray-600 leading-relaxed">
+                <h3 className="text-xl font-semibold text-brand-700 mb-2">Address</h3>
+                <p className="text-gray-700 leading-relaxed">
                   Poblacion, Dolores,<br />
                   Abra 2801
                 </p>
@@ -124,14 +124,14 @@ const UserDashboard = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
               viewport={{ once: true }}
-              className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100"
+              className="bg-brand-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-brand-100"
             >
               <div className="text-center">
-                <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiPhone className="text-2xl text-purple-600" />
+                <div className="bg-brand-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiPhone className="text-2xl text-brand-700" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Telephone</h3>
-                <p className="text-gray-600 font-medium">(074) 752-8478</p>
+                <h3 className="text-xl font-semibold text-brand-700 mb-2">Telephone</h3>
+                <p className="text-gray-700 font-medium">(074) 752-8478</p>
               </div>
             </motion.div>
 
@@ -141,14 +141,14 @@ const UserDashboard = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
               viewport={{ once: true }}
-              className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100"
+              className="bg-brand-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-brand-100"
             >
               <div className="text-center">
-                <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiMail className="text-2xl text-orange-600" />
+                  <div className="bg-brand-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiMail className="text-2xl text-brand-700" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">E-Mail Address</h3>
-                <p className="text-gray-600 text-sm break-all">conniecalibuso310@gmail.com</p>
+                <h3 className="text-xl font-semibold text-brand-700 mb-2">E-Mail Address</h3>
+                <p className="text-gray-700 text-sm break-all">conniecalibuso310@gmail.com</p>
               </div>
             </motion.div>
           </div>
