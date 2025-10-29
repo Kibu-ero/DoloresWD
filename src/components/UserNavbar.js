@@ -402,7 +402,7 @@ const UserNavbar = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-gradient-to-r from-brand-700 to-brand-400 text-white p-4 flex justify-between items-center fixed top-0 w-full z-30 shadow-2xl border-b border-brand-700/30"
+        className="bg-[#D5DEEF] text-gray-800 p-4 flex justify-between items-center fixed top-0 w-full z-30 shadow-lg border-b border-brand-200"
       >
         <motion.div 
           whileHover={{ scale: 1.05 }}
@@ -414,7 +414,7 @@ const UserNavbar = () => {
             alt="Dolores Water District Logo"
             className="w-10 h-10 rounded-full object-cover mr-3"
           />
-          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-100 to-white">
+          <h1 className="text-2xl font-bold text-brand-700">
             Dolores Water District
           </h1>
         </motion.div>
@@ -424,7 +424,7 @@ const UserNavbar = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/login")}
-            className="px-5 py-2 bg-transparent border border-brand-400/50 rounded-lg hover:bg-brand-700/40 transition-all duration-300 font-medium text-sm flex items-center gap-2"
+            className="px-5 py-2 bg-transparent border border-brand-500 rounded-lg hover:bg-brand-200 transition-all duration-300 font-medium text-sm text-brand-700 flex items-center gap-2"
           >
             <FiLogIn className="text-lg" />
             Login
