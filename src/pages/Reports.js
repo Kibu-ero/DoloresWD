@@ -231,6 +231,11 @@ const Reports = () => {
     
     if (activeTab === 'meter-reading') {
       fetchMeterReadings();
+    } else if (activeTab === 'billing-sheet' || activeTab === 'ledger') {
+      // These tabs render custom components that fetch their own data
+      setData([]);
+      setError('');
+      setLoading(false);
     } else {
       fetchData();
     }
