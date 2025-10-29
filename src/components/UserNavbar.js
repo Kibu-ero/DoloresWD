@@ -754,7 +754,7 @@ const UserNavbar = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">City*</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Municipality*</label>
                   <select
                     name="city"
                     value={formData.city}
