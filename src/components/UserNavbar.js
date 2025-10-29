@@ -402,7 +402,7 @@ const UserNavbar = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-[#D5DEEF] text-gray-800 p-4 flex justify-between items-center fixed top-0 w-full z-30 shadow-lg border-b border-brand-200"
+        className="bg-[#B1C9EF] text-gray-800 p-4 flex justify-between items-center fixed top-0 w-full z-30 shadow-lg border-b border-brand-200"
       >
         <motion.div 
           whileHover={{ scale: 1.05 }}
