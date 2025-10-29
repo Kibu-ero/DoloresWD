@@ -32,52 +32,32 @@ const BillingSheet = ({
       setLoading(true);
       setError(null);
 
-      // Fetch all bills for the specified month/year
-      const response = await apiClient.get(`/billing`);
-      const allBills = response.data;
+      // Fetch prepared daily collector rows from backend
+      const monthNum = getMonthNumber(month) + 1; // backend expects 1-12
+      const resp = await apiClient.get(`/reports/daily-collector`, {
+        params: { month: monthNum, year, collector }
+      });
+      const rows = Array.isArray(resp.data) ? resp.data : [];
 
-      console.log('Fetched bills:', allBills);
-
-      // Filter bills for the specified month/year and process data
-      const processedData = allBills
-        .filter(bill => {
-          const billDate = new Date(bill.created_at);
-          return billDate.getMonth() === getMonthNumber(month) && 
-                 billDate.getFullYear() === parseInt(year);
-        })
-        .map((bill, index) => {
-          const consumption = bill.current_reading - bill.previous_reading;
-          
-          // Check if customer is senior citizen (age >= 60)
-          const customerBirthdate = new Date(bill.birthdate || '1900-01-01');
-          const today = new Date();
-          const age = today.getFullYear() - customerBirthdate.getFullYear();
-          const isSeniorCitizen = age >= 60;
-          
-          const scd = isSeniorCitizen ? (bill.amount_due * 0.05) : 0;
-          const penalty = bill.penalty || 0;
-          const surcharge = bill.surcharge || 0;
-          const afterDue = bill.amount_due + penalty + surcharge - scd;
-
-          return {
-            id: index + 1,
-            zone: bill.zone || '',
-            name: bill.customer_name || `${bill.first_name} ${bill.last_name}`,
-            status1: isSeniorCitizen ? 'SC' : 'ACTIVE',
-            status2: bill.business_type || '',
-            presentReading: bill.current_reading,
-            previousReading: bill.previous_reading,
-            used: consumption,
-            billAmount: bill.amount_due,
-            scd: scd,
-            totalAmount: bill.amount_due - scd,
-            orNumber: bill.receipt_number || '',
-            date: formatDate(bill.payment_date || bill.due_date),
-            penalty: bill.penalty_paid || penalty,
-            afterDue: afterDue,
-            surcharge: surcharge
-          };
-        });
+      const processedData = rows.map((r, idx) => ({
+        id: idx + 1,
+        zone: r.zone,
+        name: r.name,
+        address: r.address,
+        status1: r.status1,
+        status2: r.status2,
+        presentReading: Number(r.present_reading) || 0,
+        previousReading: Number(r.previous_reading) || 0,
+        used: Number(r.used) || 0,
+        billAmount: Number(r.bill_amount) || 0,
+        scd: Number(r.scd) || 0,
+        totalAmount: Number(r.total_amount) || 0,
+        orNumber: r.or_number,
+        date: r.pay_date,
+        penalty: Number(r.penalty) || 0,
+        afterDue: Number(r.after_due) || 0,
+        surcharge: Number(r.surcharge) || 0,
+      }));
 
       setBillingData(processedData);
 
@@ -216,6 +196,7 @@ const BillingSheet = ({
             <thead>
               <tr className="bg-gray-100">
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">CONSUMER</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">ADDRESS</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">STATUS</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">STATUS</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold" colSpan="3">METER READING</th>
@@ -245,6 +226,7 @@ const BillingSheet = ({
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.zone}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs font-semibold">{row.name}</td>
+                  <td className="border border-gray-800 px-2 py-1 text-xs text-left">{row.address}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.status1}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.status2}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.presentReading}</td>
@@ -276,6 +258,7 @@ const BillingSheet = ({
               {/* Empty rows to fill up to 42 rows like the original */}
               {Array.from({ length: Math.max(0, 42 - billingData.length) }, (_, i) => (
                 <tr key={`empty-${i}`}>
+                  <td className="border border-gray-800 px-2 py-1 text-xs"></td>
                   <td className="border border-gray-800 px-2 py-1 text-xs"></td>
                   <td className="border border-gray-800 px-2 py-1 text-xs"></td>
                   <td className="border border-gray-800 px-2 py-1 text-xs"></td>
