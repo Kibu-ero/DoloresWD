@@ -28,7 +28,7 @@ const UserNavbar = () => {
     province: "Abra",
     birthdate: "",
     meterNumber: "",
-    phoneNumber: "+63",
+    phoneNumber: "",
     role: "customer"
   });
   const [error, setError] = useState("");
@@ -111,56 +111,36 @@ const UserNavbar = () => {
     return { score, feedback };
   };
 
-  // Phone number validation for Philippines format
+  // Phone number validation for Philippines format (accept 9xxxxxxxxx too)
   const validatePhoneNumber = (phone) => {
-    // Remove any spaces or special characters except + and digits
-    const cleanPhone = phone.replace(/[^\d+]/g, '');
-    
-    // Check if it starts with +63 and has 13 digits total (+63 + 10 digits)
-    if (cleanPhone.startsWith('+63') && cleanPhone.length === 13) {
-      return true;
-    }
-    
-    // Check if it starts with 09 and has 11 digits total
-    if (cleanPhone.startsWith('09') && cleanPhone.length === 11) {
-      return true;
-    }
-    
-    // Check if it's 10 digits (for the input field with +63 prefix)
-    if (cleanPhone.length === 10 && /^\d{10}$/.test(cleanPhone)) {
-      return true;
-    }
-    
-    // Check if it's 11 digits starting with 9 (common Philippine format)
-    if (cleanPhone.length === 11 && cleanPhone.startsWith('9')) {
-      return true;
-    }
-    
-    return false;
+    const clean = String(phone).trim();
+    return (
+      /^9\d{9}$/.test(clean) || // 9123456789
+      /^09\d{9}$/.test(clean) || // 09123456789
+      /^\+639\d{9}$/.test(clean) || // +639123456789
+      /^639\d{9}$/.test(clean) // 639123456789
+    );
   };
 
-  // Handle phone number input to prevent duplicate +63
+  // Handle phone number input (display 9xxxxxxxxx while typing)
   const handlePhoneNumberChange = (e) => {
-    const { value } = e.target;
-    
-    // Remove any +63 prefix if user tries to add it
-    let cleanValue = value.replace(/^\+63\s*\+63/, '+63');
-    cleanValue = cleanValue.replace(/^\+63\s*/, '');
-    
-    // Only allow digits
-    cleanValue = cleanValue.replace(/\D/g, '');
-    
-    // If it starts with 0, remove it (common Philippine format)
-    if (cleanValue.startsWith('0')) {
-      cleanValue = cleanValue.substring(1);
-    }
-    
-    // Limit to 10 digits (since we have +63 prefix)
-    if (cleanValue.length > 10) {
-      cleanValue = cleanValue.substring(0, 10);
-    }
-    
-    setFormData(prev => ({ ...prev, phoneNumber: cleanValue }));
+    let v = e.target.value.replace(/[^\d+]/g, '');
+    // Normalize: +639xxxxxxxxx or 639xxxxxxxxx or 09xxxxxxxxx => 9xxxxxxxxx
+    if (/^\+?639/.test(v)) v = v.replace(/^\+?63/, '');
+    if (/^09/.test(v)) v = v.replace(/^0/, '');
+    // Keep only up to 10 digits starting with 9
+    v = v.replace(/(\d{10}).*/, '$1');
+    setFormData(prev => ({ ...prev, phoneNumber: v }));
+  };
+
+  // Normalize to +63 format for saving/OTP
+  const toPlus63 = (phone) => {
+    const raw = String(phone).trim();
+    if (raw.startsWith('+63')) return raw;
+    if (raw.startsWith('63')) return '+' + raw;
+    if (raw.startsWith('09')) return '+63' + raw.slice(1);
+    if (raw.startsWith('9')) return '+63' + raw;
+    return raw;
   };
 
   // Hash-based modal control
@@ -305,6 +285,8 @@ const UserNavbar = () => {
     try {
       // Remove confirmPassword from the data sent to server
       const { confirmPassword, ...registrationData } = formData;
+      const phoneForSave = toPlus63(formData.phoneNumber);
+      registrationData.phoneNumber = phoneForSave;
       
       const response = await apiClient.post("/auth/register", registrationData);
       const data = response.data;
@@ -315,13 +297,13 @@ const UserNavbar = () => {
       if (data.requiresOTP) {
         // Show OTP verification modal
         setShowOTPVerification(true);
-        setRegistrationPhoneNumber(formData.phoneNumber);
+        setRegistrationPhoneNumber(phoneForSave);
         setSuccess("Registration successful! Please check your phone for verification code.");
       } else {
         // Keep modal open and start polling for approval
         setWaitingForApproval(true);
         setRegisteredEmail(formData.email || '');
-        setRegistrationPhoneNumber(formData.phoneNumber);
+        setRegistrationPhoneNumber(phoneForSave);
         setSuccess("Registration submitted! Please wait for admin approval. You will receive an OTP via SMS once approved.");
         
         // Start polling for approval status
@@ -329,14 +311,14 @@ const UserNavbar = () => {
           try {
             const checkResponse = await apiClient.get(`/customers`);
             const customers = checkResponse.data;
-            const user = customers.find(c => c.phone_number === formData.phoneNumber);
+            const user = customers.find(c => c.phone_number === phoneForSave);
             
             if (user && user.status === 'Approved') {
               clearInterval(interval);
               setWaitingForApproval(false);
               setSuccess("Approved! Please check your phone for OTP verification code.");
               setShowOTPVerification(true);
-              setRegistrationPhoneNumber(formData.phoneNumber);
+              setRegistrationPhoneNumber(phoneForSave);
             }
           } catch (err) {
             console.error('Error checking approval status:', err);
@@ -817,14 +799,13 @@ const UserNavbar = () => {
                 <div className="col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number*</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">+63</span>
                     <input
                       type="tel"
                       name="phoneNumber"
                       value={formData.phoneNumber}
                       onChange={handlePhoneNumberChange}
-                      placeholder="9123456789"
-                      className={`w-full p-3 pl-12 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all duration-200 ${
+                      placeholder="09123456789"
+                      className={`w-full p-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all duration-200 ${
                         formData.phoneNumber && !validatePhoneNumber(formData.phoneNumber) 
                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                           : formData.phoneNumber && validatePhoneNumber(formData.phoneNumber) 
