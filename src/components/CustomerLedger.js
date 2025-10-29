@@ -216,7 +216,7 @@ const CustomerLedger = ({
       });
 
       const style = doc.createElement('style');
-      style.textContent = '@page{size:A4 landscape;margin:10mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}';
+      style.textContent = '@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}';
       head.appendChild(style);
 
       // Inject cloned ledger
