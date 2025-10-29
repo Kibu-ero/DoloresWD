@@ -754,7 +754,7 @@ const UserNavbar = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Municipality*</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">City*</label>
                   <select
                     name="city"
                     value={formData.city}
@@ -847,9 +847,6 @@ const UserNavbar = () => {
                   Your registration has been submitted successfully. We're checking your information and will send you an OTP via SMS once approved.
                 </p>
                 <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl">
-                  <p className="text-sm">
-                    <strong>Email:</strong> {registeredEmail}
-                  </p>
                   <p className="text-sm mt-1">
                     <strong>Status:</strong> Pending Approval
                   </p>
