@@ -20,7 +20,7 @@ const Customers = () => {
     birthdate: "",
     meterNumber: "",
     email: "",
-    phoneNumber: "+63",
+    phoneNumber: "",
     password: "",
     status: "Active"
   });
@@ -376,15 +376,14 @@ const Customers = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number*</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">+63</span>
                     <input
                       type="tel"
                       name="phoneNumber"
                       value={newCustomer.phoneNumber}
                       onChange={handleInputChange}
-                      placeholder="9123456789"
+                      placeholder="09123456789"
                       required
-                      className="w-full p-2 pl-12 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                 </div>
@@ -553,15 +552,14 @@ const Customers = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number*</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">+63</span>
                     <input
                       type="tel"
                       name="phoneNumber"
                       value={editingCustomer.phoneNumber}
                       onChange={handleInputChange}
-                      placeholder="9123456789"
+                      placeholder="09123456789"
                       required
-                      className="w-full p-2 pl-12 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                 </div>
