@@ -773,7 +773,7 @@ const Reports = () => {
 
       {/* Ledger Modal */}
       {showLedger && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50 p-4 ledger-modal">
           <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
               <div className="flex items-center justify-between">
