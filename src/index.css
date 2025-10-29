@@ -14,19 +14,9 @@
     padding: 0 !important;
   }
   
-  /* Force the print viewport to exact A4 landscape size */
-  html, body {
-    width: 297mm !important;
-    height: 210mm !important;
-  }
+  /* Let browser manage viewport size for accurate scaling */
 
-  /* Fallback: force content to landscape when browser insists on portrait */
-  .force-landscape {
-    transform: rotate(90deg) translate(0, -100%);
-    transform-origin: left top;
-    width: 210mm !important;
-    height: 297mm !important;
-  }
+  /* Removed rotation fallback; rely on proper @page landscape */
   
   /* Hide everything except receipt and ledger content */
   body > *:not(.ledger-wrapper):not(.receipt-print-area) {
@@ -56,7 +46,7 @@
     position: relative !important;
     left: auto !important;
     top: auto !important;
-    width: calc(297mm - 20mm) !important; /* account for @page margins */
+    width: 100% !important;
     max-width: none !important;
     margin: 0 auto !important;
   }
