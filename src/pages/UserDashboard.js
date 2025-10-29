@@ -4,7 +4,7 @@ import { FiMapPin, FiPhone, FiMail, FiHash } from "react-icons/fi";
 
 const UserDashboard = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-50 to-white">
       <UserNavbar />
 
       {/* Hero Section with Background Video */}
@@ -20,7 +20,7 @@ const UserDashboard = () => {
         </video>
         
         {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-700/80 to-brand-400/20"></div>
         
         {/* Left Side Content */}
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full">
