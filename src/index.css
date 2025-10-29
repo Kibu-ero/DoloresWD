@@ -18,9 +18,9 @@
 
   /* Removed rotation fallback; rely on proper @page landscape */
   
-  /* Hide everything except receipt and ledger content */
-  body > *:not(.ledger-wrapper):not(.receipt-print-area) {
-    visibility: hidden;
+  /* Hide everything, then explicitly reveal print areas to avoid hidden ancestors */
+  body * {
+    visibility: hidden !important;
   }
   
   /* Show specific print areas */
