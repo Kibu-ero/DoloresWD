@@ -17,6 +17,7 @@ const BillingSheet = ({
     totalUsed: 0,
     totalBill: 0,
     totalSCD: 0,
+    totalAmount: 0,
     totalPenalty: 0,
     totalAfterDue: 0,
     totalSurcharge: 0
@@ -43,6 +44,11 @@ const BillingSheet = ({
       console.log('Billing data response:', resp.data);
       
       const rows = Array.isArray(resp.data) ? resp.data : [];
+      
+      if (rows.length === 0) {
+        console.warn('No billing data found for the selected period');
+        // Don't set error, just show empty table
+      }
 
       const processedData = rows.map((r, idx) => ({
         id: idx + 1,
@@ -71,6 +77,7 @@ const BillingSheet = ({
         totalUsed: acc.totalUsed + (item.used || 0),
         totalBill: acc.totalBill + (item.billAmount || 0),
         totalSCD: acc.totalSCD + (item.scd || 0),
+        totalAmount: acc.totalAmount + (item.totalAmount || 0),
         totalPenalty: acc.totalPenalty + (item.penalty || 0),
         totalAfterDue: acc.totalAfterDue + (item.afterDue || 0),
         totalSurcharge: acc.totalSurcharge + (item.surcharge || 0)
@@ -78,6 +85,7 @@ const BillingSheet = ({
         totalUsed: 0,
         totalBill: 0,
         totalSCD: 0,
+        totalAmount: 0,
         totalPenalty: 0,
         totalAfterDue: 0,
         totalSurcharge: 0
@@ -86,10 +94,27 @@ const BillingSheet = ({
       setSummary(totals);
     } catch (err) {
       console.error('Error fetching billing data:', err);
-      const errorMessage = err.response?.data?.error || 
-                          err.response?.data?.message || 
-                          err.message || 
-                          'Failed to load billing data. Please try again.';
+      console.error('Full error object:', {
+        response: err.response,
+        request: err.request,
+        message: err.message
+      });
+      
+      let errorMessage = 'Failed to load billing data. Please try again.';
+      
+      if (err.response) {
+        // Server responded with error
+        errorMessage = err.response.data?.error || 
+                      err.response.data?.message || 
+                      `Server error: ${err.response.status} ${err.response.statusText}`;
+      } else if (err.request) {
+        // Request made but no response
+        errorMessage = 'No response from server. Please check if the server is running.';
+      } else {
+        // Something else happened
+        errorMessage = err.message || errorMessage;
+      }
+      
       setError(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
@@ -222,38 +247,30 @@ const BillingSheet = ({
           <table className="w-full border-collapse border border-gray-800 billing-sheet-table">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">CONSUMER</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">ADDRESS</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">BILL NO.</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">CONSUMER ZONE</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">STATUS</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">STATUS</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold" colSpan="3">METER READING</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" colSpan="2">AMOUNT</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">AMOUNT OF BILL</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">SCD</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">TOTAL AMOUNT</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" colSpan="5">AMOUNT</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">OR NO.</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">DATE</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">PENALTY</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">AMOUNT AFTER DUE SURCHARGE</th>
               </tr>
               <tr className="bg-gray-100">
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">ZONE I</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">NAME</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold"></th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold">PRESENT</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold">PREVIOUS</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">USED</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">OF BILL</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">SCD</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold"></th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">OR NO.</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">DATE</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">PENALTY</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">AFTER DUE</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">SURCHARGE</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">USED (CU3m)</th>
               </tr>
             </thead>
             <tbody>
               {billingData.map((row, index) => (
                 <tr key={index} className="hover:bg-gray-50">
-                  <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.zone}</td>
+                  <td className="border border-gray-800 px-2 py-1 text-xs text-center font-semibold">{index + 1}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs font-semibold">{row.name}</td>
-                  <td className="border border-gray-800 px-2 py-1 text-xs text-left">{row.address}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.status1}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.status2}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.presentReading}</td>
@@ -268,16 +285,13 @@ const BillingSheet = ({
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-bold">
                     {row.totalAmount ? `₱ ${row.totalAmount.toFixed(2)}` : ''}
                   </td>
-                  <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.orNumber}</td>
-                  <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.date}</td>
+                  <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.orNumber || ''}</td>
+                  <td className="border border-gray-800 px-2 py-1 text-xs text-center">{row.date || ''}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-semibold">
                     {row.penalty > 0 ? `₱ ${row.penalty.toFixed(2)}` : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-bold">
                     {row.afterDue ? `₱ ${row.afterDue.toFixed(2)}` : ''}
-                  </td>
-                  <td className="border border-gray-800 px-2 py-1 text-xs text-right font-semibold">
-                    {row.surcharge > 0 ? `₱ ${row.surcharge.toFixed(2)}` : ''}
                   </td>
                 </tr>
               ))}
@@ -285,10 +299,7 @@ const BillingSheet = ({
               {/* Empty rows to fill up to 42 rows like the original */}
               {Array.from({ length: Math.max(0, 42 - billingData.length) }, (_, i) => (
                 <tr key={`empty-${i}`}>
-                  <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                  <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                  <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                  <td className="border border-gray-800 px-2 py-1 text-xs"></td>
+                  <td className="border border-gray-800 px-2 py-1 text-xs text-center">{billingData.length + i + 1}</td>
                   <td className="border border-gray-800 px-2 py-1 text-xs"></td>
                   <td className="border border-gray-800 px-2 py-1 text-xs"></td>
                   <td className="border border-gray-800 px-2 py-1 text-xs"></td>
@@ -309,29 +320,19 @@ const BillingSheet = ({
 
         {/* Footer Summary */}
         <div className="p-4 border-t-2 border-gray-800">
-          <div className="grid grid-cols-6 gap-4 text-sm">
-            <div className="text-center">
-              <span className="font-bold">SUB TOTAL</span>
-            </div>
-            <div className="text-center">
-              <span className="font-bold">USED: {summary.totalUsed.toFixed(2)}</span>
-            </div>
-            <div className="text-center">
-              <span className="font-bold">OF BILL: ₱ {summary.totalBill.toFixed(2)}</span>
-            </div>
-            <div className="text-center">
-              <span className="font-bold">SCD: ₱ {summary.totalSCD.toFixed(2)}</span>
-            </div>
-            <div className="text-center">
-              <span className="font-bold">PENALTY: ₱ {summary.totalPenalty.toFixed(2)}</span>
-            </div>
-            <div className="text-center">
-              <span className="font-bold">AFTER DUE: ₱ {summary.totalAfterDue.toFixed(2)}</span>
-            </div>
-          </div>
-          <div className="mt-2 text-center">
-            <span className="font-bold">SURCHARGE: ₱ {summary.totalSurcharge.toFixed(2)}</span>
-          </div>
+          <table className="w-full border-collapse">
+            <tbody>
+              <tr className="font-bold text-sm">
+                <td className="px-2 text-center border-r border-gray-300">SUB TOTAL</td>
+                <td className="px-2 text-center border-r border-gray-300">USED: {summary.totalUsed.toFixed(2)}</td>
+                <td className="px-2 text-center border-r border-gray-300">AMOUNT OF BILL: ₱ {summary.totalBill.toFixed(2)}</td>
+                <td className="px-2 text-center border-r border-gray-300">SCD: ₱ {summary.totalSCD.toFixed(2)}</td>
+                <td className="px-2 text-center border-r border-gray-300">TOTAL AMOUNT: ₱ {summary.totalAmount.toFixed(2)}</td>
+                <td className="px-2 text-center border-r border-gray-300">PENALTY: ₱ {summary.totalPenalty.toFixed(2)}</td>
+                <td className="px-2 text-center">AMOUNT AFTER DUE SURCHARGE: ₱ {summary.totalAfterDue.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
