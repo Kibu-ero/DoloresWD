@@ -2,6 +2,23 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+:root {
+  --brand-50: #F0F3FA;
+  --brand-100: #D5DEEF;
+  --brand-200: #B1C9EF;
+  --brand-300: #8AAEE0;
+  --brand-400: #638ECB;
+  --brand-500: #628ECB;
+  --brand-700: #395886;
+}
+
+/* Base typography */
+@layer base {
+  html, body, #root { height: 100%; }
+  body { @apply bg-gradient-to-br from-[var(--brand-50)] via-white to-[var(--brand-100)] text-gray-800; font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+  h1, h2, h3 { font-family: 'Poppins', 'Inter', system-ui, sans-serif; }
+}
+
 /* Print styles for receipts */
 @media print {
   @page {
