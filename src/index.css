@@ -19,11 +19,27 @@
   /* Removed rotation fallback; rely on proper @page landscape */
   
   /* Print ONLY the ledger */
-  /* Print only the ledger modal: hide everything else */
-  body > *:not(.ledger-modal) { display: none !important; }
+  /* Chrome: hide app siblings via #root to avoid removing modal itself */
+  #root > *:not(.ledger-modal) { display: none !important; }
   .ledger-modal { display: block !important; position: static !important; }
   .ledger-modal * { visibility: visible !important; }
   .ledger-modal .ledger-wrapper { width: 100% !important; max-width: none !important; margin: 0 !important; }
+
+  /* Ensure modal container renders fully in print */
+  .ledger-modal > div {
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .ledger-modal .sticky { display: none !important; }
+  .ledger-modal .p-6 { padding: 0 !important; }
   
   .receipt-print-area { width: 100%; }
   
