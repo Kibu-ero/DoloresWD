@@ -19,6 +19,14 @@
     width: 297mm !important;
     height: 210mm !important;
   }
+
+  /* Fallback: force content to landscape when browser insists on portrait */
+  .force-landscape {
+    transform: rotate(90deg) translate(0, -100%);
+    transform-origin: left top;
+    width: 210mm !important;
+    height: 297mm !important;
+  }
   
   /* Hide everything except receipt and ledger content */
   body > *:not(.ledger-wrapper):not(.receipt-print-area) {
