@@ -928,7 +928,7 @@ const Reports = () => {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Analytics Dashboard
                 </h1>
-                <p className="text-gray-600 mt-1">Comprehensive reporting for {role.replace('_', ' ').toUpperCase()}</p>
+                <p className="text-gray-600 mt-1">Comprehensive reporting for your account</p>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-xl shadow-lg">
