@@ -84,7 +84,9 @@ const Reports = () => {
   const [showLedger, setShowLedger] = useState(false);
   const [selectedMonthForBillingSheet, setSelectedMonthForBillingSheet] = useState('DECEMBER');
   const [selectedYearForBillingSheet, setSelectedYearForBillingSheet] = useState('2024');
-  const [selectedCollectorForBillingSheet, setSelectedCollectorForBillingSheet] = useState('DOLORES A');
+  const [selectedCollectorForBillingSheet, setSelectedCollectorForBillingSheet] = useState('ALL');
+  const [availableZones, setAvailableZones] = useState([]);
+  const [loadingZones, setLoadingZones] = useState(false);
   const [showBillingSheet, setShowBillingSheet] = useState(false);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
   const [previewPDF, setPreviewPDF] = useState(null);
@@ -96,6 +98,13 @@ const Reports = () => {
     }
   }, [activeTab]);
 
+  // Fetch available zones when billing sheet tab is active or month/year changes
+  useEffect(() => {
+    if (activeTab === 'billing-sheet') {
+      fetchAvailableZones();
+    }
+  }, [activeTab, selectedMonthForBillingSheet, selectedYearForBillingSheet]);
+
   // Fetch customers for ledger
   const fetchCustomers = async () => {
     try {
@@ -104,6 +113,37 @@ const Reports = () => {
     } catch (err) {
       console.error('Error fetching customers:', err);
     }
+  };
+
+  // Fetch available zones for billing sheet
+  const fetchAvailableZones = async () => {
+    setLoadingZones(true);
+    try {
+      const monthNum = getMonthNumber(selectedMonthForBillingSheet) + 1;
+      const res = await apiClient.get('/reports/billing-sheet-zones', {
+        params: { month: monthNum, year: selectedYearForBillingSheet }
+      });
+      setAvailableZones(res.data || []);
+      // If current selection is not in available zones, reset to 'ALL'
+      if (selectedCollectorForBillingSheet !== 'ALL' && 
+          !res.data.includes(selectedCollectorForBillingSheet)) {
+        setSelectedCollectorForBillingSheet('ALL');
+      }
+    } catch (err) {
+      console.error('Error fetching zones:', err);
+      setAvailableZones([]);
+    } finally {
+      setLoadingZones(false);
+    }
+  };
+
+  const getMonthNumber = (monthName) => {
+    const months = {
+      'JANUARY': 0, 'FEBRUARY': 1, 'MARCH': 2, 'APRIL': 3,
+      'MAY': 4, 'JUNE': 5, 'JULY': 6, 'AUGUST': 7,
+      'SEPTEMBER': 8, 'OCTOBER': 9, 'NOVEMBER': 10, 'DECEMBER': 11
+    };
+    return months[monthName.toUpperCase()] || 0;
   };
 
   // Helper function to get date ranges for predefined periods
@@ -857,22 +897,30 @@ const Reports = () => {
           </select>
         </div>
 
-        {/* Collector Selection */}
+        {/* Zone/Collector Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Collector
+            Select Zone/Collector
           </label>
           <select
             value={selectedCollectorForBillingSheet}
             onChange={(e) => setSelectedCollectorForBillingSheet(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
+            disabled={loadingZones}
+            className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
-            <option value="DOLORES A">DOLORES A</option>
-            <option value="DOLORES B">DOLORES B</option>
-            <option value="DOLORES C">DOLORES C</option>
-            <option value="COLLECTOR 1">COLLECTOR 1</option>
-            <option value="COLLECTOR 2">COLLECTOR 2</option>
+            <option value="ALL">All Zones</option>
+            {availableZones.map((zone) => (
+              <option key={zone} value={zone}>
+                {zone}
+              </option>
+            ))}
           </select>
+          {loadingZones && (
+            <p className="text-xs text-gray-500 mt-1">Loading zones...</p>
+          )}
+          {!loadingZones && availableZones.length === 0 && (
+            <p className="text-xs text-gray-500 mt-1">No zones found for this period</p>
+          )}
         </div>
       </div>
 
@@ -912,7 +960,7 @@ const Reports = () => {
               <BillingSheet
                 month={selectedMonthForBillingSheet}
                 year={selectedYearForBillingSheet}
-                collector={selectedCollectorForBillingSheet}
+                collector={selectedCollectorForBillingSheet === 'ALL' ? '' : selectedCollectorForBillingSheet}
                 onClose={() => setShowBillingSheet(false)}
               />
             </div>
