@@ -754,7 +754,7 @@ const UserNavbar = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">City*</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Municipality*</label>
                   <select
                     name="city"
                     value={formData.city}
@@ -875,7 +875,7 @@ const UserNavbar = () => {
                     <div><span className="font-semibold text-gray-800">Phone:</span> {formData.phoneNumber}</div>
                     <div><span className="font-semibold text-gray-800">Street:</span> {formData.street}</div>
                     <div><span className="font-semibold text-gray-800">Barangay:</span> {formData.barangay}</div>
-                    <div><span className="font-semibold text-gray-800">City:</span> {formData.city}</div>
+                    <div><span className="font-semibold text-gray-800">Municipality:</span> {formData.city}</div>
                     <div><span className="font-semibold text-gray-800">Province:</span> {formData.province}</div>
                     <div><span className="font-semibold text-gray-800">Birthdate:</span> {formData.birthdate}</div>
                     <div><span className="font-semibold text-gray-800">Meter Number:</span> {formData.meterNumber}</div>
