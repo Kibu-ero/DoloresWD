@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiLogIn, FiUserPlus, FiCheckCircle, FiArrowLeft, FiArrowRight, FiEye, FiEyeOff, FiXCircle } from "react-icons/fi";
-import RegistrationVerification from "./RegistrationVerification";
+import RegistrationVerification from "../hooks/RegistrationVerification";
 import apiClient from "../api/client";
 
 const UserNavbar = () => {
