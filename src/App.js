@@ -18,6 +18,9 @@ import FinanceManagerDashboard from "./pages/FinanceManagerDashboard";
 import BillingSheetDemo from "./pages/BillingSheetDemo";
 import IdleTimeoutProvider from "./components/common/IdleTimeoutProvider";
 // import PublicRoute from "./components/PublicRoute";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyResetOTP from "./pages/VerifyResetOTP";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   return (
@@ -27,6 +30,9 @@ function App() {
           <Routes>
           <Route path="/" element={<UserDashboard />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* Admin Routes */}
