@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/client';
-import { FiSave, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiSave, FiPlus, FiTrash2, FiEdit } from 'react-icons/fi';
 
 const SystemSettings = () => {
   const [settings, setSettings] = useState({
@@ -19,8 +19,10 @@ const SystemSettings = () => {
   });
   const [waterRates, setWaterRates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [notification, setNotification] = useState('');
   const [activeTab, setActiveTab] = useState('general');
+  const [editingRate, setEditingRate] = useState(null);
   const [newRate, setNewRate] = useState({
     consumption_min: '',
     consumption_max: '',
@@ -39,7 +41,7 @@ const SystemSettings = () => {
       setSettings(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      setError('Failed to load settings. Please try again.');
       setLoading(false);
     }
   };
