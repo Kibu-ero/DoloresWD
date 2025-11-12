@@ -26,15 +26,17 @@ const RegistrationVerification = ({ phoneNumber, onVerificationSuccess }) => {
       // Don't store token - user must login separately
       // localStorage.setItem('token', response.data.token);
       // localStorage.setItem('user', JSON.stringify(response.data.user));
-
+      
+      // Call success callback
       if (onVerificationSuccess) {
         onVerificationSuccess(response.data);
       }
-
+      
       // Redirect to login page instead of auto-login
       setTimeout(() => {
         navigate('/login');
       }, 2000);
+      
     } catch (error) {
       setError(error.response?.data?.error || 'Failed to verify OTP');
     } finally {
@@ -129,4 +131,4 @@ const RegistrationVerification = ({ phoneNumber, onVerificationSuccess }) => {
   );
 };
 
-export default RegistrationVerification;
+export default RegistrationVerification; 
