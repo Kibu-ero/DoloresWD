@@ -6,8 +6,7 @@
 //   WHERE customer_id = $1
 //   ORDER BY due_date ASC
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api/client';
 import { formatCurrency } from '../utils/currencyFormatter';
 import { FiLogOut, FiRefreshCw, FiChevronDown, FiChevronUp, FiFileText, FiX, FiCheck } from 'react-icons/fi';
@@ -37,7 +36,7 @@ const CustomerDashboard = () => {
   const [showPaymentConfirmModal, setShowPaymentConfirmModal] = useState(false);
   const [pendingPaymentData, setPendingPaymentData] = useState(null);
 
-  const fetchBills = async (showNotif = false) => {
+  const fetchBills = useCallback(async (showNotif = false) => {
     try {
       if (!customerId) {
         setError('Please log in to view your bills');
@@ -58,13 +57,13 @@ const CustomerDashboard = () => {
     } catch (err) {
       setError(err.message);
     }
-  };
+  }, [customerId]);
 
   useEffect(() => {
     fetchBills();
     const interval = setInterval(() => fetchBills(true), 15000);
     return () => clearInterval(interval);
-  }, [customerId]);
+  }, [fetchBills]);
 
   useEffect(() => {
     function handleClickOutside(event) {
