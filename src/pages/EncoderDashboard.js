@@ -187,7 +187,7 @@ const EncoderDashboard = () => {
         current_reading: currentReading,
         due_date: dueDate || calculateDueDate()
       };
-      const res = await apiClient.post("/billing", payload);
+      await apiClient.post("/billing", payload);
       setNotification("Bill generated successfully!");
       setCurrentReading("");
       setDueDate("");
@@ -292,7 +292,7 @@ const EncoderDashboard = () => {
                       {filteredCustomers.map(c => (
                         <div
                           key={c.id}
-                          className={`px-4 py-2 cursor-pointer hover:bg-blue-100 ${selectedCustomer == c.id ? 'bg-blue-50' : ''}`}
+                          className={`px-4 py-2 cursor-pointer hover:bg-blue-100 ${selectedCustomer === c.id ? 'bg-blue-50' : ''}`}
                           onClick={() => {
                             setSelectedCustomer(c.id);
                             setCustomerSearch(c.last_name && c.first_name ? `${c.last_name}, ${c.first_name}` : c.name);
