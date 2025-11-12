@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../api/client";
 import { formatCurrency } from '../utils/currencyFormatter';
 import Reports from "./Reports";
@@ -18,7 +18,6 @@ const sidebarLinks = [
 
 const EncoderDashboard = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const user = JSON.parse(localStorage.getItem('user'));
   const displayName = user && user.firstName ? `${user.firstName} ${user.lastName}` : 'User';
 
@@ -187,8 +186,7 @@ const EncoderDashboard = () => {
         current_reading: currentReading,
         due_date: dueDate || calculateDueDate()
       };
-      const res = await apiClient.post("/billing", payload);
-      setNotification("Bill generated successfully!");
+      await apiClient.post("/billing", payload);
       setCurrentReading("");
       setDueDate("");
       fetchBills();
@@ -292,7 +290,7 @@ const EncoderDashboard = () => {
                       {filteredCustomers.map(c => (
                         <div
                           key={c.id}
-                          className={`px-4 py-2 cursor-pointer hover:bg-blue-100 ${selectedCustomer == c.id ? 'bg-blue-50' : ''}`}
+                          className={`px-4 py-2 cursor-pointer hover:bg-blue-100 ${selectedCustomer === c.id ? 'bg-blue-50' : ''}`}
                           onClick={() => {
                             setSelectedCustomer(c.id);
                             setCustomerSearch(c.last_name && c.first_name ? `${c.last_name}, ${c.first_name}` : c.name);
