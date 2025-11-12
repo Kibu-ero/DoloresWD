@@ -27,7 +27,6 @@ const CustomerDashboard = () => {
   const customer = JSON.parse(localStorage.getItem('user'));
   const customerId = customer?.userId;
   const displayName = customer ? `${customer.firstName} ${customer.lastName}` : 'User';
-  const avatarUrl = customer?.avatarUrl || 'https://randomuser.me/api/portraits/women/44.jpg'; // fallback avatar
   const displayInitial = customer && customer.firstName ? customer.firstName.charAt(0).toUpperCase() : 'U';
   const [viewMode, setViewMode] = useState('current'); // 'current' or 'past'
   const [expandedBillId, setExpandedBillId] = useState(null);
