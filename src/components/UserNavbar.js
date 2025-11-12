@@ -44,6 +44,7 @@ const UserNavbar = () => {
     feedback: []
   });
   const [waitingForApproval, setWaitingForApproval] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
   const [approvalCheckInterval, setApprovalCheckInterval] = useState(null);
   
   const steps = [
@@ -301,6 +302,7 @@ const UserNavbar = () => {
       } else {
         // Keep modal open and start polling for approval
         setWaitingForApproval(true);
+        setRegisteredEmail(formData.email || '');
         setRegistrationPhoneNumber(phoneForSave);
         setSuccess("Registration submitted! Please wait for admin approval. You will receive an OTP via SMS once approved.");
         
@@ -385,6 +387,7 @@ const UserNavbar = () => {
   const closeModal = () => {
     setIsSignUpOpen(false);
     setWaitingForApproval(false);
+    setRegisteredEmail("");
     if (approvalCheckInterval) {
       clearInterval(approvalCheckInterval);
       setApprovalCheckInterval(null);
