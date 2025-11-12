@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import apiClient from '../api/client';
@@ -98,13 +98,6 @@ const Reports = () => {
     }
   }, [activeTab]);
 
-  // Fetch available zones when billing sheet tab is active or month/year changes
-  useEffect(() => {
-    if (activeTab === 'billing-sheet') {
-      fetchAvailableZones();
-    }
-  }, [activeTab, selectedMonthForBillingSheet, selectedYearForBillingSheet]);
-
   // Fetch customers for ledger
   const fetchCustomers = async () => {
     try {
@@ -116,7 +109,7 @@ const Reports = () => {
   };
 
   // Fetch available zones for billing sheet
-  const fetchAvailableZones = async () => {
+  const fetchAvailableZones = useCallback(async () => {
     setLoadingZones(true);
     try {
       const monthNum = getMonthNumber(selectedMonthForBillingSheet) + 1;
@@ -135,7 +128,14 @@ const Reports = () => {
     } finally {
       setLoadingZones(false);
     }
-  };
+  }, [selectedMonthForBillingSheet, selectedYearForBillingSheet, selectedCollectorForBillingSheet]);
+
+  // Fetch available zones when billing sheet tab is active or month/year changes
+  useEffect(() => {
+    if (activeTab === 'billing-sheet') {
+      fetchAvailableZones();
+    }
+  }, [activeTab, selectedMonthForBillingSheet, selectedYearForBillingSheet, fetchAvailableZones]);
 
   const getMonthNumber = (monthName) => {
     const months = {
@@ -398,7 +398,6 @@ const Reports = () => {
       // Convert column names to user-friendly labels
       switch(col) {
         case 'date': return 'Date';
-        case 'totalcollected': return 'Total Collected';
         case 'paymentcount': return 'Payment Count';
         case 'averageamount': return 'Average Amount';
         case 'source': return 'Payment Source';
