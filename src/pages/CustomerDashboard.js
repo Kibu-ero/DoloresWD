@@ -6,7 +6,8 @@
 //   WHERE customer_id = $1
 //   ORDER BY due_date ASC
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import { formatCurrency } from '../utils/currencyFormatter';
 import { FiLogOut, FiRefreshCw, FiChevronDown, FiChevronUp, FiFileText, FiX, FiCheck } from 'react-icons/fi';
@@ -27,6 +28,7 @@ const CustomerDashboard = () => {
   const customer = JSON.parse(localStorage.getItem('user'));
   const customerId = customer?.userId;
   const displayName = customer ? `${customer.firstName} ${customer.lastName}` : 'User';
+  const avatarUrl = customer?.avatarUrl || 'https://randomuser.me/api/portraits/women/44.jpg'; // fallback avatar
   const displayInitial = customer && customer.firstName ? customer.firstName.charAt(0).toUpperCase() : 'U';
   const [viewMode, setViewMode] = useState('current'); // 'current' or 'past'
   const [expandedBillId, setExpandedBillId] = useState(null);
@@ -35,7 +37,7 @@ const CustomerDashboard = () => {
   const [showPaymentConfirmModal, setShowPaymentConfirmModal] = useState(false);
   const [pendingPaymentData, setPendingPaymentData] = useState(null);
 
-  const fetchBills = useCallback(async (showNotif = false) => {
+  const fetchBills = async (showNotif = false) => {
     try {
       if (!customerId) {
         setError('Please log in to view your bills');
@@ -56,13 +58,13 @@ const CustomerDashboard = () => {
     } catch (err) {
       setError(err.message);
     }
-  }, [customerId]);
+  };
 
   useEffect(() => {
     fetchBills();
     const interval = setInterval(() => fetchBills(true), 15000);
     return () => clearInterval(interval);
-  }, [fetchBills]);
+  }, [customerId]);
 
   useEffect(() => {
     function handleClickOutside(event) {
