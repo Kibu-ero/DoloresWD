@@ -21,20 +21,20 @@ const RegistrationVerification = ({ phoneNumber, onVerificationSuccess }) => {
         otp
       });
 
-      setSuccess('Account verified successfully! Redirecting to login...');
+      setSuccess('Account verified successfully!');
       
-      // Don't store token - user must login separately
-      // localStorage.setItem('token', response.data.token);
-      // localStorage.setItem('user', JSON.stringify(response.data.user));
+      // Store token and user info
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       
       // Call success callback
       if (onVerificationSuccess) {
-        onVerificationSuccess(response.data);
+        onVerificationSuccess(response.data.user);
       }
       
-      // Redirect to login page instead of auto-login
+      // Redirect to customer dashboard
       setTimeout(() => {
-        navigate('/login');
+        navigate('/customer-dashboard');
       }, 2000);
       
     } catch (error) {
