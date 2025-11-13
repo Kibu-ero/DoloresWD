@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiDownload, FiPrinter, FiRefreshCw } from 'react-icons/fi';
 import apiClient from '../api/client';
-import { formatCurrency } from '../utils/currencyFormatter';
 
 const BillingSheet = ({ 
   month = 'DECEMBER',
@@ -135,11 +134,6 @@ const BillingSheet = ({
     return months[monthName.toUpperCase()] || 0;
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return `${date.getMonth() + 1}-${date.getDate()}`;
-  };
 
   const handlePrint = () => {
     window.print();
