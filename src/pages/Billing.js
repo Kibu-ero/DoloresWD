@@ -49,7 +49,6 @@ const Billing = () => {
   const [bills, setBills] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [notification, setNotification] = useState("");
   const [showAddBillModal, setShowAddBillModal] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -501,16 +500,6 @@ const Billing = () => {
         </div>
       </div>
 
-      {/* Notification */}
-      {notification && (
-        <div className={`mb-6 p-4 rounded-lg shadow-md text-sm font-semibold text-center
-          ${notification.startsWith("✅") 
-            ? "bg-green-100 text-green-700" 
-            : "bg-red-100 text-red-700"
-        }`}>
-          {notification}
-        </div>
-      )}
 
       {/* Search Bar */}
       <div className="mb-6 flex items-center max-w-md bg-white/80 rounded-xl px-4 py-2 shadow border border-gray-200">
