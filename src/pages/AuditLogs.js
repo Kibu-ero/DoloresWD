@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { FiSearch, FiFilter, FiCalendar, FiUser, FiFileText, FiActivity, FiRefreshCw, FiDownload } from "react-icons/fi";
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import React, { useState, useEffect, useCallback } from "react";
+import { FiFilter, FiCalendar, FiUser, FiFileText, FiActivity, FiRefreshCw, FiDownload } from "react-icons/fi";
 import apiClient from '../api/client';
 
 const AuditLogs = () => {
@@ -20,11 +18,7 @@ const AuditLogs = () => {
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 20;
 
-  useEffect(() => {
-    fetchAuditLogs();
-  }, [filters, currentPage]);
-
-  const fetchAuditLogs = async () => {
+  const fetchAuditLogs = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
@@ -54,7 +48,11 @@ const AuditLogs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, currentPage]);
+
+  useEffect(() => {
+    fetchAuditLogs();
+  }, [fetchAuditLogs]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
