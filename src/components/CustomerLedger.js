@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FiDownload, FiPrinter, FiRefreshCw } from 'react-icons/fi';
 import CustomerService from '../services/customer.service';
 import BillingService from '../services/billing.service';
@@ -26,14 +26,7 @@ const CustomerLedger = ({
     });
   };
 
-  // Fetch ledger data when component mounts
-  useEffect(() => {
-    if (customerId) {
-      fetchLedgerData();
-    }
-  }, [customerId]);
-
-  const fetchLedgerData = async () => {
+  const fetchLedgerData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -185,7 +178,14 @@ const CustomerLedger = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [customerId]);
+
+  // Fetch ledger data when component mounts
+  useEffect(() => {
+    if (customerId) {
+      fetchLedgerData();
+    }
+  }, [customerId, fetchLedgerData]);
 
   const handlePrint = () => {
     try {
