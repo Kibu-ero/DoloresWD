@@ -170,7 +170,7 @@ const CustomerReceipt = ({
     } finally {
       setLoading(false);
     }
-  }, [customerId, billId, paymentId, isPrintable, numberToWords]);
+  }, [customerId, billId, paymentId, numberToWords]);
 
   // Fetch receipt data when component mounts
   useEffect(() => {
