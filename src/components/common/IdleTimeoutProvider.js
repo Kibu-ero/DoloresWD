@@ -46,7 +46,7 @@ const IdleTimeoutProvider = ({ children }) => {
       log('Showing idle timeout warning');
       setShowWarning(true);
     }
-  }, []);
+  }, [isLoggedIn, isProtectedRoute]);
 
   // Handle user activity
   const handleActivity = useCallback(() => {
@@ -62,7 +62,7 @@ const IdleTimeoutProvider = ({ children }) => {
     if (isLoggedIn() && isProtectedRoute()) {
       handleLogout();
     }
-  }, [handleLogout]);
+  }, [handleLogout, isLoggedIn, isProtectedRoute]);
 
   // Handle "Stay Signed In" button
   const handleStaySignedIn = useCallback(() => {
@@ -72,7 +72,7 @@ const IdleTimeoutProvider = ({ children }) => {
   }, []);
 
   // Initialize idle timer
-  const idleTimer = useIdleTimer({
+  useIdleTimer({
     timeout: SESSION_CONFIG.IDLE_TIMEOUT,
     onIdle: handleIdle,
     onActivity: handleActivity,
