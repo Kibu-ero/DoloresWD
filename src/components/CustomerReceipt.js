@@ -15,24 +15,27 @@ const CustomerReceipt = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch receipt data when component mounts
-  useEffect(() => {
-    console.log('CustomerReceipt props:', { customerId, billId, paymentId, isPrintable });
-    console.log('Props types:', { 
-      customerId: typeof customerId, 
-      billId: typeof billId, 
-      paymentId: typeof paymentId 
-    });
+  // Convert number to words (simplified version)
+  const numberToWords = useCallback((num) => {
+    const ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+    const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+    const teens = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
     
-    if (customerId && billId) {
-      console.log('✅ Valid props, fetching receipt data...');
-      fetchReceiptData();
-    } else {
-      console.warn('❌ Missing required props:', { customerId, billId });
-      setError('Missing customer or bill information');
-      setLoading(false);
+    if (num === 0) return 'zero';
+    if (num < 10) return ones[num];
+    if (num < 20) return teens[num - 10];
+    if (num < 100) {
+      if (num % 10 === 0) return tens[Math.floor(num / 10)];
+      return tens[Math.floor(num / 10)] + ' ' + ones[num % 10];
     }
-  }, [customerId, billId, paymentId, isPrintable, fetchReceiptData]);
+    if (num < 1000) {
+      if (num % 100 === 0) return ones[Math.floor(num / 100)] + ' hundred';
+      return ones[Math.floor(num / 100)] + ' hundred ' + numberToWords(num % 100);
+    }
+    
+    // For larger numbers, return a simplified version
+    return Math.floor(num).toString() + ' pesos';
+  }, []);
 
   const fetchReceiptData = useCallback(async () => {
     try {
@@ -167,29 +170,26 @@ const CustomerReceipt = ({
     } finally {
       setLoading(false);
     }
-  }, [customerId, billId, paymentId, isPrintable]);
+  }, [customerId, billId, paymentId, isPrintable, numberToWords]);
 
-  // Convert number to words (simplified version)
-  const numberToWords = (num) => {
-    const ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
-    const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
-    const teens = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  // Fetch receipt data when component mounts
+  useEffect(() => {
+    console.log('CustomerReceipt props:', { customerId, billId, paymentId, isPrintable });
+    console.log('Props types:', { 
+      customerId: typeof customerId, 
+      billId: typeof billId, 
+      paymentId: typeof paymentId 
+    });
     
-    if (num === 0) return 'zero';
-    if (num < 10) return ones[num];
-    if (num < 20) return teens[num - 10];
-    if (num < 100) {
-      if (num % 10 === 0) return tens[Math.floor(num / 10)];
-      return tens[Math.floor(num / 10)] + ' ' + ones[num % 10];
+    if (customerId && billId) {
+      console.log('✅ Valid props, fetching receipt data...');
+      fetchReceiptData();
+    } else {
+      console.warn('❌ Missing required props:', { customerId, billId });
+      setError('Missing customer or bill information');
+      setLoading(false);
     }
-    if (num < 1000) {
-      if (num % 100 === 0) return ones[Math.floor(num / 100)] + ' hundred';
-      return ones[Math.floor(num / 100)] + ' hundred ' + numberToWords(num % 100);
-    }
-    
-    // For larger numbers, return a simplified version
-    return Math.floor(num).toString() + ' pesos';
-  };
+  }, [customerId, billId, paymentId, isPrintable, fetchReceiptData]);
 
   const handlePrint = () => {
     window.print();
