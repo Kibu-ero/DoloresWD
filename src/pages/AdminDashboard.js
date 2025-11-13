@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { formatCurrency } from '../utils/currencyFormatter';
 import apiClient from "../api/client";
-import { FiUsers, FiActivity, FiMenu, FiX, FiHome, FiFileText, FiBarChart2, FiEdit, FiShield, FiSettings, FiLogOut, FiAlertTriangle } from 'react-icons/fi';
+import { FiUsers, FiActivity, FiMenu, FiHome, FiFileText, FiBarChart2, FiEdit, FiShield, FiSettings, FiLogOut, FiAlertTriangle } from 'react-icons/fi';
 import Billing from "./Billing";
 import Customers from "./Customers";
 import SystemSettings from "./SystemSettings";
@@ -11,7 +11,6 @@ import AuditLogs from "./AuditLogs";
 import Reports from "./Reports";
 import PenaltyManager from "../components/PenaltyManager";
 import CreditManager from "../components/CreditManager";
-import axios from 'axios';
 
 const sidebarLinks = [
   { label: "Dashboard", icon: <FiHome /> },
