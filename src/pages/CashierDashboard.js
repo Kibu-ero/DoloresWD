@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import {
   FiHome,
@@ -314,7 +314,7 @@ const CashierDashboard = () => {
 
   const handleConfirmPayment = async () => {
     try {
-      const { paymentData, change, token } = pendingPaymentData;
+      const { paymentData, change } = pendingPaymentData;
       
       console.log('Payment Details:', paymentData);
 
