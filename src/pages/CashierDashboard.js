@@ -1,18 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import apiClient from '../api/client';
 import {
   FiHome,
-  FiUsers,
   FiFileText,
-  FiDollarSign,
-  FiSettings,
   FiActivity,
   FiLogOut,
   FiBarChart2,
   FiCreditCard,
   FiMenu,
-  FiEye,
   FiDownload,
   FiCheckCircle,
   FiXCircle,
@@ -50,8 +46,6 @@ const CashierDashboard = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileModalOpen, setFileModalOpen] = useState(false);
   const [fileActionLoading, setFileActionLoading] = useState(false);
-  const [fileNotification, setFileNotification] = useState("");
-  const [fileError, setFileError] = useState("");
   const receiptRef = useRef();
   
   // Notification modal state
@@ -67,6 +61,7 @@ const CashierDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [notification, setNotification] = useState("");
+  const [fileNotification, setFileNotification] = useState("");
 
   // Get user name from localStorage
   const user = JSON.parse(localStorage.getItem('user'));
@@ -78,7 +73,6 @@ const CashierDashboard = () => {
   const pendingBills = 8;
 
   // Helper to check if a link is active
-  const isActive = (tab) => activeTab === tab;
 
   // Helper function to safely get bill amount
   const getBillAmount = (bill) => {
@@ -97,7 +91,7 @@ const CashierDashboard = () => {
     navigate("/login");
   };
 
-  const fetchBills = async (showNotif = false) => {
+  const fetchBills = useCallback(async (showNotif = false) => {
     setLoading(true);
     setError('');
     const token = localStorage.getItem('token');
@@ -166,13 +160,13 @@ const CashierDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBills();
     const interval = setInterval(() => fetchBills(true), 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchBills]);
 
   const openPaymentModal = (bill) => {
     setSelectedBill(bill);
@@ -215,30 +209,7 @@ const CashierDashboard = () => {
     `,
   });
 
-  // File viewing functions
-  const fetchPaymentProofs = async () => {
-    setFileError("");
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      setFileError('No token found. Please log in again.');
-      return;
-    }
 
-    try {
-      // Use the same endpoint as admin since we fixed the role middleware
-      const response = await apiClient.get('/uploads/all');
-      setFiles(response.data);
-    } catch (err) {
-      console.error('Error fetching payment proofs:', err);
-      setFileError("Failed to fetch payment proofs");
-    }
-  };
-
-  const handleViewFile = (file) => {
-    setSelectedFile(file);
-    setFileModalOpen(true);
-  };
 
   const handleCloseFileModal = () => {
     setFileModalOpen(false);
@@ -416,10 +387,6 @@ const CashierDashboard = () => {
     setNotificationModal(prev => ({ ...prev, isOpen: false }));
   };
 
-  const handleManualRefresh = () => {
-    setNotification("");
-    fetchBills(true);
-  };
 
   // Example content for each tab
   const renderContent = () => {
