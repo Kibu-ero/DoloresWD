@@ -59,9 +59,7 @@ const CashierDashboard = () => {
     onCancel: null
   });
   const navigate = useNavigate();
-  const location = useLocation();
   const [notification, setNotification] = useState("");
-  const [fileNotification, setFileNotification] = useState("");
 
   // Get user name from localStorage
   const user = JSON.parse(localStorage.getItem('user'));
@@ -230,15 +228,14 @@ const CashierDashboard = () => {
         { status: "Paid" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setFileNotification("Payment approved successfully!");
+      // Payment approved successfully
       setFiles(files.map(f => f.id === selectedFile.id ? { ...f, status: "Paid" } : f));
       handleCloseFileModal();
     } catch (err) {
       console.error('Error approving payment:', err);
-      setFileNotification("Failed to approve payment.");
+      // Failed to approve payment
     } finally {
       setFileActionLoading(false);
-      setTimeout(() => setFileNotification(""), 3000);
     }
   };
 
@@ -256,15 +253,14 @@ const CashierDashboard = () => {
         { status: "Rejected" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setFileNotification("Payment rejected.");
+      // Payment rejected
       setFiles(files.map(f => f.id === selectedFile.id ? { ...f, status: "Rejected" } : f));
       handleCloseFileModal();
     } catch (err) {
       console.error('Error rejecting payment:', err);
-      setFileNotification("Failed to reject payment.");
+      // Failed to reject payment
     } finally {
       setFileActionLoading(false);
-      setTimeout(() => setFileNotification(""), 3000);
     }
   };
 
