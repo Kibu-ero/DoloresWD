@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FiDownload, FiPrinter, FiRefreshCw } from 'react-icons/fi';
 import CustomerService from '../services/customer.service';
 import BillingService from '../services/billing.service';
@@ -32,9 +32,9 @@ const CustomerReceipt = ({
       setError('Missing customer or bill information');
       setLoading(false);
     }
-  }, [customerId, billId, paymentId]);
+  }, [customerId, billId, paymentId, isPrintable, fetchReceiptData]);
 
-  const fetchReceiptData = async () => {
+  const fetchReceiptData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -167,7 +167,7 @@ const CustomerReceipt = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [customerId, billId, paymentId, isPrintable]);
 
   // Convert number to words (simplified version)
   const numberToWords = (num) => {
