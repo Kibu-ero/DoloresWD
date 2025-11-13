@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FiDollarSign, FiCreditCard, FiTrendingUp, FiAlertCircle } from 'react-icons/fi';
 import apiClient from '../api';
@@ -9,7 +9,7 @@ const CustomerCreditDisplay = ({ customerId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchCreditInfo = async () => {
+  const fetchCreditInfo = useCallback(async () => {
     if (!customerId) return;
     
     try {
@@ -28,11 +28,11 @@ const CustomerCreditDisplay = ({ customerId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [customerId]);
 
   useEffect(() => {
     fetchCreditInfo();
-  }, [customerId]);
+  }, [fetchCreditInfo]);
 
   if (loading) {
     return (
@@ -202,5 +202,21 @@ const CustomerCreditDisplay = ({ customerId }) => {
 };
 
 export default CustomerCreditDisplay;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

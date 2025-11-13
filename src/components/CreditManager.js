@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiPlus, FiMinus, FiEdit, FiDollarSign, FiUser, FiClock, FiCheckCircle } from 'react-icons/fi';
+import { FiPlus, FiMinus, FiEdit, FiDollarSign, FiCheckCircle } from 'react-icons/fi';
 import apiClient from '../api';
 import { formatCurrency } from '../utils/currencyFormatter';
 
@@ -127,15 +127,6 @@ const CreditManager = () => {
     fetchCustomersWithCredits();
   }, []);
 
-  const getTransactionTypeColor = (type) => {
-    switch (type) {
-      case 'credit': return 'text-green-600 bg-green-50';
-      case 'debit': return 'text-red-600 bg-red-50';
-      case 'adjustment': return 'text-blue-600 bg-blue-50';
-      case 'refund': return 'text-purple-600 bg-purple-50';
-      default: return 'text-gray-600 bg-gray-50';
-    }
-  };
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg">
@@ -464,5 +455,21 @@ const CreditManager = () => {
 };
 
 export default CreditManager;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
