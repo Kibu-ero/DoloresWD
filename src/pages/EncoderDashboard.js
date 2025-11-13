@@ -70,7 +70,6 @@ const EncoderDashboard = () => {
   const [previousReading, setPreviousReading] = useState('');
   const [currentReading, setCurrentReading] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [notification, setNotification] = useState('');
   const [loading, setLoading] = useState(false);
   const [lastBill, setLastBill] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -105,7 +104,7 @@ const EncoderDashboard = () => {
       const res = await apiClient.get("/billing/customers");
       setCustomers(res.data);
     } catch (err) {
-      setNotification("Failed to fetch customers");
+      console.error("Failed to fetch customers");
     }
   };
 
@@ -114,7 +113,7 @@ const EncoderDashboard = () => {
       const res = await apiClient.get("/billing");
       setBills(res.data);
     } catch (err) {
-      setNotification("Failed to fetch bills");
+      console.error("Failed to fetch bills");
     }
   };
 
@@ -159,10 +158,9 @@ const EncoderDashboard = () => {
 
   const handleInputSubmit = async (e) => {
     e.preventDefault();
-    setNotification("");
     const customer = customers.find(c => c.id === parseInt(selectedCustomer));
     if (!customer) {
-      setNotification("Customer not found");
+      console.error("Customer not found");
       return;
     }
     setPendingBill({
@@ -187,7 +185,7 @@ const EncoderDashboard = () => {
         due_date: dueDate || calculateDueDate()
       };
       await apiClient.post("/billing", payload);
-      setNotification("Bill generated successfully!");
+      // Bill generated successfully
       setCurrentReading("");
       setDueDate("");
       fetchBills();
@@ -197,7 +195,7 @@ const EncoderDashboard = () => {
         await fetchPreviousReading(selectedCustomer);
       }
     } catch (err) {
-      setNotification("Failed to generate bill: " + (err.response?.data?.message || err.message));
+      console.error("Failed to generate bill: " + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
       setPendingBill(null);
