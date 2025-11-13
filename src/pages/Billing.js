@@ -179,24 +179,6 @@ const Billing = () => {
     return baseAmount - seniorDiscount + penalty;
   };
 
-  // Handle Bill Status Update
-  const handleStatusChange = async (billId, status) => {
-    showConfirmation(
-      `Are you sure you want to mark Bill ${billId} as ${status}?`,
-      async () => {
-        try {
-          await apiClient.put(`/billing/${billId}`, { status });
-          setBills(bills.map(bill => 
-            bill.bill_id === billId ? { ...bill, status } : bill
-          ));
-          showNotification(`Bill ${billId} marked as ${status}.`, 'success', 'Success');
-        } catch (error) {
-          showNotification("Failed to update bill status.", 'error', 'Error');
-        }
-      },
-      'Confirm Status Update'
-    );
-  };
 
   // Add New Bill - Show confirmation first
   const handleAddBill = async (e) => {
