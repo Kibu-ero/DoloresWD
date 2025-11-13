@@ -48,7 +48,7 @@ const AuditLogs = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, currentPage]);
+  }, [filters]);
 
   useEffect(() => {
     fetchAuditLogs();
