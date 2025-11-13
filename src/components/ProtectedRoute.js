@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import apiClient from "../api/client";
 
@@ -9,7 +9,7 @@ function ProtectedRoute({ allowedRoles }) {
   const token = localStorage.getItem("token");
   const location = useLocation();
 
-  const verifyToken = async () => {
+  const verifyToken = useCallback(async () => {
     if (!token) {
       setIsAuthenticated(false);
       return;
@@ -27,12 +27,12 @@ function ProtectedRoute({ allowedRoles }) {
       localStorage.removeItem("role");
       localStorage.removeItem("user");
     }
-  };
+  }, [token]);
 
   // Verify token on initial load and route changes
   useEffect(() => {
     verifyToken();
-  }, [location.pathname]); // Re-run verification when route changes
+  }, [location.pathname, verifyToken]); // Re-run verification when route changes
 
   // Re-verify when navigating with back/forward (bfcache) or tab visibility changes
   useEffect(() => {
@@ -53,7 +53,7 @@ function ProtectedRoute({ allowedRoles }) {
       window.removeEventListener('pageshow', handlePageShow);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, []);
+  }, [verifyToken]);
 
   if (isAuthenticated === null) {
     return <div>Loading...</div>;
