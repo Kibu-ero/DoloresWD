@@ -10,11 +10,6 @@ const UserNavbar = () => {
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
   const [showOTPVerification, setShowOTPVerification] = useState(false);
   const [registrationPhoneNumber, setRegistrationPhoneNumber] = useState("");
-  const [showOTPInput, setShowOTPInput] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [otpError, setOtpError] = useState("");
-  const [otpSuccess, setOtpSuccess] = useState("");
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -211,12 +206,6 @@ const UserNavbar = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const getPasswordStrengthColor = (score) => {
-    if (score <= 2) return "text-red-500";
-    if (score <= 3) return "text-yellow-500";
-    if (score <= 4) return "text-blue-500";
-    return "text-green-500";
-  };
 
   const getPasswordStrengthText = (score) => {
     if (score <= 2) return "Weak";
@@ -334,60 +323,10 @@ const UserNavbar = () => {
     }
   };
 
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
-    setOtpLoading(true);
-    setOtpError("");
-    setOtpSuccess("");
-
-    try {
-      const response = await apiClient.post("/otp/verify-registration", {
-        phoneNumber: registrationPhoneNumber,
-        otp: otpCode
-      });
-
-      const data = response.data;
-
-      setOtpSuccess("Account verified successfully! Redirecting to login...");
-      
-      // Redirect to login page after successful verification
-      setTimeout(() => {
-        closeModal();
-        navigate("/login");
-      }, 2000);
-      
-    } catch (err) {
-      setOtpError(err.message || "Failed to verify OTP");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const handleResendOTP = async () => {
-    setOtpLoading(true);
-    setOtpError("");
-    setOtpSuccess("");
-
-    try {
-      const response = await apiClient.post("/otp/resend", {
-        phoneNumber: registrationPhoneNumber,
-        purpose: 'registration'
-      });
-
-      const data = response.data;
-
-      setOtpSuccess("New OTP sent!");
-    } catch (err) {
-      setOtpError(err.message || "Failed to resend OTP");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
 
   const closeModal = () => {
     setIsSignUpOpen(false);
     setWaitingForApproval(false);
-    setRegisteredEmail("");
     if (approvalCheckInterval) {
       clearInterval(approvalCheckInterval);
       setApprovalCheckInterval(null);
