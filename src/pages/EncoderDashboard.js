@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../api/client";
 import { formatCurrency } from '../utils/currencyFormatter';
 import Reports from "./Reports";
@@ -18,7 +18,6 @@ const sidebarLinks = [
 
 const EncoderDashboard = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const user = JSON.parse(localStorage.getItem('user'));
   const displayName = user && user.firstName ? `${user.firstName} ${user.lastName}` : 'User';
 
