@@ -10,16 +10,16 @@ const IdleTimeoutProvider = ({ children }) => {
   const location = useLocation();
 
   // Check if user is on a page that requires authentication
-  const isProtectedRoute = () => {
+  const isProtectedRoute = useCallback(() => {
     return !isPublicRoute(location.pathname);
-  };
+  }, [location.pathname]);
 
   // Check if user is logged in
-  const isLoggedIn = () => {
+  const isLoggedIn = useCallback(() => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     return !!(token && user);
-  };
+  }, []);
 
   // Handle logout
   const handleLogout = useCallback(() => {
