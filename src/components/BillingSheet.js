@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FiDownload, FiPrinter, FiRefreshCw } from 'react-icons/fi';
 import apiClient from '../api/client';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const BillingSheet = ({ 
   month = 'DECEMBER',
@@ -140,7 +142,104 @@ const BillingSheet = ({
   };
 
   const handleDownload = () => {
-    console.log('Download functionality to be implemented');
+    try {
+      // Create a new PDF document in landscape orientation
+      const doc = new jsPDF('l', 'mm', 'a4');
+      
+      // Set font
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DAILY COLLECTOR', 148, 15, { align: 'center' });
+      
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'normal');
+      const collectorText = collector && collector.trim() !== '' ? collector : 'ALL ZONES';
+      doc.text(collectorText, 148, 22, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`BILLING SHEET - ${month} ${year}`, 148, 29, { align: 'center' });
+      
+      // Prepare table data
+      const tableData = billingData.map((row, index) => [
+        index + 1,
+        row.name || '',
+        row.status1 || '',
+        row.status2 || '',
+        row.presentReading || 0,
+        row.previousReading || 0,
+        row.used || 0,
+        row.billAmount ? `₱ ${row.billAmount.toFixed(2)}` : '',
+        row.scd > 0 ? `₱ ${row.scd.toFixed(2)}` : '',
+        row.totalAmount ? `₱ ${row.totalAmount.toFixed(2)}` : '',
+        row.orNumber || '',
+        row.date || '',
+        row.penalty > 0 ? `₱ ${row.penalty.toFixed(2)}` : '',
+        row.afterDue ? `₱ ${row.afterDue.toFixed(2)}` : ''
+      ]);
+      
+      // Add empty rows if needed
+      for (let i = billingData.length; i < 42; i++) {
+        tableData.push([
+          i + 1,
+          '', '', '', '', '', '', '', '', '', '', '', '', ''
+        ]);
+      }
+      
+      // Generate table
+      doc.autoTable({
+        head: [[
+          'BILL NO.',
+          'CONSUMER ZONE',
+          'STATUS',
+          'STATUS',
+          'PRESENT',
+          'PREVIOUS',
+          'USED (CU3m)',
+          'AMOUNT OF BILL',
+          'SCD',
+          'TOTAL AMOUNT',
+          'OR NO.',
+          'DATE',
+          'PENALTY',
+          'AMOUNT AFTER DUE SURCHARGE'
+        ]],
+        body: tableData,
+        startY: 35,
+        styles: { fontSize: 7, cellPadding: 1 },
+        headStyles: { fillColor: [220, 220, 220], fontStyle: 'bold', fontSize: 7 },
+        columnStyles: {
+          0: { cellWidth: 15 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 20 },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 20 },
+          6: { cellWidth: 25 },
+          7: { cellWidth: 30 },
+          8: { cellWidth: 20 },
+          9: { cellWidth: 30 },
+          10: { cellWidth: 30 },
+          11: { cellWidth: 20 },
+          12: { cellWidth: 25 },
+          13: { cellWidth: 40 }
+        },
+        margin: { top: 35, left: 5, right: 5 }
+      });
+      
+      // Add summary at the bottom
+      const finalY = doc.lastAutoTable.finalY + 5;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`SUB TOTAL | USED: ${summary.totalUsed.toFixed(2)} | AMOUNT OF BILL: ₱ ${summary.totalBill.toFixed(2)} | SCD: ₱ ${summary.totalSCD.toFixed(2)} | TOTAL AMOUNT: ₱ ${summary.totalAmount.toFixed(2)} | PENALTY: ₱ ${summary.totalPenalty.toFixed(2)} | AMOUNT AFTER DUE SURCHARGE: ₱ ${summary.totalAfterDue.toFixed(2)}`, 5, finalY);
+      
+      // Save the PDF
+      const fileName = `Billing_Sheet_${month}_${year}_${collector && collector.trim() !== '' ? collector.replace(/\s+/g, '_') : 'ALL_ZONES'}.pdf`;
+      doc.save(fileName);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   const handleRefresh = () => {
