@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FiDownload, FiPrinter, FiRefreshCw } from 'react-icons/fi';
 import CustomerService from '../services/customer.service';
 import BillingService from '../services/billing.service';
 import apiClient from '../api/client';
+import jsPDF from 'jspdf';
 
 const CustomerReceipt = ({ 
   customerId,
@@ -14,6 +15,7 @@ const CustomerReceipt = ({
   const [receiptData, setReceiptData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const receiptRef = useRef(null);
 
   // Convert number to words (simplified version)
   const numberToWords = useCallback((num) => {
@@ -192,12 +194,263 @@ const CustomerReceipt = ({
   }, [customerId, billId, paymentId, isPrintable, fetchReceiptData]);
 
   const handlePrint = () => {
-    window.print();
+    // Get the receipt HTML
+    const receiptElement = receiptRef.current;
+    if (!receiptElement) {
+      // Fallback to standard print
+      window.print();
+      return;
+    }
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      // Fallback if popup is blocked
+      window.print();
+      return;
+    }
+
+    // Create print HTML with inline styles
+    const printHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Receipt - ${receiptData?.receiptNumber || 'Print'}</title>
+          <style>
+            @page {
+              margin: 10mm;
+              size: A4;
+            }
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              font-family: Arial, sans-serif;
+              background: white;
+            }
+            .print-hidden {
+              display: none !important;
+            }
+            * {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+          </style>
+        </head>
+        <body>
+          ${receiptElement.outerHTML}
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+      
+      // Close window after printing (with delay to allow print dialog to show)
+      setTimeout(() => {
+        printWindow.close();
+      }, 500);
+    }, 250);
   };
 
   const handleDownload = () => {
-    // Implementation for downloading as PDF or image
-    console.log('Download functionality to be implemented');
+    if (!receiptData) return;
+
+    try {
+      // Create a new PDF document
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let yPos = 15;
+      const margin = 15;
+
+      // Header
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DOLORES WATER DISTRICT', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 8;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('POBLACION 2801 DOLORES ABRA PHILIPPINES', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 5;
+      doc.text('NON VAT Reg. TIN-000-609-549-00000', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 8;
+
+      // Acknowledgement Receipt Title
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ACKNOWLEDGEMENT RECEIPT', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 8;
+
+      // Receipt Number and Date
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Receipt No.: ${receiptData.receiptNumber}`, margin, yPos);
+      doc.text(`Date: ${receiptData.date}`, pageWidth - margin, yPos, { align: 'right' });
+      yPos += 10;
+
+      // Draw a line
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 5;
+
+      // Left Column - Settlement Details
+      const leftX = margin;
+      const rightX = pageWidth / 2 + 5;
+      const columnWidth = (pageWidth - margin * 2 - 10) / 2;
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('In settlement of the following:', leftX, yPos);
+      yPos += 6;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(`Meter No.: ${receiptData.meterNumber}`, leftX, yPos);
+      yPos += 5;
+      doc.text(`Billing Date: ${receiptData.billingDate}`, leftX, yPos);
+      yPos += 5;
+      doc.text(`Due Date: ${receiptData.dueDate}`, leftX, yPos);
+      yPos += 6;
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Line Items:', leftX, yPos);
+      yPos += 6;
+
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Previous Reading: ${receiptData.previousReading}`, leftX, yPos);
+      yPos += 5;
+      doc.text(`Current Reading: ${receiptData.currentReading}`, leftX, yPos);
+      yPos += 5;
+      doc.text(`Consumption (cu.m.): ${receiptData.consumption}`, leftX, yPos);
+      yPos += 5;
+      doc.text(`Total Sales: ₱ ${parseFloat(receiptData.totalSales).toFixed(2)}`, leftX, yPos);
+      yPos += 5;
+
+      if (parseFloat(receiptData.scpwdDiscount) > 0) {
+        doc.setTextColor(0, 128, 0); // Green
+        doc.text(`SCPWD Discount (20%): -₱ ${parseFloat(receiptData.scpwdDiscount).toFixed(2)}`, leftX, yPos);
+        doc.setTextColor(0, 0, 0); // Black
+        yPos += 5;
+      }
+
+      doc.text(`AD Due: ₱ ${parseFloat(receiptData.adDue).toFixed(2)}`, leftX, yPos);
+      yPos += 5;
+
+      if (parseFloat(receiptData.penalty) > 0) {
+        doc.setTextColor(220, 38, 38); // Red
+        doc.text(`Penalty (10%): ₱ ${parseFloat(receiptData.penalty).toFixed(2)}`, leftX, yPos);
+        doc.setTextColor(0, 0, 0); // Black
+        yPos += 5;
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.line(leftX, yPos, leftX + columnWidth, yPos);
+      yPos += 6;
+      doc.text(`TOTAL AMOUNT DUE: ₱ ${parseFloat(receiptData.totalAmountDue).toFixed(2)}`, leftX, yPos);
+      yPos += 8;
+
+      // Payment Method
+      doc.setFont('helvetica', 'bold');
+      doc.text('Payment Method:', leftX, yPos);
+      yPos += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.text(`✓ ${receiptData.paymentMethod}`, leftX, yPos);
+      yPos += 10;
+
+      // Right Column - Customer Information
+      yPos = 50; // Reset to start of right column
+      doc.setFont('helvetica', 'bold');
+      doc.text('Customer Information:', rightX, yPos);
+      yPos += 6;
+
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Received from: ${receiptData.customerName}`, rightX, yPos);
+      yPos += 5;
+      const addressLines = doc.splitTextToSize(`and address at: ${receiptData.customerAddress}`, columnWidth);
+      doc.text(addressLines, rightX, yPos);
+      yPos += addressLines.length * 5;
+      doc.text(`the business style of: ${receiptData.businessStyle}`, rightX, yPos);
+      yPos += 5;
+
+      if (receiptData.customerTIN) {
+        doc.text(`with TIN: ${receiptData.customerTIN}`, rightX, yPos);
+        yPos += 5;
+      }
+
+      if (receiptData.customerBusiness) {
+        doc.text(`engaged in: ${receiptData.customerBusiness}`, rightX, yPos);
+        yPos += 5;
+      }
+
+      yPos += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Amount Paid:', rightX, yPos);
+      yPos += 6;
+      doc.setFontSize(14);
+      doc.setTextColor(0, 128, 0); // Green
+      doc.text(`₱ ${parseFloat(receiptData.amountReceived).toFixed(2)}`, rightX, yPos);
+      doc.setTextColor(0, 0, 0); // Black
+      yPos += 8;
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('in partial/full payment of:', rightX, yPos);
+      yPos += 5;
+      doc.setFont('helvetica', 'italic');
+      doc.text(`${receiptData.amountInWords}`, rightX, yPos);
+      yPos += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.text('the sum of:', rightX, yPos);
+      yPos += 5;
+      doc.setFont('helvetica', 'italic');
+      doc.text(`${receiptData.amountInWords} pesos`, rightX, yPos);
+      yPos += 10;
+
+      // Footer
+      const footerY = pageHeight - 40;
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Printer\'s Details:', margin, footerY);
+      doc.text('(x3) 125001-150000', margin, footerY + 4);
+      doc.text('Authority to Print No. 007AL20230000000715', margin, footerY + 8);
+      doc.text('Issued: 02272023', margin, footerY + 12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ATHY\'S PRINTING PRESS', margin, footerY + 16);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Real St., Zone 1, Bantay, Ilocos Sur', margin, footerY + 20);
+      doc.text('TIN-945-005-299-000-NVAT', margin, footerY + 24);
+
+      doc.text('Printer\'s Accreditation:', pageWidth / 2 + 5, footerY);
+      doc.text('No. 002MP20200000000001', pageWidth / 2 + 5, footerY + 4);
+      doc.text('Date Issued-05-18-2020', pageWidth / 2 + 5, footerY + 8);
+
+      // Signature lines
+      const signatureY = pageHeight - 15;
+      doc.text('By: _________________', margin, signatureY);
+      doc.text('Cashier/Authorized Representative: _________________', pageWidth / 2, signatureY, { align: 'center' });
+
+      // Disclaimer
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(220, 38, 38); // Red
+      doc.text('THIS DOCUMENT IS NOT VALID FOR CLAIMING INPUT TAXES', pageWidth / 2, pageHeight - 5, { align: 'center' });
+
+      // Save the PDF
+      const fileName = `Receipt_${receiptData.receiptNumber}_${receiptData.date.replace(/\//g, '-')}.pdf`;
+      doc.save(fileName);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   const handleRefresh = () => {
@@ -288,7 +541,7 @@ const CustomerReceipt = ({
       )}
 
       {/* Receipt Container */}
-      <div className="border-2 border-gray-800 bg-white shadow-lg">
+      <div ref={receiptRef} className="border-2 border-gray-800 bg-white shadow-lg receipt-container">
         {/* Header with Logo */}
         <div className="text-center py-4 border-b-2 border-gray-800">
           <div className="flex items-center justify-center mb-2">
