@@ -21,22 +21,20 @@ const RegistrationVerification = ({ phoneNumber, onVerificationSuccess }) => {
         otp
       });
 
-      setSuccess('Account verified successfully!');
+      setSuccess('Account verified successfully! Please login to continue.');
       
-      // Store token and user info
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      // Call success callback
+      // Don't store token - user needs to login manually
+      // localStorage.setItem('token', response.data.token);
+      // localStorage.setItem('user', JSON.stringify(response.data.user));
+
       if (onVerificationSuccess) {
         onVerificationSuccess(response.data.user);
       }
-      
-      // Redirect to customer dashboard
+
+      // Redirect to login page instead of dashboard
       setTimeout(() => {
-        navigate('/customer-dashboard');
+        navigate('/login');
       }, 2000);
-      
     } catch (error) {
       setError(error.response?.data?.error || 'Failed to verify OTP');
     } finally {
@@ -131,4 +129,4 @@ const RegistrationVerification = ({ phoneNumber, onVerificationSuccess }) => {
   );
 };
 
-export default RegistrationVerification; 
+export default RegistrationVerification;
