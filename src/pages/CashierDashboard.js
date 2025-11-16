@@ -625,8 +625,8 @@ const CashierDashboard = () => {
           {renderContent()}
         </div>
         {showReceipt && receiptDetails && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50 p-4 receipt-overlay">
-            <div className="bg-white rounded-lg shadow-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto receipt-container">
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50 p-4 receipt-overlay print:bg-transparent print:fixed print:inset-0 print:flex print:items-center print:justify-center">
+            <div className="bg-white rounded-lg shadow-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto receipt-container print:max-w-none print:w-full print:max-h-none print:overflow-visible print:shadow-none print:rounded-none">
               {/* Receipt Header */}
               <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10 receipt-modal-header">
                 <div className="flex justify-between items-center">
