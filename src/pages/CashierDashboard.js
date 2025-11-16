@@ -17,6 +17,7 @@ import { useReactToPrint } from 'react-to-print';
 import AdminFileReview from "./AdminFileReview";
 import Reports from "./Reports";
 import { formatCurrency } from '../utils/currencyFormatter';
+import { formatUserName } from '../utils/nameFormatter';
 import NotificationModal from '../components/common/NotificationModal';
 import CustomerReceipt from '../components/CustomerReceipt';
 
@@ -63,7 +64,7 @@ const CashierDashboard = () => {
 
   // Get user name from localStorage
   const user = JSON.parse(localStorage.getItem('user'));
-  const displayName = user && user.firstName ? `${user.firstName} ${user.lastName}` : 'User';
+  const displayName = formatUserName(user);
 
   // Example stats (replace with real data)
   const totalPayments = 42;
