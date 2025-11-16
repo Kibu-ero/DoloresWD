@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../api/client";
 import { formatCurrency } from '../utils/currencyFormatter';
+import { formatUserName } from '../utils/nameFormatter';
 import Reports from "./Reports";
 import { FiHome, FiEdit, FiFileText, FiBarChart2, FiLogOut } from 'react-icons/fi';
 
@@ -18,7 +19,7 @@ const sidebarLinks = [
 const EncoderDashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
-  const displayName = user && user.firstName ? `${user.firstName} ${user.lastName}` : 'User';
+  const displayName = formatUserName(user);
 
   // Function to calculate due date (20th of current or next month)
   const calculateDueDate = () => {
