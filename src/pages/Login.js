@@ -92,7 +92,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 via-purple-100 to-pink-100 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 via-blue-50 to-brand-100 p-4 relative overflow-hidden">
       {/* Billink Logo/Name in upper left */}
       <motion.div 
         className="absolute top-6 left-6 z-20"
@@ -107,9 +107,9 @@ const Login = () => {
           <img 
             src="/logodolores.png"
             alt="Billink Logo"
-            className="w-10 h-10 rounded-full object-cover border-2 border-blue-500/50 shadow-lg group-hover:border-blue-400 transition-all duration-300"
+            className="w-10 h-10 rounded-full object-cover border-2 border-brand-500/50 shadow-lg group-hover:border-brand-400 transition-all duration-300"
           />
-          <span className="text-2xl font-bold text-gray-800 tracking-wide group-hover:text-blue-600 transition-colors duration-300">
+          <span className="text-2xl font-bold text-gray-800 tracking-wide group-hover:text-brand-600 transition-colors duration-300">
             Billink
           </span>
         </button>
@@ -124,11 +124,11 @@ const Login = () => {
       </div>
 
       {/* Particle Background */}
-      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
         {[...Array(30)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full bg-gradient-to-r from-blue-400 to-purple-400 pointer-events-none"
+            className="absolute rounded-full bg-brand-400 pointer-events-none"
             style={{
               width: Math.random() * 8 + 4 + 'px',
               height: Math.random() * 8 + 4 + 'px',
@@ -154,7 +154,7 @@ const Login = () => {
       {/* Floating Light Orbs */}
       <div className="fixed inset-0 overflow-hidden z-0 pointer-events-none">
         <motion.div 
-          className="absolute top-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full filter blur-[120px] opacity-30 pointer-events-none"
+          className="absolute top-1/4 left-1/4 w-80 h-80 bg-brand-400 rounded-full filter blur-[120px] opacity-20 pointer-events-none"
           animate={{
             scale: [1, 1.3, 1],
             x: [-30, 30, -30],
@@ -168,7 +168,7 @@ const Login = () => {
           }}
         />
         <motion.div 
-          className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full filter blur-[140px] opacity-30 pointer-events-none"
+          className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-brand-600 rounded-full filter blur-[140px] opacity-20 pointer-events-none"
           animate={{
             scale: [1, 1.4, 1],
             x: [30, -30, 30],
@@ -182,7 +182,7 @@ const Login = () => {
           }}
         />
         <motion.div 
-          className="absolute top-1/2 right-1/3 w-72 h-72 bg-gradient-to-r from-indigo-400 to-blue-400 rounded-full filter blur-[100px] opacity-25 pointer-events-none"
+          className="absolute top-1/2 right-1/3 w-72 h-72 bg-brand-300 rounded-full filter blur-[100px] opacity-15 pointer-events-none"
           animate={{
             scale: [1, 1.2, 1],
             x: [20, -20, 20],
@@ -206,10 +206,10 @@ const Login = () => {
         {/* Glass Morphism Card */}
         <div className="bg-white/90 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden border-2 border-white/50 relative">
           {/* Glow Effect */}
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-3xl blur-xl opacity-30 animate-pulse pointer-events-none"></div>
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-400 to-brand-600 rounded-3xl blur-xl opacity-20 animate-pulse pointer-events-none"></div>
           
           {/* Premium Header with Logo */}
-          <div className="relative p-8 pb-8 text-center bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 border-b-2 border-white/20">
+          <div className="relative p-8 pb-8 text-center bg-gradient-to-br from-brand-600 via-brand-500 to-brand-400 border-b-2 border-white/20">
             <div className="flex justify-center mb-4">
               <motion.div
                 initial={{ scale: 0 }}
@@ -233,7 +233,7 @@ const Login = () => {
                 Welcome Back
               </motion.h1>
               <motion.p 
-                className="text-blue-100 text-base font-medium"
+                className="text-brand-100 text-base font-medium"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -265,7 +265,7 @@ const Login = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-5 w-5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
@@ -274,7 +274,7 @@ const Login = () => {
                     placeholder="Enter your username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200 shadow-sm hover:shadow-md"
                     required
                   />
                 </div>
@@ -290,7 +290,7 @@ const Login = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-5 w-5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
@@ -299,7 +299,7 @@ const Login = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-12 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="w-full pl-12 pr-12 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200 shadow-sm hover:shadow-md"
                     required
                   />
                   <button
@@ -323,7 +323,7 @@ const Login = () => {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 bg-white border-gray-300 rounded focus:ring-blue-400 text-blue-600 cursor-pointer"
+                    className="h-4 w-4 bg-white border-gray-300 rounded focus:ring-brand-500 text-brand-600 cursor-pointer"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 cursor-pointer">
                     Remember me
@@ -333,7 +333,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/forgot-password")}
-                  className="text-sm text-blue-600 hover:text-blue-700 transition duration-200 font-medium cursor-pointer focus:outline-none focus:text-blue-700 z-10 relative"
+                  className="text-sm text-brand-600 hover:text-brand-700 transition duration-200 font-medium cursor-pointer focus:outline-none focus:text-brand-700 z-10 relative"
                 >
                   Forgot password?
                 </button>
@@ -349,7 +349,7 @@ const Login = () => {
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full py-4 px-4 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-white transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] ${
+                  className={`w-full py-4 px-4 rounded-xl font-semibold text-white bg-gradient-to-r from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800 focus:outline-none focus:ring-4 focus:ring-brand-300 focus:ring-offset-2 focus:ring-offset-white transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] ${
                     isLoading ? "opacity-90 cursor-not-allowed" : "cursor-pointer"
                   }`}
                 >
@@ -379,7 +379,7 @@ const Login = () => {
                   <div className="w-full border-t-2 border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 text-gray-600 backdrop-blur-sm rounded-full font-medium border border-gray-200">
+                  <span className="px-4 py-1 bg-brand-50 text-gray-600 backdrop-blur-sm rounded-full font-medium border border-brand-200">
                     New to Dolores Water?
                   </span>
                 </div>
@@ -390,7 +390,7 @@ const Login = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate('/#signup')}
-                  className="w-full py-3 px-4 rounded-xl font-semibold text-blue-600 hover:text-white border-2 border-blue-300 hover:border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-500 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 z-10 relative"
+                  className="w-full py-3 px-4 rounded-xl font-semibold text-brand-600 hover:text-white border-2 border-brand-300 hover:border-brand-500 bg-brand-50 hover:bg-gradient-to-r hover:from-brand-500 hover:to-brand-700 transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-400 z-10 relative"
                 >
                   Create account
                 </motion.button>
