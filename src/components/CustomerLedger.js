@@ -14,6 +14,26 @@ const CustomerLedger = ({
   const [ledgerData, setLedgerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Get current user for "Prepared by"
+  const getCurrentUser = () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.firstName && user.lastName) {
+          return `${user.firstName} ${user.lastName}`;
+        } else if (user.name) {
+          return user.name;
+        } else if (user.username) {
+          return user.username;
+        }
+      }
+    } catch (e) {
+      console.error('Error getting current user:', e);
+    }
+    return '';
+  };
 
   // Currency formatting function with commas
   const formatCurrency = (amount) => {
@@ -140,33 +160,137 @@ const CustomerLedger = ({
         }
       });
 
-      // Sort entries by date
-      ledgerEntries.sort((a, b) => {
-        if (!a.date || !b.date) return 0;
-        return new Date(a.date) - new Date(b.date);
+      // Group entries by month and year
+      const entriesByMonth = {};
+      const entriesWithoutDate = [];
+      
+      ledgerEntries.forEach(entry => {
+        if (entry.date && entry.date.trim() !== '') {
+          // Parse date - handle MM/DD/YY format
+          let date;
+          if (entry.date.includes('/')) {
+            const parts = entry.date.split('/');
+            if (parts.length === 3) {
+              const month = parseInt(parts[0]) - 1;
+              const day = parseInt(parts[1]);
+              let year = parseInt(parts[2]);
+              // Handle 2-digit year
+              if (year < 100) {
+                year += year < 50 ? 2000 : 1900;
+              }
+              date = new Date(year, month, day);
+            } else {
+              date = new Date(entry.date);
+            }
+          } else {
+            date = new Date(entry.date);
+          }
+          
+          if (!isNaN(date.getTime())) {
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            if (!entriesByMonth[monthKey]) {
+              entriesByMonth[monthKey] = [];
+            }
+            entriesByMonth[monthKey].push(entry);
+          } else {
+            entriesWithoutDate.push(entry);
+          }
+        } else {
+          entriesWithoutDate.push(entry);
+        }
       });
+
+      // Create ordered entries for all 12 months of the current year (or year from first entry)
+      const currentYear = new Date().getFullYear();
+      const orderedEntries = [];
+      
+      // Get all unique years from entries
+      const years = new Set();
+      Object.keys(entriesByMonth).forEach(key => {
+        years.add(parseInt(key.split('-')[0]));
+      });
+      const yearToUse = years.size > 0 ? Math.max(...years) : currentYear;
+      
+      // Create entries for all 12 months, ordered from January to December
+      for (let month = 1; month <= 12; month++) {
+        const monthKey = `${yearToUse}-${String(month).padStart(2, '0')}`;
+        const monthEntries = entriesByMonth[monthKey] || [];
+        
+        // Sort month entries by date
+        monthEntries.sort((a, b) => {
+          if (!a.date || !b.date) return 0;
+          return new Date(a.date) - new Date(b.date);
+        });
+        
+        // Add entries for this month
+        orderedEntries.push(...monthEntries);
+        
+        // If no entries for this month, add empty placeholder rows
+        if (monthEntries.length === 0) {
+          const monthName = new Date(yearToUse, month - 1).toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
+          orderedEntries.push({
+            date: '',
+            particulars: `${monthName} ${yearToUse} BILL`,
+            reference: '',
+            meterReading: '',
+            consumption: '',
+            drBillings: 0,
+            crCollections: 0,
+            amount: 0,
+            balance: 0,
+            isEmpty: true
+          });
+          orderedEntries.push({
+            date: '',
+            particulars: 'PENALTY',
+            reference: '',
+            meterReading: '',
+            consumption: '',
+            drBillings: 0,
+            crCollections: 0,
+            amount: 0,
+            balance: 0,
+            isEmpty: true
+          });
+          orderedEntries.push({
+            date: '',
+            particulars: 'PAYMENT',
+            reference: '',
+            meterReading: '',
+            consumption: '',
+            drBillings: 0,
+            crCollections: 0,
+            amount: 0,
+            balance: 0,
+            isEmpty: true
+          });
+        }
+      }
 
       // Calculate running balance
       let runningBalance = 0;
-      ledgerEntries.forEach(entry => {
-        if (entry.drBillings > 0) {
-          runningBalance += entry.drBillings;
-        }
-        if (entry.crCollections > 0) {
-          runningBalance -= entry.crCollections;
-        }
-        if (entry.amount > 0) {
-          runningBalance -= entry.amount; // penalty payments
+      orderedEntries.forEach(entry => {
+        if (!entry.isEmpty) {
+          if (entry.drBillings > 0) {
+            runningBalance += entry.drBillings;
+          }
+          if (entry.crCollections > 0) {
+            runningBalance -= entry.crCollections;
+          }
+          if (entry.amount > 0) {
+            runningBalance -= entry.amount; // penalty payments
+          }
         }
         entry.balance = runningBalance;
       });
 
       const formattedData = {
         customer: customer,
-        ledgerEntries: ledgerEntries,
+        ledgerEntries: orderedEntries,
         totalBillings: ledgerEntries.reduce((sum, entry) => sum + entry.drBillings, 0),
         totalCollections: ledgerEntries.reduce((sum, entry) => sum + entry.crCollections + entry.amount, 0),
-        currentBalance: runningBalance
+        currentBalance: runningBalance,
+        preparedBy: getCurrentUser()
       };
 
       console.log('Formatted ledger data:', formattedData);
@@ -254,14 +378,13 @@ const CustomerLedger = ({
         entry.meterReading || '',
         entry.consumption || '',
         formatCurrency(entry.drBillings),
-        formatCurrency(entry.crCollections),
-        formatCurrency(entry.amount),
+        formatCurrency(entry.crCollections + entry.amount),
         formatCurrency(entry.balance)
       ]);
       
       // Add table
       doc.autoTable({
-        head: [['Date', 'Particulars', 'Ref.', 'Meter Reading', 'Consumption', 'DR Billings', 'CR Collections', 'Amount', 'Balance']],
+        head: [['Date', 'Particulars', 'Ref.', 'Meter Reading', 'Consumption', 'DR Billings', 'CR Collections', 'Balance']],
         body: tableData,
         startY: 80,
         styles: { fontSize: 8 },
@@ -269,8 +392,7 @@ const CustomerLedger = ({
         columnStyles: {
           5: { halign: 'right' },
           6: { halign: 'right' },
-          7: { halign: 'right' },
-          8: { halign: 'right' }
+          7: { halign: 'right' }
         }
       });
       
@@ -283,7 +405,8 @@ const CustomerLedger = ({
       
       // Add signatories
       doc.setFont('helvetica', 'normal');
-      doc.text('Prepared by: _________________', 20, finalY + 40);
+      const preparedBy = ledgerData.preparedBy || '';
+      doc.text(`Prepared by: ${preparedBy || '_________________'}`, 20, finalY + 40);
       doc.text('Approved by: _________________', 20, finalY + 60);
       
       // Save the PDF
@@ -447,8 +570,8 @@ const CustomerLedger = ({
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold">Ref.</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold">Meter Reading</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold">Consumption (Cubic Meters)</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold">DR Billings</th>
-                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" colSpan="2">CR Collections</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">DR Billings</th>
+                <th className="border border-gray-800 px-2 py-1 text-xs font-bold" rowSpan="2">CR Collections</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs font-bold">Balance</th>
               </tr>
               <tr className="bg-gray-100">
@@ -456,9 +579,6 @@ const CustomerLedger = ({
                 <th className="border border-gray-800 px-2 py-1 text-xs"></th>
                 <th className="border border-gray-800 px-2 py-1 text-xs"></th>
                 <th className="border border-gray-800 px-2 py-1 text-xs"></th>
-                <th className="border border-gray-800 px-2 py-1 text-xs"></th>
-                <th className="border border-gray-800 px-2 py-1 text-xs"></th>
-                <th className="border border-gray-800 px-2 py-1 text-xs">Amount</th>
                 <th className="border border-gray-800 px-2 py-1 text-xs"></th>
                 <th className="border border-gray-800 px-2 py-1 text-xs"></th>
               </tr>
@@ -475,59 +595,13 @@ const CustomerLedger = ({
                     {entry.drBillings > 0 ? formatCurrency(entry.drBillings) : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-semibold">
-                    {entry.amount > 0 ? formatCurrency(entry.amount) : ''}
-                  </td>
-                  <td className="border border-gray-800 px-2 py-1 text-xs text-right font-semibold">
-                    {entry.crCollections > 0 ? formatCurrency(entry.crCollections) : ''}
+                    {entry.crCollections > 0 || entry.amount > 0 ? formatCurrency(entry.crCollections + entry.amount) : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-bold">
                     {entry.balance !== 0 ? formatCurrency(entry.balance) : ''}
                   </td>
                 </tr>
               ))}
-              
-              {/* Empty rows for remaining months */}
-              {Array.from({ length: Math.max(0, 12 - Math.ceil(ledgerData.ledgerEntries.length / 3)) }, (_, i) => {
-                const month = new Date().getMonth() + i + 1;
-                const monthName = new Date(2025, month - 1).toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
-                return (
-                  <React.Fragment key={`empty-${i}`}>
-                    <tr>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs font-semibold">{monthName} 2025 BILL</td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs font-semibold">PENALTY</td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                    </tr>
-                    <tr>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs font-semibold">PAYMENT</td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                      <td className="border border-gray-800 px-2 py-1 text-xs"></td>
-                    </tr>
-                  </React.Fragment>
-                );
-              })}
             </tbody>
           </table>
         </div>
@@ -552,7 +626,11 @@ const CustomerLedger = ({
           {/* Signatories Section */}
           <div className="mt-8 grid grid-cols-2 gap-8 text-sm">
             <div className="text-center">
-              <div className="border-b border-gray-400 w-32 mx-auto mb-2"></div>
+              <div className="border-b border-gray-400 w-48 mx-auto mb-2 h-6">
+                {ledgerData.preparedBy && (
+                  <span className="text-gray-800 font-medium">{ledgerData.preparedBy}</span>
+                )}
+              </div>
               <span className="font-semibold">Prepared by:</span>
             </div>
             <div className="text-center">
