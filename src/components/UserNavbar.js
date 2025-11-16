@@ -164,8 +164,8 @@ const UserNavbar = () => {
         age--;
       }
       
-      // Validate age is reasonable (between 15 and 120)
-      if (age < 15 || age > 120) {
+      // Validate age is reasonable (between 18 and 120)
+      if (age < 18 || age > 120) {
         setCalculatedAge(null);
         setIsSenior(false);
         return;
@@ -213,6 +213,73 @@ const UserNavbar = () => {
     return "Strong";
   };
 
+  // Validate step 0 (Account Info)
+  const validateStep0 = () => {
+    if (!formData.firstName || !formData.lastName || !formData.username || 
+        !formData.birthdate || !formData.meterNumber || !formData.password || !formData.confirmPassword) {
+      setError("Please fill in all required fields in Account Info");
+      return false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return false;
+    }
+
+    if (passwordStrength.score < 3) {
+      setError("Password is too weak. Please meet the requirements.");
+      return false;
+    }
+
+    // Validate age
+    if (formData.birthdate) {
+      const today = new Date();
+      const birthDate = new Date(formData.birthdate);
+      
+      if (birthDate > today) {
+        setError("Birthdate cannot be in the future");
+        return false;
+      }
+      
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      if (age < 18 || age > 120) {
+        setError("You must be at least 18 years old to register");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  // Validate step 1 (Address)
+  const validateStep1 = () => {
+    if (!formData.province || !formData.city || !formData.barangay || !formData.street) {
+      setError("Please fill in all required fields in Address");
+      return false;
+    }
+    return true;
+  };
+
+  // Validate step 2 (Contact)
+  const validateStep2 = () => {
+    if (!formData.phoneNumber) {
+      setError("Please fill in your phone number");
+      return false;
+    }
+
+    if (!validatePhoneNumber(formData.phoneNumber)) {
+      setError("Please enter a valid Philippine phone number (e.g., 09123456789 or +639123456789)");
+      return false;
+    }
+
+    return true;
+  };
+
   const validateForm = () => {
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
@@ -245,8 +312,8 @@ const UserNavbar = () => {
         age--;
       }
       
-      if (age < 15 || age > 120) {
-        setError("You must be at least 15 years old to register");
+      if (age < 18 || age > 120) {
+        setError("You must be at least 18 years old to register");
         return false;
       }
     }
@@ -442,6 +509,14 @@ const UserNavbar = () => {
           ))}
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center">
+            <FiXCircle className="w-5 h-5 mr-2" />
+            {error}
+          </div>
+        )}
+
         {/* Step Content and Navigation */}
         {step < 3 ? (
           <div className="space-y-6">
@@ -501,7 +576,7 @@ const UserNavbar = () => {
                     name="birthdate"
                     value={formData.birthdate}
                     onChange={handleInputChange}
-                    max={new Date(Date.now() - 15 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                    max={new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                     className={`w-full p-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all duration-200 ${
                       formData.birthdate && calculatedAge === null 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -520,7 +595,7 @@ const UserNavbar = () => {
                   {formData.birthdate && calculatedAge === null && (
                     <p className="text-red-500 text-xs mt-1 flex items-center">
                       <FiXCircle className="w-3 h-3 mr-1" />
-                      You must be at least 15 years old to register
+                      You must be at least 18 years old to register
                     </p>
                   )}
                 </div>
@@ -887,7 +962,21 @@ const UserNavbar = () => {
             </button>
             <button
               type="button"
-              onClick={() => setStep(step + 1)}
+              onClick={() => {
+                let isValid = false;
+                if (step === 0) {
+                  isValid = validateStep0();
+                } else if (step === 1) {
+                  isValid = validateStep1();
+                } else if (step === 2) {
+                  isValid = validateStep2();
+                }
+                
+                if (isValid) {
+                  setError("");
+                  setStep(step + 1);
+                }
+              }}
               className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               Next <FiArrowRight className="w-4 h-4" />
