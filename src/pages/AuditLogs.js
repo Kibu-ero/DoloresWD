@@ -118,24 +118,124 @@ const AuditLogs = () => {
     }
     
     const items = [];
+    
+    // Customer information
     if (details.customer_name) {
-      items.push(<div key="customer"><strong>Customer:</strong> {details.customer_name}</div>);
+      items.push(
+        <div key="customer" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Customer:</span>
+          <span className="text-gray-900">{details.customer_name}</span>
+        </div>
+      );
     }
-    if (details.amount_paid || details.amount_due || details.amount) {
-      const amount = details.amount_paid || details.amount_due || details.amount;
-      items.push(<div key="amount"><strong>Amount:</strong> ₱{parseFloat(amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>);
+    
+    // Amount information (prioritize amount_paid, then amount_due, then amount)
+    if (details.amount_paid || details.amount_due || details.amount || details.total_amount) {
+      const amount = details.amount_paid || details.total_amount || details.amount_due || details.amount;
+      items.push(
+        <div key="amount" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">
+            {details.amount_paid || details.total_amount ? 'Amount Paid:' : details.amount_due ? 'Amount Due:' : 'Amount:'}
+          </span>
+          <span className="text-green-600 font-bold">₱{parseFloat(amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+      );
     }
+    
+    // Penalty information
+    if (details.penalty_paid && parseFloat(details.penalty_paid) > 0) {
+      items.push(
+        <div key="penalty" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Penalty:</span>
+          <span className="text-orange-600">₱{parseFloat(details.penalty_paid).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+      );
+    }
+    
+    // Payment method
     if (details.payment_method) {
-      items.push(<div key="method"><strong>Payment Method:</strong> {details.payment_method}</div>);
+      items.push(
+        <div key="method" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Method:</span>
+          <span className="text-gray-900">{details.payment_method}</span>
+        </div>
+      );
     }
+    
+    // Receipt number
     if (details.receipt_number) {
-      items.push(<div key="receipt"><strong>Receipt:</strong> {details.receipt_number}</div>);
+      items.push(
+        <div key="receipt" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Receipt:</span>
+          <span className="text-gray-900 font-mono">{details.receipt_number}</span>
+        </div>
+      );
     }
+    
+    // Bill ID
     if (details.bill_id) {
-      items.push(<div key="bill"><strong>Bill ID:</strong> {details.bill_id}</div>);
+      items.push(
+        <div key="bill" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Bill ID:</span>
+          <span className="text-gray-900 font-mono">#{details.bill_id}</span>
+        </div>
+      );
     }
+    
+    // Status
     if (details.status) {
-      items.push(<div key="status"><strong>Status:</strong> {details.status}</div>);
+      const statusColor = details.status === 'Paid' || details.status === 'approved' ? 'text-green-600' : 
+                          details.status === 'Rejected' || details.status === 'rejected' ? 'text-red-600' : 
+                          'text-gray-600';
+      items.push(
+        <div key="status" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Status:</span>
+          <span className={`${statusColor} font-semibold`}>{details.status}</span>
+        </div>
+      );
+    }
+    
+    // Reference number (for payment submissions)
+    if (details.reference_number) {
+      items.push(
+        <div key="reference" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Reference:</span>
+          <span className="text-gray-900 font-mono">{details.reference_number}</span>
+        </div>
+      );
+    }
+    
+    // Meter readings (for bill creation)
+    if (details.previous_reading !== undefined || details.current_reading !== undefined) {
+      items.push(
+        <div key="readings" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Readings:</span>
+          <span className="text-gray-900">
+            {details.previous_reading} → {details.current_reading}
+            {details.consumption && ` (${details.consumption} cu.m)`}
+          </span>
+        </div>
+      );
+    }
+    
+    // Credit applied
+    if (details.credit_applied && parseFloat(details.credit_applied) > 0) {
+      items.push(
+        <div key="credit" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Credit Applied:</span>
+          <span className="text-blue-600">₱{parseFloat(details.credit_applied).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+      );
+    }
+    
+    // Reviewed by (for approvals/rejections)
+    if (details.reviewed_by) {
+      items.push(
+        <div key="reviewer" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Reviewed by:</span>
+          <span className="text-gray-900">{details.reviewed_by}</span>
+        </div>
+      );
     }
     
     if (items.length === 0) {
@@ -143,7 +243,7 @@ const AuditLogs = () => {
     }
     
     return (
-      <div className="text-xs bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 max-w-[28rem] border-2 border-blue-100 text-gray-700 space-y-1.5 shadow-sm">
+      <div className="text-xs bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-xl p-4 max-w-[32rem] border-2 border-blue-200 text-gray-700 space-y-2 shadow-md hover:shadow-lg transition-shadow">
         {items}
       </div>
     );
@@ -352,7 +452,11 @@ const AuditLogs = () => {
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm">{formatDetails(log.details)}</td>
+                        <td className="px-6 py-4 text-sm">
+                          <div className="min-w-[20rem]">
+                            {formatDetails(log.details)}
+                          </div>
+                        </td>
                       </tr>
                     ))
                   ) : (
