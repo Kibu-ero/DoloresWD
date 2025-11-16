@@ -323,16 +323,17 @@ const CustomerLedger = ({
         balanceMap.set(entry, runningBalance);
       });
       
-      // Apply balances to all entries (including empty ones)
+      // Apply balances to all entries (only for actual transactions, not empty placeholders)
       orderedEntries.forEach(entry => {
         if (balanceMap.has(entry)) {
+          // This is an actual transaction with a date - use its calculated balance
           entry.balance = balanceMap.get(entry);
-        } else if (!entry.isEmpty) {
-          // For entries without dates, use the last known balance
+        } else if (!entry.isEmpty && entry.date && entry.date.trim() !== '') {
+          // For entries with dates but not in balanceMap (shouldn't happen, but just in case)
           entry.balance = runningBalance;
         } else {
-          // For empty placeholder entries, use the balance from the last transaction before them
-          entry.balance = runningBalance;
+          // For empty placeholder entries (BILL, PENALTY, PAYMENT without data), set balance to null/empty
+          entry.balance = null;
         }
       });
 
@@ -650,7 +651,7 @@ const CustomerLedger = ({
                     {entry.crCollections > 0 || entry.amount > 0 ? formatCurrency(entry.crCollections + entry.amount) : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-bold">
-                    {entry.balance !== 0 ? formatCurrency(entry.balance) : ''}
+                    {entry.balance !== null && entry.balance !== undefined && entry.balance !== 0 ? formatCurrency(entry.balance) : ''}
                   </td>
                 </tr>
               ))}
