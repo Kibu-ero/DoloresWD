@@ -9,8 +9,6 @@ const AuditLogs = () => {
   const [filters, setFilters] = useState({
     user_id: "",
     action: "",
-    entity: "",
-    entity_id: "",
     start_date: "",
     end_date: ""
   });
@@ -25,8 +23,6 @@ const AuditLogs = () => {
       
       if (filters.user_id) queryParams.append('user_id', filters.user_id);
       if (filters.action) queryParams.append('action', filters.action);
-      if (filters.entity) queryParams.append('entity', filters.entity);
-      if (filters.entity_id) queryParams.append('entity_id', filters.entity_id);
       if (filters.start_date) queryParams.append('start', filters.start_date);
       if (filters.end_date) queryParams.append('end', filters.end_date);
 
@@ -64,8 +60,6 @@ const AuditLogs = () => {
     setFilters({
       user_id: "",
       action: "",
-      entity: "",
-      entity_id: "",
       start_date: "",
       end_date: ""
     });
@@ -73,43 +67,85 @@ const AuditLogs = () => {
   };
 
   const getActionIcon = (action) => {
-    switch (action.toLowerCase()) {
-      case 'login':
-        return <FiUser className="text-blue-500" />;
-      case 'bill_created':
-      case 'bill_updated':
-        return <FiFileText className="text-green-500" />;
-      case 'payment_submitted':
-      case 'payment_approved':
-      case 'payment_rejected':
-        return <FiActivity className="text-purple-500" />;
-      default:
-        return <FiActivity className="text-gray-500" />;
+    const actionLower = action.toLowerCase();
+    if (actionLower.includes('payment')) {
+      return <FiActivity className="text-purple-500" />;
     }
+    if (actionLower.includes('bill')) {
+      return <FiFileText className="text-green-500" />;
+    }
+    if (actionLower.includes('login')) {
+      return <FiUser className="text-blue-500" />;
+    }
+    return <FiActivity className="text-gray-500" />;
   };
 
   const getActionColor = (action) => {
-    switch (action.toLowerCase()) {
-      case 'login':
-        return 'bg-blue-100 text-blue-800';
-      case 'bill_created':
-        return 'bg-green-100 text-green-800';
-      case 'bill_updated':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'payment_submitted':
-      case 'payment_approved':
-      case 'payment_rejected':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    const actionLower = action.toLowerCase();
+    if (actionLower.includes('payment_processed') || actionLower.includes('payment_approved')) {
+      return 'bg-green-100 text-green-800';
     }
+    if (actionLower.includes('payment_rejected')) {
+      return 'bg-red-100 text-red-800';
+    }
+    if (actionLower.includes('payment_submitted')) {
+      return 'bg-blue-100 text-blue-800';
+    }
+    if (actionLower.includes('bill_created')) {
+      return 'bg-green-100 text-green-800';
+    }
+    if (actionLower.includes('login')) {
+      return 'bg-blue-100 text-blue-800';
+    }
+    return 'bg-gray-100 text-gray-800';
   };
 
-  const renderDetails = (details) => {
+  const formatAction = (action) => {
+    return action
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const formatDetails = (details) => {
     if (!details) return <span className="text-gray-400">—</span>;
-    const json = JSON.stringify(details, null, 2);
+    
+    if (typeof details === 'string') {
+      try {
+        details = JSON.parse(details);
+      } catch {
+        return <span className="text-gray-600">{details}</span>;
+      }
+    }
+    
+    const items = [];
+    if (details.customer_name) {
+      items.push(<div key="customer"><strong>Customer:</strong> {details.customer_name}</div>);
+    }
+    if (details.amount_paid || details.amount_due || details.amount) {
+      const amount = details.amount_paid || details.amount_due || details.amount;
+      items.push(<div key="amount"><strong>Amount:</strong> ₱{parseFloat(amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>);
+    }
+    if (details.payment_method) {
+      items.push(<div key="method"><strong>Payment Method:</strong> {details.payment_method}</div>);
+    }
+    if (details.receipt_number) {
+      items.push(<div key="receipt"><strong>Receipt:</strong> {details.receipt_number}</div>);
+    }
+    if (details.bill_id) {
+      items.push(<div key="bill"><strong>Bill ID:</strong> {details.bill_id}</div>);
+    }
+    if (details.status) {
+      items.push(<div key="status"><strong>Status:</strong> {details.status}</div>);
+    }
+    
+    if (items.length === 0) {
+      return <span className="text-gray-400">—</span>;
+    }
+    
     return (
-      <pre className="text-xs bg-gray-50 rounded p-2 max-w-[28rem] overflow-x-auto border border-gray-200 text-gray-700">{json}</pre>
+      <div className="text-xs bg-gray-50 rounded p-2 max-w-[28rem] border border-gray-200 text-gray-700 space-y-1">
+        {items}
+      </div>
     );
   };
 
@@ -125,16 +161,30 @@ const AuditLogs = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ['Timestamp', 'User ID', 'Action', 'Entity', 'Entity ID'];
+    const headers = ['Timestamp', 'User ID', 'Action', 'Details'];
     const csvContent = [
       headers.join(','),
-      ...auditLogs.map(log => [
-        formatTimestamp(log.timestamp),
-        log.user_id || 'N/A',
-        log.action,
-        log.entity || 'N/A',
-        log.entity_id || 'N/A'
-      ].join(','))
+      ...auditLogs.map(log => {
+        let detailsStr = 'N/A';
+        if (log.details) {
+          const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+          const parts = [];
+          if (details.customer_name) parts.push(`Customer: ${details.customer_name}`);
+          if (details.amount_paid || details.amount_due || details.amount) {
+            const amount = details.amount_paid || details.amount_due || details.amount;
+            parts.push(`Amount: ₱${parseFloat(amount).toFixed(2)}`);
+          }
+          if (details.payment_method) parts.push(`Method: ${details.payment_method}`);
+          if (details.receipt_number) parts.push(`Receipt: ${details.receipt_number}`);
+          detailsStr = parts.join('; ') || 'N/A';
+        }
+        return [
+          formatTimestamp(log.timestamp),
+          log.user_id || 'N/A',
+          log.action,
+          detailsStr
+        ].join(',');
+      })
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -183,7 +233,7 @@ const AuditLogs = () => {
           <FiFilter className="text-gray-500" />
           <h3 className="font-semibold text-gray-900">Filters</h3>
         </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
             <input
@@ -202,29 +252,7 @@ const AuditLogs = () => {
               name="action"
               value={filters.action}
               onChange={handleFilterChange}
-              placeholder="Enter action"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Entity</label>
-            <input
-              type="text"
-              name="entity"
-              value={filters.entity}
-              onChange={handleFilterChange}
-              placeholder="e.g., billing, employees"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Entity ID</label>
-            <input
-              type="text"
-              name="entity_id"
-              value={filters.entity_id}
-              onChange={handleFilterChange}
-              placeholder="Primary key"
+              placeholder="e.g., payment, bill"
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -289,12 +317,6 @@ const AuditLogs = () => {
                       Action
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Entity
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Entity ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Details
                     </th>
                   </tr>
@@ -316,13 +338,11 @@ const AuditLogs = () => {
                           <div className="flex items-center">
                             {getActionIcon(log.action)}
                             <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getActionColor(log.action)}`}>
-                              {log.action}
+                              {formatAction(log.action)}
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.entity || 'system'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.entity_id || '—'}</td>
-                        <td className="px-6 py-4 text-sm">{renderDetails(log.details)}</td>
+                        <td className="px-6 py-4 text-sm">{formatDetails(log.details)}</td>
                       </tr>
                     ))
                   ) : (
