@@ -22,8 +22,8 @@
 /* Print styles for receipts */
 @media print {
   @page {
-    margin: 10mm;
-    size: landscape;
+    margin: 8mm;
+    size: A4 portrait;
   }
   
   body {
@@ -35,12 +35,29 @@
 
   /* Removed rotation fallback; rely on proper @page landscape */
   
-  /* Print ONLY the ledger */
+  /* Print ONLY the ledger, billing sheet, and receipt */
   /* Chrome: hide app siblings via #root to avoid removing modal itself */
-  #root > *:not(.ledger-modal) { display: none !important; }
+  #root > *:not(.ledger-modal):not(.billing-sheet-modal):not(.receipt-overlay) { 
+    display: none !important; 
+  }
+  
+  /* Show receipt overlay when printing */
+  .receipt-overlay {
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: transparent !important;
+    z-index: 9999 !important;
+    padding: 0 !important;
+  }
   .ledger-modal { display: block !important; position: static !important; }
   .ledger-modal * { visibility: visible !important; }
   .ledger-modal .ledger-wrapper { width: 100% !important; max-width: none !important; margin: 0 !important; }
+  
+  /* Billing sheet modal print styles */
+  .billing-sheet-modal { display: block !important; position: static !important; }
+  .billing-sheet-modal * { visibility: visible !important; }
+  .billing-sheet-modal .billing-sheet-container { width: 100% !important; max-width: none !important; margin: 0 !important; }
 
   /* Ensure modal container renders fully in print */
   .ledger-modal > div {
@@ -57,6 +74,22 @@
   }
   .ledger-modal .sticky { display: none !important; }
   .ledger-modal .p-6 { padding: 0 !important; }
+  
+  /* Billing sheet modal container print styles */
+  .billing-sheet-modal > div {
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .billing-sheet-modal .sticky { display: none !important; }
+  .billing-sheet-modal .p-6 { padding: 0 !important; }
   
   .receipt-print-area { width: 100%; }
   
@@ -163,10 +196,36 @@
     margin-top: 0.75rem !important;
   }
   
-  /* Hide receipt modal elements when printing */
+  /* Hide receipt modal header and instructions when printing */
   .receipt-modal-header,
   .receipt-modal-instructions {
     display: none !important;
+  }
+  
+  /* Show receipt overlay when printing (but make it transparent) */
+  .receipt-overlay {
+    background: transparent !important;
+    position: fixed !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 9999 !important;
+  }
+  
+  /* Show receipt modal content when printing */
+  .receipt-overlay > .receipt-container {
+    display: block !important;
+    position: static !important;
+    max-width: none !important;
+    width: 100% !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
   }
   
   /* Ensure receipt content is properly formatted for print */
@@ -175,19 +234,42 @@
     padding: 0 !important;
   }
   
-  /* Hide any background overlays when printing */
-  .receipt-overlay {
-    background: none !important;
-  }
-  
-  /* Ensure receipt container is properly sized for print */
-  .receipt-container {
+  /* Ensure inner receipt container keeps its border and layout */
+  .receipt-print-area .receipt-container {
+    border: 2px solid #1f2937 !important;
     width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     box-shadow: none !important;
-    border: none !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    background: white !important;
+  }
+  
+  /* Hide buttons when printing */
+  button.print\\:hidden,
+  .print\\:hidden {
+    display: none !important;
+  }
+  
+  /* Ensure receipt print area is visible */
+  .receipt-print-area {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Hide all other content when printing receipt */
+  body > *:not(.receipt-overlay) {
+    display: none !important;
+  }
+  
+  /* Show receipt overlay content */
+  .receipt-overlay,
+  .receipt-overlay * {
+    visibility: visible !important;
   }
   
   /* Ledger print styles */
