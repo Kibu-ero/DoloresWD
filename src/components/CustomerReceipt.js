@@ -210,7 +210,7 @@ const CustomerReceipt = ({
       return;
     }
 
-    // Create print HTML with inline styles
+    // Create print HTML with improved styles for better layout
     const printHTML = `
       <!DOCTYPE html>
       <html>
@@ -218,7 +218,7 @@ const CustomerReceipt = ({
           <title>Receipt - ${receiptData?.receiptNumber || 'Print'}</title>
           <style>
             @page {
-              margin: 10mm;
+              margin: 8mm;
               size: A4;
             }
             * {
@@ -231,13 +231,38 @@ const CustomerReceipt = ({
               padding: 0;
               font-family: Arial, sans-serif;
               background: white;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
             .print-hidden {
               display: none !important;
             }
-            * {
+            .receipt-container {
+              width: 100%;
+              max-width: 100%;
+              margin: 0;
+              padding: 0;
+              border: 2px solid #1f2937 !important;
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            .receipt-container * {
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 0;
+              }
+              .receipt-container {
+                margin: 0;
+                padding: 0;
+              }
             }
           </style>
         </head>
@@ -262,8 +287,11 @@ const CustomerReceipt = ({
     }, 250);
   };
 
-  const handleDownload = () => {
-    if (!receiptData) return;
+  const handleDownload = async () => {
+    if (!receiptData) {
+      alert('Receipt data not available. Please wait for the receipt to load.');
+      return;
+    }
 
     try {
       // Create a new PDF document
@@ -449,7 +477,8 @@ const CustomerReceipt = ({
       doc.save(fileName);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error('Error details:', error.message, error.stack);
+      alert(`Failed to generate PDF: ${error.message}. Please try again.`);
     }
   };
 
@@ -541,7 +570,7 @@ const CustomerReceipt = ({
       )}
 
       {/* Receipt Container */}
-      <div ref={receiptRef} className="border-2 border-gray-800 bg-white shadow-lg receipt-container">
+      <div ref={receiptRef} className="border-2 border-gray-800 bg-white shadow-lg receipt-container print:shadow-none print:border-2 print:border-gray-800">
         {/* Header with Logo */}
         <div className="text-center py-4 border-b-2 border-gray-800">
           <div className="flex items-center justify-center mb-2">
