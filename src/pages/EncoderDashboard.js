@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../api/client";
 import { formatCurrency } from '../utils/currencyFormatter';
 import Reports from "./Reports";
-import { FiHome, FiEdit, FiFileText, FiBarChart2, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiEdit, FiFileText, FiBarChart2, FiLogOut } from 'react-icons/fi';
 
 console.log("EncoderDashboard loaded, user:", JSON.parse(localStorage.getItem('user')));
 
@@ -13,7 +13,6 @@ const sidebarLinks = [
   { label: "Input Readings", icon: <FiEdit />, tab: "input" },
   { label: "Generate Bills", icon: <FiFileText />, tab: "bills" },
   { label: "Reports", icon: <FiBarChart2 />, tab: "reports" },
-  { label: "Settings", icon: <FiSettings />, tab: "settings" },
 ];
 
 const EncoderDashboard = () => {
@@ -413,8 +412,6 @@ const EncoderDashboard = () => {
         );
       case 'reports':
         return <Reports />;
-      case 'settings':
-        return <div className="bg-white/80 rounded-xl shadow p-8">Settings Content</div>;
       default:
         return null;
     }
