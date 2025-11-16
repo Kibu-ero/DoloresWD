@@ -641,13 +641,6 @@ const CashierDashboard = () => {
                       ✓ Payment Approved
                     </div>
                     <button
-                      onClick={handlePrint}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center"
-                    >
-                      <FiDownload className="w-4 h-4 mr-2" />
-                      Print Receipt
-                    </button>
-                    <button
                       onClick={() => setShowReceipt(false)}
                       className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100"
                       title="Close Receipt"
@@ -662,22 +655,6 @@ const CashierDashboard = () => {
               
               {/* Receipt Content */}
               <div className="p-6">
-                {/* Print Instructions Banner */}
-                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 receipt-modal-instructions">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                    <div>
-                      <h3 className="font-semibold text-blue-800">Ready to Print!</h3>
-                      <p className="text-sm text-blue-700">
-                        Use the "Print Receipt" button below to print this official receipt. 
-                        The receipt is optimized for printing and will look professional on paper.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
                 <div className="receipt-content">
                   <div className="receipt-print-area" ref={receiptRef}>
                     <CustomerReceipt
