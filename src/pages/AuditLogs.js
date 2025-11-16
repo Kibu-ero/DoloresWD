@@ -143,7 +143,7 @@ const AuditLogs = () => {
     }
     
     return (
-      <div className="text-xs bg-gray-50 rounded p-2 max-w-[28rem] border border-gray-200 text-gray-700 space-y-1">
+      <div className="text-xs bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 max-w-[28rem] border-2 border-blue-100 text-gray-700 space-y-1.5 shadow-sm">
         {items}
       </div>
     );
@@ -203,35 +203,42 @@ const AuditLogs = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Audit Trail</h1>
-          <p className="text-gray-600">Track all system activities and user actions</p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={fetchAuditLogs}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <FiRefreshCw className="w-4 h-4" />
-            Refresh
-          </button>
-          <button
-            onClick={exportToCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <FiDownload className="w-4 h-4" />
-            Export CSV
-          </button>
+      {/* Header with Gradient */}
+      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
+              <FiActivity className="w-8 h-8" />
+              Audit Trail
+            </h1>
+            <p className="text-blue-100">Track all system activities and user actions</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={fetchAuditLogs}
+              className="flex items-center gap-2 px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all duration-200 shadow-lg hover:shadow-xl border border-white/30"
+            >
+              <FiRefreshCw className="w-4 h-4" />
+              Refresh
+            </button>
+            <button
+              onClick={exportToCSV}
+              className="flex items-center gap-2 px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all duration-200 shadow-lg hover:shadow-xl border border-white/30"
+            >
+              <FiDownload className="w-4 h-4" />
+              Export CSV
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <FiFilter className="text-gray-500" />
-          <h3 className="font-semibold text-gray-900">Filters</h3>
+      <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200/50 p-6 backdrop-blur-sm">
+        <div className="flex items-center gap-2 mb-6">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <FiFilter className="text-blue-600 w-5 h-5" />
+          </div>
+          <h3 className="font-bold text-xl text-gray-800">Filters</h3>
         </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
@@ -242,7 +249,7 @@ const AuditLogs = () => {
               value={filters.user_id}
               onChange={handleFilterChange}
               placeholder="Enter user ID"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
             />
           </div>
           <div>
@@ -253,7 +260,7 @@ const AuditLogs = () => {
               value={filters.action}
               onChange={handleFilterChange}
               placeholder="e.g., payment, bill"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
             />
           </div>
           <div>
@@ -263,7 +270,7 @@ const AuditLogs = () => {
               name="start_date"
               value={filters.start_date}
               onChange={handleFilterChange}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
             />
           </div>
           <div>
@@ -273,7 +280,7 @@ const AuditLogs = () => {
               name="end_date"
               value={filters.end_date}
               onChange={handleFilterChange}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
             />
           </div>
         </div>
@@ -288,9 +295,12 @@ const AuditLogs = () => {
       </div>
 
       {/* Audit Logs Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900">Activity Log</h3>
+      <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+          <h3 className="font-bold text-xl text-gray-800 flex items-center gap-2">
+            <FiActivity className="w-5 h-5 text-blue-600" />
+            Activity Log
+          </h3>
         </div>
         
         {loading ? (
@@ -305,26 +315,26 @@ const AuditLogs = () => {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Timestamp
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       User ID
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Action
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Details
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {paginatedLogs.length > 0 ? (
                     paginatedLogs.map((log, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
+                      <tr key={index} className="hover:bg-blue-50/50 transition-colors duration-150 border-l-4 border-transparent hover:border-blue-400">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex items-center">
                             <FiCalendar className="w-4 h-4 text-gray-400 mr-2" />
