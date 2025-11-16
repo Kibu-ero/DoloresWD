@@ -19,11 +19,11 @@
   h1, h2, h3 { font-family: 'Poppins', 'Inter', system-ui, sans-serif; }
 }
 
-/* Print styles for receipts */
+/* Print styles for receipts and ledger */
 @media print {
   @page {
-    margin: 8mm;
-    size: A4 portrait;
+    margin: 10mm;
+    size: landscape;
   }
   
   body {
@@ -38,15 +38,23 @@
   /* Print ONLY the ledger, billing sheet, and receipt */
   /* Chrome: hide app siblings via #root to avoid removing modal itself */
   #root > *:not(.ledger-modal):not(.billing-sheet-modal):not(.receipt-overlay) { 
-    display: none !important; 
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  /* Ensure receipt overlay is visible when printing */
+  #root .receipt-overlay {
+    display: flex !important;
+    visibility: visible !important;
   }
   
   /* Show receipt overlay when printing */
   .receipt-overlay {
     display: flex !important;
+    visibility: visible !important;
     position: fixed !important;
     inset: 0 !important;
-    background: transparent !important;
+    background: white !important;
     z-index: 9999 !important;
     padding: 0 !important;
   }
@@ -202,20 +210,23 @@
     display: none !important;
   }
   
-  /* Show receipt overlay when printing (but make it transparent) */
+  /* Show receipt overlay when printing */
   .receipt-overlay {
-    background: transparent !important;
+    background: white !important;
     position: fixed !important;
     inset: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     z-index: 9999 !important;
+    padding: 0 !important;
+    visibility: visible !important;
   }
   
   /* Show receipt modal content when printing */
   .receipt-overlay > .receipt-container {
     display: block !important;
+    visibility: visible !important;
     position: static !important;
     max-width: none !important;
     width: 100% !important;
@@ -228,6 +239,35 @@
     overflow: visible !important;
   }
   
+  /* Ensure receipt content div is visible and remove padding */
+  .receipt-overlay .receipt-content {
+    display: block !important;
+    visibility: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Remove padding from p-6 class inside receipt container */
+  .receipt-overlay .p-6 {
+    padding: 0 !important;
+  }
+  
+  /* Ensure all text and elements are visible */
+  .receipt-overlay .receipt-container,
+  .receipt-overlay .receipt-container * {
+    visibility: visible !important;
+  }
+  
+  /* Preserve important colors */
+  .receipt-overlay .text-red-600 {
+    color: #dc2626 !important;
+  }
+  
+  .receipt-overlay .text-green-600,
+  .receipt-overlay .text-green-700 {
+    color: #16a34a !important;
+  }
+  
   /* Ensure receipt content is properly formatted for print */
   .receipt-content {
     margin: 0 !important;
@@ -235,7 +275,8 @@
   }
   
   /* Ensure inner receipt container keeps its border and layout */
-  .receipt-print-area .receipt-container {
+  .receipt-print-area .receipt-container,
+  .receipt-print-area > div {
     border: 2px solid #1f2937 !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -245,6 +286,61 @@
     page-break-inside: avoid;
     break-inside: avoid;
     background: white !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Ensure all receipt content is visible */
+  .receipt-print-area,
+  .receipt-print-area * {
+    visibility: visible !important;
+  }
+  
+  /* Ensure text elements are visible with proper colors */
+  .receipt-print-area span,
+  .receipt-print-area div,
+  .receipt-print-area p,
+  .receipt-print-area h1,
+  .receipt-print-area h2,
+  .receipt-print-area h3,
+  .receipt-print-area h4,
+  .receipt-print-area td,
+  .receipt-print-area th,
+  .receipt-print-area label,
+  .receipt-print-area li {
+    visibility: visible !important;
+  }
+  
+  /* Preserve text colors but ensure visibility */
+  .receipt-print-area .text-red-600 {
+    color: #dc2626 !important;
+    visibility: visible !important;
+  }
+  
+  .receipt-print-area .text-green-600,
+  .receipt-print-area .text-green-700 {
+    color: #16a34a !important;
+    visibility: visible !important;
+  }
+  
+  /* Ensure grid and flex layouts work in print */
+  .receipt-print-area .grid {
+    display: grid !important;
+    visibility: visible !important;
+  }
+  
+  .receipt-print-area .flex {
+    display: flex !important;
+    visibility: visible !important;
+  }
+  
+  /* Ensure borders are visible */
+  .receipt-print-area .border,
+  .receipt-print-area .border-2,
+  .receipt-print-area .border-b,
+  .receipt-print-area .border-t {
+    border-color: #1f2937 !important;
+    visibility: visible !important;
   }
   
   /* Hide buttons when printing */
@@ -261,14 +357,78 @@
     padding: 0 !important;
   }
   
-  /* Hide all other content when printing receipt */
-  body > *:not(.receipt-overlay) {
-    display: none !important;
+  /* Receipt-specific page settings (portrait) */
+  .receipt-overlay {
+    page: receipt-page;
   }
   
-  /* Show receipt overlay content */
+  @page receipt-page {
+    margin: 8mm;
+    size: A4 portrait;
+  }
+  
+  /* Show receipt overlay and all its content when printing */
+  .receipt-overlay {
+    display: flex !important;
+    visibility: visible !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: white !important;
+    z-index: 9999 !important;
+    padding: 0 !important;
+  }
+  
+  /* Make sure all content inside receipt overlay is visible */
   .receipt-overlay,
   .receipt-overlay * {
+    visibility: visible !important;
+  }
+  
+  /* Ensure receipt container is visible and properly displayed */
+  .receipt-overlay .receipt-container {
+    display: block !important;
+    visibility: visible !important;
+    background: white !important;
+  }
+  
+  /* Ensure receipt content div is visible */
+  .receipt-overlay .receipt-content {
+    display: block !important;
+    visibility: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Remove padding from p-6 class inside receipt container */
+  .receipt-overlay .p-6 {
+    padding: 0 !important;
+  }
+  
+  /* Ensure receipt print area is visible */
+  .receipt-print-area {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+  }
+  
+  /* Ensure CustomerReceipt component and all its children are visible */
+  .receipt-print-area > * {
+    visibility: visible !important;
+  }
+  
+  /* Ensure all nested elements are visible but preserve their display types */
+  .receipt-print-area * {
+    visibility: visible !important;
+  }
+  
+  /* Ensure grid and flex work in print */
+  .receipt-print-area .grid {
+    display: grid !important;
+    visibility: visible !important;
+  }
+  
+  .receipt-print-area .flex {
+    display: flex !important;
     visibility: visible !important;
   }
   
