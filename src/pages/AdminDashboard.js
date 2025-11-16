@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { formatCurrency } from '../utils/currencyFormatter';
+import { formatUserName } from '../utils/nameFormatter';
 import apiClient from "../api/client";
 import { FiUsers, FiActivity, FiMenu, FiHome, FiFileText, FiBarChart2, FiEdit, FiShield, FiSettings, FiLogOut, FiAlertTriangle } from 'react-icons/fi';
 import Billing from "./Billing";
@@ -217,7 +218,7 @@ const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedTab, setSelectedTab] = useState("Dashboard");
   const user = JSON.parse(localStorage.getItem("user"));
-  const displayName = user && user.firstName ? `${user.firstName} ${user.lastName}` : "User";
+  const displayName = formatUserName(user);
 
   const ContentComponent = contentPanels[selectedTab] || (() => <div className="text-white">Not found</div>);
 
