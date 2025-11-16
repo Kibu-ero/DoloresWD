@@ -267,21 +267,73 @@ const CustomerLedger = ({
         }
       }
 
-      // Calculate running balance
-      let runningBalance = 0;
-      orderedEntries.forEach(entry => {
-        if (!entry.isEmpty) {
-          if (entry.drBillings > 0) {
-            runningBalance += entry.drBillings;
+      // Calculate running balance - need to sort all entries by actual date first
+      // Create a combined list of all entries with dates for proper chronological balance calculation
+      const allEntriesWithDates = orderedEntries.filter(entry => entry.date && entry.date.trim() !== '');
+      
+      // Sort by actual date for balance calculation
+      allEntriesWithDates.sort((a, b) => {
+        if (!a.date || !b.date) return 0;
+        // Parse dates for comparison
+        let dateA, dateB;
+        if (a.date.includes('/')) {
+          const partsA = a.date.split('/');
+          if (partsA.length === 3) {
+            let yearA = parseInt(partsA[2]);
+            if (yearA < 100) yearA += yearA < 50 ? 2000 : 1900;
+            dateA = new Date(yearA, parseInt(partsA[0]) - 1, parseInt(partsA[1]));
+          } else {
+            dateA = new Date(a.date);
           }
-          if (entry.crCollections > 0) {
-            runningBalance -= entry.crCollections;
-          }
-          if (entry.amount > 0) {
-            runningBalance -= entry.amount; // penalty payments
-          }
+        } else {
+          dateA = new Date(a.date);
         }
-        entry.balance = runningBalance;
+        
+        if (b.date.includes('/')) {
+          const partsB = b.date.split('/');
+          if (partsB.length === 3) {
+            let yearB = parseInt(partsB[2]);
+            if (yearB < 100) yearB += yearB < 50 ? 2000 : 1900;
+            dateB = new Date(yearB, parseInt(partsB[0]) - 1, parseInt(partsB[1]));
+          } else {
+            dateB = new Date(b.date);
+          }
+        } else {
+          dateB = new Date(b.date);
+        }
+        
+        return dateA - dateB;
+      });
+      
+      // Calculate running balance chronologically
+      let runningBalance = 0;
+      const balanceMap = new Map(); // Map to store balance for each entry
+      
+      allEntriesWithDates.forEach(entry => {
+        if (entry.drBillings > 0) {
+          runningBalance += entry.drBillings;
+        }
+        if (entry.crCollections > 0) {
+          runningBalance -= entry.crCollections;
+        }
+        if (entry.amount > 0) {
+          runningBalance -= entry.amount; // penalty payments
+        }
+        // Store balance using entry reference or index
+        balanceMap.set(entry, runningBalance);
+      });
+      
+      // Apply balances to all entries (including empty ones)
+      orderedEntries.forEach(entry => {
+        if (balanceMap.has(entry)) {
+          entry.balance = balanceMap.get(entry);
+        } else if (!entry.isEmpty) {
+          // For entries without dates, use the last known balance
+          entry.balance = runningBalance;
+        } else {
+          // For empty placeholder entries, use the balance from the last transaction before them
+          entry.balance = runningBalance;
+        }
       });
 
       const formattedData = {
@@ -407,7 +459,7 @@ const CustomerLedger = ({
       doc.setFont('helvetica', 'normal');
       const preparedBy = ledgerData.preparedBy || '';
       doc.text(`Prepared by: ${preparedBy || '_________________'}`, 20, finalY + 40);
-      doc.text('Approved by: _________________', 20, finalY + 60);
+      doc.text('Approved by: Michael Topson', 20, finalY + 60);
       
       // Save the PDF
       doc.save(`customer-ledger-${ledgerData.customer.first_name}-${ledgerData.customer.last_name}.pdf`);
@@ -634,7 +686,9 @@ const CustomerLedger = ({
               <span className="font-semibold">Prepared by:</span>
             </div>
             <div className="text-center">
-              <div className="border-b border-gray-400 w-32 mx-auto mb-2"></div>
+              <div className="border-b border-gray-400 w-48 mx-auto mb-2 h-6">
+                <span className="text-gray-800 font-medium">Michael Topson</span>
+              </div>
               <span className="font-semibold">Approved by:</span>
             </div>
           </div>
