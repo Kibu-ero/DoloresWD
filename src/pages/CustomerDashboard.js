@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api/client';
 import { formatCurrency } from '../utils/currencyFormatter';
+import { formatName } from '../utils/nameFormatter';
 import { FiLogOut, FiRefreshCw, FiChevronDown, FiChevronUp, FiFileText, FiX, FiCheck } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomerCreditDisplay from '../components/CustomerCreditDisplay';
@@ -26,8 +27,8 @@ const CustomerDashboard = () => {
   const dropdownRef = React.useRef(null);
   const customer = JSON.parse(localStorage.getItem('user'));
   const customerId = customer?.userId;
-  const displayName = customer ? `${customer.firstName} ${customer.lastName}` : 'User';
-  const displayInitial = customer && customer.firstName ? customer.firstName.charAt(0).toUpperCase() : 'U';
+  const displayName = customer ? formatName(customer.firstName, customer.lastName) : 'User';
+  const displayInitial = customer && customer.lastName ? customer.lastName.charAt(0).toUpperCase() : (customer && customer.firstName ? customer.firstName.charAt(0).toUpperCase() : 'U');
   const [viewMode, setViewMode] = useState('current'); // 'current' or 'past'
   const [expandedBillId, setExpandedBillId] = useState(null);
   const [showProofHelp, setShowProofHelp] = useState(false);
