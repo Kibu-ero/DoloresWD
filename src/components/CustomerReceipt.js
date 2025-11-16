@@ -4,6 +4,7 @@ import CustomerService from '../services/customer.service';
 import BillingService from '../services/billing.service';
 import apiClient from '../api/client';
 import jsPDF from 'jspdf';
+import '../styles/receiptPrint.css';
 
 const CustomerReceipt = ({ 
   customerId,
