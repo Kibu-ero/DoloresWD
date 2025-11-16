@@ -92,7 +92,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 via-purple-100 to-pink-100 p-4 relative overflow-hidden">
       {/* Billink Logo/Name in upper left */}
       <motion.div 
         className="absolute top-6 left-6 z-20"
@@ -115,25 +115,34 @@ const Login = () => {
         </button>
       </motion.div>
 
+      {/* Animated Background Pattern */}
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, rgba(59, 130, 246, 0.3) 1px, transparent 0)`,
+          backgroundSize: '40px 40px'
+        }}></div>
+      </div>
+
       {/* Particle Background */}
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+        {[...Array(30)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full bg-blue-300 pointer-events-none"
+            className="absolute rounded-full bg-gradient-to-r from-blue-400 to-purple-400 pointer-events-none"
             style={{
-              width: Math.random() * 10 + 5 + 'px',
-              height: Math.random() * 10 + 5 + 'px',
+              width: Math.random() * 8 + 4 + 'px',
+              height: Math.random() * 8 + 4 + 'px',
               top: Math.random() * 100 + '%',
               left: Math.random() * 100 + '%',
             }}
             animate={{
-              y: [0, (Math.random() - 0.5) * 100],
-              x: [0, (Math.random() - 0.5) * 50],
-              opacity: [0.2, 0.8, 0.2],
+              y: [0, (Math.random() - 0.5) * 150],
+              x: [0, (Math.random() - 0.5) * 100],
+              opacity: [0.1, 0.6, 0.1],
+              scale: [1, 1.5, 1],
             }}
             transition={{
-              duration: Math.random() * 10 + 10,
+              duration: Math.random() * 8 + 8,
               repeat: Infinity,
               repeatType: 'reverse',
               ease: 'easeInOut',
@@ -145,28 +154,42 @@ const Login = () => {
       {/* Floating Light Orbs */}
       <div className="fixed inset-0 overflow-hidden z-0 pointer-events-none">
         <motion.div 
-          className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-300 rounded-full filter blur-[100px] opacity-20 pointer-events-none"
+          className="absolute top-1/4 left-1/4 w-80 h-80 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full filter blur-[120px] opacity-30 pointer-events-none"
           animate={{
-            scale: [1, 1.1, 1],
-            x: [-20, 20, -20],
-            y: [-10, 10, -10]
+            scale: [1, 1.3, 1],
+            x: [-30, 30, -30],
+            y: [-20, 20, -20]
           }}
           transition={{
-            duration: 15,
+            duration: 12,
             repeat: Infinity,
             repeatType: 'reverse',
             ease: 'easeInOut'
           }}
         />
         <motion.div 
-          className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-indigo-300 rounded-full filter blur-[120px] opacity-20 pointer-events-none"
+          className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full filter blur-[140px] opacity-30 pointer-events-none"
+          animate={{
+            scale: [1, 1.4, 1],
+            x: [30, -30, 30],
+            y: [20, -20, 20]
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            repeatType: 'reverse',
+            ease: 'easeInOut'
+          }}
+        />
+        <motion.div 
+          className="absolute top-1/2 right-1/3 w-72 h-72 bg-gradient-to-r from-indigo-400 to-blue-400 rounded-full filter blur-[100px] opacity-25 pointer-events-none"
           animate={{
             scale: [1, 1.2, 1],
             x: [20, -20, 20],
-            y: [10, -10, 10]
+            y: [-15, 15, -15]
           }}
           transition={{
-            duration: 20,
+            duration: 15,
             repeat: Infinity,
             repeatType: 'reverse',
             ease: 'easeInOut'
@@ -181,30 +204,36 @@ const Login = () => {
         className="w-full max-w-md z-30 relative"
       >
         {/* Glass Morphism Card */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200/50 relative">
+        <div className="bg-white/90 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden border-2 border-white/50 relative">
           {/* Glow Effect */}
-          <div className="absolute -inset-1 bg-blue-200/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-3xl blur-xl opacity-30 animate-pulse pointer-events-none"></div>
           
           {/* Premium Header with Logo */}
-          <div className="relative p-8 pb-10 text-center bg-gradient-to-br from-blue-100/80 to-indigo-100/80 border-b border-gray-200/50">
+          <div className="relative p-8 pb-8 text-center bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 border-b-2 border-white/20">
             <div className="flex justify-center mb-4">
-              <img 
-                src="/logodolores.png"
-                alt="Dolores Water District Logo"
-                className="w-20 h-20 rounded-full object-cover border-[3px] border-white/80 shadow-xl"
-              />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              >
+                <img 
+                  src="/logodolores.png"
+                  alt="Dolores Water District Logo"
+                  className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-2xl ring-4 ring-white/20"
+                />
+              </motion.div>
             </div>
-            <div className="pt-8"> {/* Adjusted spacing */}
+            <div className="pt-4">
               <motion.h1 
-                className="text-2xl font-bold text-gray-800 tracking-tight"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                className="text-3xl font-bold text-white tracking-tight mb-2"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
                 Welcome Back
               </motion.h1>
               <motion.p 
-                className="text-gray-600/80 mt-1.5 text-sm font-light"
+                className="text-blue-100 text-base font-medium"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -214,7 +243,7 @@ const Login = () => {
             </div>
           </div>
           {/* Luxury Form */}
-          <div className="p-8 pt-10 relative z-10">
+          <div className="p-8 pt-6 relative z-10 bg-gradient-to-b from-white to-gray-50/50">
             {error && (
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
@@ -235,7 +264,7 @@ const Login = () => {
                   Username
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
@@ -245,7 +274,7 @@ const Login = () => {
                     placeholder="Enter your username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/90 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
                     required
                   />
                 </div>
@@ -260,7 +289,7 @@ const Login = () => {
                   Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
@@ -270,7 +299,7 @@ const Login = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 bg-white/90 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
+                    className="w-full pl-12 pr-12 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
                     required
                   />
                   <button
@@ -320,7 +349,7 @@ const Login = () => {
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full py-3.5 px-4 rounded-lg font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-white transition-all duration-300 shadow-lg ${
+                  className={`w-full py-4 px-4 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-white transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] ${
                     isLoading ? "opacity-90 cursor-not-allowed" : "cursor-pointer"
                   }`}
                 >
@@ -340,17 +369,17 @@ const Login = () => {
             </form>
 
             <motion.div 
-              className="mt-8"
+              className="mt-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
             >
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+                  <div className="w-full border-t-2 border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-white/80 text-gray-600 backdrop-blur-sm rounded-full">
+                  <span className="px-4 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 text-gray-600 backdrop-blur-sm rounded-full font-medium border border-gray-200">
                     New to Dolores Water?
                   </span>
                 </div>
@@ -361,7 +390,7 @@ const Login = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate('/#signup')}
-                  className="w-full py-2.5 px-4 rounded-lg font-medium text-blue-600 hover:text-white border border-gray-300 hover:border-blue-500 bg-white/50 hover:bg-blue-500 transition-all duration-300 backdrop-blur-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 z-10 relative"
+                  className="w-full py-3 px-4 rounded-xl font-semibold text-blue-600 hover:text-white border-2 border-blue-300 hover:border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-500 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 z-10 relative"
                 >
                   Create account
                 </motion.button>
