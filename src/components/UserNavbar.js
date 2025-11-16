@@ -632,84 +632,86 @@ const UserNavbar = () => {
                     </button>
                   </div>
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Password Strength</label>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        passwordStrength.score <= 2 ? 'bg-red-500' : 
-                        passwordStrength.score <= 3 ? 'bg-yellow-500' : 
-                        passwordStrength.score <= 4 ? 'bg-blue-500' : 'bg-green-500'
-                      }`} 
-                      style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
-                    ></div>
+                {formData.password && formData.password.length > 0 && (
+                  <div className="col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Password Strength</label>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          passwordStrength.score <= 2 ? 'bg-red-500' : 
+                          passwordStrength.score <= 3 ? 'bg-yellow-500' : 
+                          passwordStrength.score <= 4 ? 'bg-blue-500' : 'bg-green-500'
+                        }`} 
+                        style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className={`text-xs font-medium ${
+                        passwordStrength.score <= 2 ? 'text-red-600' : 
+                        passwordStrength.score <= 3 ? 'text-yellow-600' : 
+                        passwordStrength.score <= 4 ? 'text-blue-600' : 'text-green-600'
+                      }`}>
+                        {getPasswordStrengthText(passwordStrength.score)}
+                      </span>
+                      <span className="text-xs text-gray-500">{passwordStrength.score}/5</span>
+                    </div>
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-xs font-semibold text-gray-700 mb-2">Requirements:</p>
+                      <ul className="text-xs text-gray-600 space-y-1">
+                        <li className="flex items-center">
+                          {passwordStrength.score >= 1 ? (
+                            <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
+                          ) : (
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                          )}
+                          <span className={passwordStrength.score >= 1 ? "text-green-600" : "text-gray-600"}>
+                            At least 8 characters
+                          </span>
+                        </li>
+                        <li className="flex items-center">
+                          {passwordStrength.score >= 2 ? (
+                            <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
+                          ) : (
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                          )}
+                          <span className={passwordStrength.score >= 2 ? "text-green-600" : "text-gray-600"}>
+                            At least one lowercase letter
+                          </span>
+                        </li>
+                        <li className="flex items-center">
+                          {passwordStrength.score >= 3 ? (
+                            <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
+                          ) : (
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                          )}
+                          <span className={passwordStrength.score >= 3 ? "text-green-600" : "text-gray-600"}>
+                            At least one uppercase letter
+                          </span>
+                        </li>
+                        <li className="flex items-center">
+                          {passwordStrength.score >= 4 ? (
+                            <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
+                          ) : (
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                          )}
+                          <span className={passwordStrength.score >= 4 ? "text-green-600" : "text-gray-600"}>
+                            At least one number
+                          </span>
+                        </li>
+                        <li className="flex items-center">
+                          {passwordStrength.score >= 5 ? (
+                            <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
+                          ) : (
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+                          )}
+                          <span className={passwordStrength.score >= 5 ? "text-green-600" : "text-gray-600"}>
+                            At least one special character
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center mt-1">
-                    <span className={`text-xs font-medium ${
-                      passwordStrength.score <= 2 ? 'text-red-600' : 
-                      passwordStrength.score <= 3 ? 'text-yellow-600' : 
-                      passwordStrength.score <= 4 ? 'text-blue-600' : 'text-green-600'
-                    }`}>
-                      {getPasswordStrengthText(passwordStrength.score)}
-                    </span>
-                    <span className="text-xs text-gray-500">{passwordStrength.score}/5</span>
-                  </div>
-                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs font-semibold text-gray-700 mb-2">Requirements:</p>
-                    <ul className="text-xs text-gray-600 space-y-1">
-                      <li className="flex items-center">
-                        {passwordStrength.score >= 1 ? (
-                          <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                        )}
-                        <span className={passwordStrength.score >= 1 ? "text-green-600" : "text-gray-600"}>
-                          At least 8 characters
-                        </span>
-                      </li>
-                      <li className="flex items-center">
-                        {passwordStrength.score >= 2 ? (
-                          <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                        )}
-                        <span className={passwordStrength.score >= 2 ? "text-green-600" : "text-gray-600"}>
-                          At least one lowercase letter
-                        </span>
-                      </li>
-                      <li className="flex items-center">
-                        {passwordStrength.score >= 3 ? (
-                          <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                        )}
-                        <span className={passwordStrength.score >= 3 ? "text-green-600" : "text-gray-600"}>
-                          At least one uppercase letter
-                        </span>
-                      </li>
-                      <li className="flex items-center">
-                        {passwordStrength.score >= 4 ? (
-                          <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                        )}
-                        <span className={passwordStrength.score >= 4 ? "text-green-600" : "text-gray-600"}>
-                          At least one number
-                        </span>
-                      </li>
-                      <li className="flex items-center">
-                        {passwordStrength.score >= 5 ? (
-                          <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-                        )}
-                        <span className={passwordStrength.score >= 5 ? "text-green-600" : "text-gray-600"}>
-                          At least one special character
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
+                )}
                 <div className="col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password*</label>
                   <div className="relative">
