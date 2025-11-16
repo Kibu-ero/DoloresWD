@@ -261,7 +261,7 @@ const AuditLogs = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ['Timestamp', 'User ID', 'Action', 'Details'];
+    const headers = ['Timestamp', 'User ID', 'Username', 'Action', 'Details'];
     const csvContent = [
       headers.join(','),
       ...auditLogs.map(log => {
@@ -281,6 +281,7 @@ const AuditLogs = () => {
         return [
           formatTimestamp(log.timestamp),
           log.user_id || 'N/A',
+          log.username || 'N/A',
           log.action,
           detailsStr
         ].join(',');
@@ -421,7 +422,7 @@ const AuditLogs = () => {
                       Timestamp
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      User ID
+                      User
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Action
@@ -442,7 +443,12 @@ const AuditLogs = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {log.user_id || 'N/A'}
+                          <div className="flex flex-col">
+                            <span className="font-semibold">ID: {log.user_id || 'N/A'}</span>
+                            {log.username && (
+                              <span className="text-xs text-gray-600 mt-0.5">@{log.username}</span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
