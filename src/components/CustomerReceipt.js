@@ -213,13 +213,19 @@ const CustomerReceipt = ({
 
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       const headHtml = document.head.innerHTML || '';
-      const extraStyles = '<style>@page{size:A4 portrait;margin:8mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:white !important;} .receipt-print-area{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;background:white !important;} .receipt-print-area *{visibility:visible !important;color:#000 !important;} .receipt-modal-header{display:none !important;}</style>';
+      const extraStyles = '<style>@page{size:A4 portrait;margin:8mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:white !important;} .receipt-print-area{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;background:white !important;} .receipt-print-area *{visibility:visible !important;color:#000 !important;} .receipt-modal-header{display:none !important;} button{display:none !important;}</style>';
       doc.open();
       doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${headHtml}${extraStyles}</head><body></body></html>`);
       doc.close();
 
+      // Clone the receipt content and remove any buttons before injecting
+      const clonedNode = receiptNode.cloneNode(true);
+      // Remove all buttons from the cloned content
+      const buttons = clonedNode.querySelectorAll('button');
+      buttons.forEach(btn => btn.remove());
+
       // Inject cloned receipt content
-      doc.body.appendChild(receiptNode.cloneNode(true));
+      doc.body.appendChild(clonedNode);
 
       // Print and cleanup
       setTimeout(() => {
