@@ -13,7 +13,6 @@ import {
   FiCheckCircle,
   FiXCircle,
 } from "react-icons/fi";
-import { useReactToPrint } from 'react-to-print';
 import AdminFileReview from "./AdminFileReview";
 import Reports from "./Reports";
 import { formatCurrency } from '../utils/currencyFormatter';
@@ -182,31 +181,10 @@ const CashierDashboard = () => {
     return applySeniorDiscount ? baseAmount * 0.8 : baseAmount;
   };
 
-  const handlePrint = useReactToPrint({
-    content: () => receiptRef.current,
-    documentTitle: 'Payment Receipt',
-    pageStyle: `
-      @media print {
-        body * {
-          visibility: hidden;
-        }
-        .receipt-print-area, .receipt-print-area * {
-          visibility: visible;
-        }
-        .receipt-print-area {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-        }
-        .receipt-modal-header,
-        .receipt-overlay,
-        .receipt-container {
-          display: none !important;
-        }
-      }
-    `,
-  });
+  const handlePrint = () => {
+    // Use window.print() directly - CSS will handle showing only the receipt
+    window.print();
+  };
 
 
 
