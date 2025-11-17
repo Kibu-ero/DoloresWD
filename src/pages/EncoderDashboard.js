@@ -156,6 +156,32 @@ const EncoderDashboard = () => {
     }
   };
 
+  const checkExistingBill = async (customerId) => {
+    try {
+      const res = await apiClient.get(`/billing/customer/${customerId}`);
+      if (res.data && res.data.length > 0) {
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+        
+        // Check if any bill exists for the current month
+        const existingBill = res.data.find(bill => {
+          if (!bill.created_at) return false;
+          const billDate = new Date(bill.created_at);
+          const billYear = billDate.getFullYear();
+          const billMonth = billDate.getMonth() + 1;
+          return billYear === currentYear && billMonth === currentMonth && bill.status !== 'Cancelled';
+        });
+        
+        return existingBill;
+      }
+      return null;
+    } catch (err) {
+      console.error("Error checking existing bills:", err);
+      return null;
+    }
+  };
+
   const handleInputSubmit = async (e) => {
     e.preventDefault();
     const customer = customers.find(c => c.id === parseInt(selectedCustomer));
@@ -163,6 +189,14 @@ const EncoderDashboard = () => {
       console.error("Customer not found");
       return;
     }
+    
+    // Check if a bill already exists for this customer this month
+    const existingBill = await checkExistingBill(customer.id);
+    if (existingBill) {
+      alert(`A bill for this customer already exists for the current month. Only one bill per customer is allowed per month.\n\nExisting Bill ID: ${existingBill.bill_id || existingBill.id}\nCreated: ${new Date(existingBill.created_at).toLocaleDateString()}`);
+      return;
+    }
+    
     setPendingBill({
       customer,
       previousReading,
@@ -195,7 +229,9 @@ const EncoderDashboard = () => {
         await fetchPreviousReading(selectedCustomer);
       }
     } catch (err) {
-      console.error("Failed to generate bill: " + (err.response?.data?.message || err.message));
+      const errorMessage = err.response?.data?.message || err.message;
+      console.error("Failed to generate bill: " + errorMessage);
+      alert(`Failed to generate bill: ${errorMessage}`);
     } finally {
       setLoading(false);
       setPendingBill(null);
