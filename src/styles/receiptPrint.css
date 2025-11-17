@@ -6,18 +6,19 @@
     size: A4 portrait;
   }
   
-  /* Hide everything except receipt overlay */
-  body > *:not(.receipt-overlay),
-  #root > *:not(.receipt-overlay),
-  body *:not(.receipt-overlay):not(.receipt-overlay *) {
-    display: none !important;
+  /* Hide everything by default */
+  body * {
     visibility: hidden !important;
+  }
+  
+  /* Show receipt overlay and all its children */
+  .receipt-overlay,
+  .receipt-overlay * {
+    visibility: visible !important;
   }
   
   /* Show receipt overlay when printing */
   .receipt-overlay {
-    display: block !important;
-    visibility: visible !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -30,13 +31,45 @@
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
+    display: block !important;
   }
   
   /* Make sure all content inside receipt overlay is visible */
   .receipt-overlay * {
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Preserve background colors for specific elements */
+  .receipt-overlay .bg-white {
+    background-color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .receipt-overlay .bg-gray-100 {
+    background-color: #f3f4f6 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Ensure text is black and visible */
+  .receipt-overlay p,
+  .receipt-overlay span,
+  .receipt-overlay div,
+  .receipt-overlay h1,
+  .receipt-overlay h2,
+  .receipt-overlay h3,
+  .receipt-overlay h4,
+  .receipt-overlay h5,
+  .receipt-overlay h6,
+  .receipt-overlay td,
+  .receipt-overlay th,
+  .receipt-overlay label,
+  .receipt-overlay li {
+    color: #000000 !important;
     visibility: visible !important;
-    color: #000 !important;
-    background: transparent !important;
   }
   
   /* Hide receipt modal header and instructions when printing */
@@ -59,8 +92,18 @@
     padding: 0 !important;
     box-shadow: none !important;
     background: white !important;
+    background-color: white !important;
     border-radius: 0 !important;
     overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Override any dark backgrounds */
+  .receipt-overlay.bg-gray-900,
+  .receipt-overlay[class*="bg-gray"] {
+    background: white !important;
+    background-color: white !important;
   }
   
   /* Ensure receipt content div is visible and remove padding */
@@ -70,11 +113,22 @@
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
+    background: white !important;
+    background-color: white !important;
   }
   
   /* Remove padding from p-6 class inside receipt container */
   .receipt-overlay .p-6 {
     padding: 0 !important;
+  }
+  
+  /* Override opacity classes that might hide content */
+  .receipt-overlay[class*="opacity"],
+  .receipt-overlay .bg-opacity-75,
+  .receipt-overlay .bg-opacity-50 {
+    opacity: 1 !important;
+    background: white !important;
+    background-color: white !important;
   }
   
   /* Ensure receipt print area is visible */
@@ -84,6 +138,8 @@
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: white !important;
+    background-color: white !important;
   }
   
   /* Ensure inner receipt container keeps its border and layout */
@@ -98,6 +154,7 @@
     page-break-inside: avoid;
     break-inside: avoid;
     background: white !important;
+    background-color: white !important;
     display: block !important;
     visibility: visible !important;
   }
@@ -106,11 +163,33 @@
   .receipt-print-area,
   .receipt-print-area * {
     visibility: visible !important;
-    display: revert !important;
+  }
+  
+  /* Explicitly set display types for common elements */
+  .receipt-print-area > div {
+    display: block !important;
+  }
+  
+  .receipt-print-area .grid {
+    display: grid !important;
+  }
+  
+  .receipt-print-area .flex {
+    display: flex !important;
+  }
+  
+  .receipt-print-area .inline,
+  .receipt-print-area .inline-block {
+    display: inline-block !important;
   }
   
   /* Ensure text elements are visible with proper colors */
-  .receipt-print-area span,
+  .receipt-print-area span {
+    visibility: visible !important;
+    color: #000000 !important;
+    display: inline !important;
+  }
+  
   .receipt-print-area div,
   .receipt-print-area p,
   .receipt-print-area h1,
@@ -118,16 +197,31 @@
   .receipt-print-area h3,
   .receipt-print-area h4,
   .receipt-print-area h5,
-  .receipt-print-area h6,
+  .receipt-print-area h6 {
+    visibility: visible !important;
+    color: #000000 !important;
+    display: block !important;
+  }
+  
   .receipt-print-area td,
-  .receipt-print-area th,
+  .receipt-print-area th {
+    visibility: visible !important;
+    color: #000000 !important;
+    display: table-cell !important;
+  }
+  
   .receipt-print-area label,
-  .receipt-print-area li,
+  .receipt-print-area li {
+    visibility: visible !important;
+    color: #000000 !important;
+    display: list-item !important;
+  }
+  
   .receipt-print-area strong,
   .receipt-print-area b {
     visibility: visible !important;
-    color: #000 !important;
-    display: revert !important;
+    color: #000000 !important;
+    font-weight: bold !important;
   }
   
   /* Preserve text colors but ensure visibility */
@@ -169,7 +263,7 @@
   /* Ensure CustomerReceipt component and all its children are visible */
   .receipt-print-area > * {
     visibility: visible !important;
-    display: revert !important;
+    display: block !important;
   }
   
   /* Ensure all nested elements are visible but preserve their display types */
