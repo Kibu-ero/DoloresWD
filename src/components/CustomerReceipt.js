@@ -195,8 +195,41 @@ const CustomerReceipt = ({
   }, [customerId, billId, paymentId, isPrintable, fetchReceiptData]);
 
   const handlePrint = () => {
-    // Use window.print() directly - no new tab
-    window.print();
+    try {
+      const receiptNode = document.querySelector('.receipt-print-area');
+      if (!receiptNode) {
+        window.print();
+        return;
+      }
+      // Use hidden iframe so print keeps current styles and doesn't open a tab
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      const headHtml = document.head.innerHTML || '';
+      const extraStyles = '<style>@page{size:A4 portrait;margin:8mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:white !important;} .receipt-print-area{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;background:white !important;} .receipt-print-area *{visibility:visible !important;color:#000 !important;} .receipt-modal-header{display:none !important;}</style>';
+      doc.open();
+      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${headHtml}${extraStyles}</head><body></body></html>`);
+      doc.close();
+
+      // Inject cloned receipt content
+      doc.body.appendChild(receiptNode.cloneNode(true));
+
+      // Print and cleanup
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => document.body.removeChild(iframe), 100);
+      }, 50);
+    } catch (e) {
+      window.print();
+    }
   };
 
   const handleDownload = async () => {
