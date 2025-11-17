@@ -70,39 +70,46 @@ const UserNavbar = () => {
   // Password strength checker
   const checkPasswordStrength = (password) => {
     const feedback = [];
-    let score = 0;
+    const requirements = {
+      hasLength: password.length >= 8,
+      hasLowercase: /[a-z]/.test(password),
+      hasUppercase: /[A-Z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecial: /[^A-Za-z0-9]/.test(password)
+    };
 
-    if (password.length >= 8) {
+    let score = 0;
+    if (requirements.hasLength) {
       score += 1;
     } else {
       feedback.push("At least 8 characters");
     }
 
-    if (/[a-z]/.test(password)) {
+    if (requirements.hasLowercase) {
       score += 1;
     } else {
       feedback.push("At least one lowercase letter");
     }
 
-    if (/[A-Z]/.test(password)) {
+    if (requirements.hasUppercase) {
       score += 1;
     } else {
       feedback.push("At least one uppercase letter");
     }
 
-    if (/[0-9]/.test(password)) {
+    if (requirements.hasNumber) {
       score += 1;
     } else {
       feedback.push("At least one number");
     }
 
-    if (/[^A-Za-z0-9]/.test(password)) {
+    if (requirements.hasSpecial) {
       score += 1;
     } else {
       feedback.push("At least one special character");
     }
 
-    return { score, feedback };
+    return { score, feedback, requirements };
   };
 
   // Phone number validation for Philippines format (accept 9xxxxxxxxx too)
@@ -190,7 +197,17 @@ const UserNavbar = () => {
     if (formData.password) {
       setPasswordStrength(checkPasswordStrength(formData.password));
     } else {
-      setPasswordStrength({ score: 0, feedback: [] });
+      setPasswordStrength({ 
+        score: 0, 
+        feedback: [],
+        requirements: {
+          hasLength: false,
+          hasLowercase: false,
+          hasUppercase: false,
+          hasNumber: false,
+          hasSpecial: false
+        }
+      });
     }
   }, [formData.password]);
 
@@ -659,52 +676,52 @@ const UserNavbar = () => {
                       <p className="text-xs font-semibold text-gray-700 mb-2">Requirements:</p>
                       <ul className="text-xs text-gray-600 space-y-1">
                         <li className="flex items-center">
-                          {passwordStrength.score >= 1 ? (
+                          {passwordStrength.requirements?.hasLength ? (
                             <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
                           ) : (
                             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
                           )}
-                          <span className={passwordStrength.score >= 1 ? "text-green-600" : "text-gray-600"}>
+                          <span className={passwordStrength.requirements?.hasLength ? "text-green-600" : "text-gray-600"}>
                             At least 8 characters
                           </span>
                         </li>
                         <li className="flex items-center">
-                          {passwordStrength.score >= 2 ? (
+                          {passwordStrength.requirements?.hasLowercase ? (
                             <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
                           ) : (
                             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
                           )}
-                          <span className={passwordStrength.score >= 2 ? "text-green-600" : "text-gray-600"}>
+                          <span className={passwordStrength.requirements?.hasLowercase ? "text-green-600" : "text-gray-600"}>
                             At least one lowercase letter
                           </span>
                         </li>
                         <li className="flex items-center">
-                          {passwordStrength.score >= 3 ? (
+                          {passwordStrength.requirements?.hasUppercase ? (
                             <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
                           ) : (
                             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
                           )}
-                          <span className={passwordStrength.score >= 3 ? "text-green-600" : "text-gray-600"}>
+                          <span className={passwordStrength.requirements?.hasUppercase ? "text-green-600" : "text-gray-600"}>
                             At least one uppercase letter
                           </span>
                         </li>
                         <li className="flex items-center">
-                          {passwordStrength.score >= 4 ? (
+                          {passwordStrength.requirements?.hasNumber ? (
                             <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
                           ) : (
                             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
                           )}
-                          <span className={passwordStrength.score >= 4 ? "text-green-600" : "text-gray-600"}>
+                          <span className={passwordStrength.requirements?.hasNumber ? "text-green-600" : "text-gray-600"}>
                             At least one number
                           </span>
                         </li>
                         <li className="flex items-center">
-                          {passwordStrength.score >= 5 ? (
+                          {passwordStrength.requirements?.hasSpecial ? (
                             <FiCheckCircle className="w-3 h-3 mr-2 text-green-500" />
                           ) : (
                             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
                           )}
-                          <span className={passwordStrength.score >= 5 ? "text-green-600" : "text-gray-600"}>
+                          <span className={passwordStrength.requirements?.hasSpecial ? "text-green-600" : "text-gray-600"}>
                             At least one special character
                           </span>
                         </li>
