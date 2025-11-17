@@ -36,7 +36,14 @@ const UserNavbar = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
-    feedback: []
+    feedback: [],
+    requirements: {
+      hasLength: false,
+      hasLowercase: false,
+      hasUppercase: false,
+      hasNumber: false,
+      hasSpecial: false
+    }
   });
   const [waitingForApproval, setWaitingForApproval] = useState(false);
   const [approvalCheckInterval, setApprovalCheckInterval] = useState(null);
@@ -69,6 +76,20 @@ const UserNavbar = () => {
 
   // Password strength checker
   const checkPasswordStrength = (password) => {
+    if (!password || typeof password !== 'string') {
+      return {
+        score: 0,
+        feedback: [],
+        requirements: {
+          hasLength: false,
+          hasLowercase: false,
+          hasUppercase: false,
+          hasNumber: false,
+          hasSpecial: false
+        }
+      };
+    }
+
     const feedback = [];
     const requirements = {
       hasLength: password.length >= 8,
