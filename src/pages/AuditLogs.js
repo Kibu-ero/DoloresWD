@@ -28,15 +28,23 @@ const AuditLogs = () => {
 
       const response = await apiClient.get(`/audit-logs?${queryParams}`);
       const data = response.data;
-      // Normalize details to object when JSON string
-      const normalized = (Array.isArray(data) ? data : []).map(row => ({
-        ...row,
-        details: (() => {
+      // Normalize details to object when JSON string and extract username if not available
+      const normalized = (Array.isArray(data) ? data : []).map(row => {
+        const details = (() => {
           if (!row.details) return null;
           if (typeof row.details === 'object') return row.details;
           try { return JSON.parse(row.details); } catch { return { raw: String(row.details) }; }
-        })()
-      }));
+        })();
+        
+        // If username is not in the row but is in details, use it
+        const username = row.username || (details && details.username) || null;
+        
+        return {
+          ...row,
+          details,
+          username
+        };
+      });
       setAuditLogs(normalized);
       setTotalPages(Math.ceil(data.length / itemsPerPage));
     } catch (err) {
