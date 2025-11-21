@@ -30,7 +30,7 @@ const AuditLogs = () => {
       const data = response.data;
       // Normalize details to object when JSON string and extract username if not available
       const normalized = (Array.isArray(data) ? data : []).map(row => {
-        const details = (() => {
+        let details = (() => {
           if (!row.details) return null;
           if (typeof row.details === 'object') return row.details;
           try { return JSON.parse(row.details); } catch { return { raw: String(row.details) }; }
@@ -38,6 +38,31 @@ const AuditLogs = () => {
         
         // If username is not in the row but is in details, use it
         const username = row.username || (details && details.username) || null;
+        
+        // If details don't exist but we have user_role, construct details for login entries
+        if (!details && row.action && row.action.toLowerCase() === 'login' && row.user_role) {
+          const role = row.user_role || '';
+          const roleLabels = {
+            'customer': 'Customer',
+            'cashier': 'Cashier',
+            'encoder': 'Encoder',
+            'admin': 'Administrator',
+            'finance_officer': 'Finance Officer',
+            'finance officer': 'Finance Officer'
+          };
+          
+          const userType = roleLabels[role.toLowerCase()] || role
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+          
+          details = {
+            username: username || null,
+            role: role,
+            user_type: userType,
+            description: `${userType} logged in`
+          };
+        }
         
         return {
           ...row,
