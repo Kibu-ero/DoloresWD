@@ -134,8 +134,36 @@ const AuditLogs = () => {
     
     const items = [];
     
-    // Login information (username, role, email)
-    if (details.username) {
+    // Login information - prioritize showing who logged in
+    // Show description first if available (e.g., "Cashier logged in")
+    if (details.description) {
+      items.push(
+        <div key="description" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Action:</span>
+          <span className="text-blue-700 font-semibold">{details.description}</span>
+        </div>
+      );
+    }
+    
+    // Show user type (who logged in: Cashier, Customer, Encoder, etc.)
+    if (details.user_type) {
+      items.push(
+        <div key="user_type" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">User Type:</span>
+          <span className="text-indigo-600 font-semibold">{details.user_type}</span>
+        </div>
+      );
+    }
+    
+    // Show full name if available, otherwise username
+    if (details.name) {
+      items.push(
+        <div key="name" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Name:</span>
+          <span className="text-gray-900">{details.name}</span>
+        </div>
+      );
+    } else if (details.username) {
       items.push(
         <div key="username" className="flex items-center gap-2">
           <span className="font-semibold text-gray-700">Username:</span>
@@ -143,7 +171,9 @@ const AuditLogs = () => {
         </div>
       );
     }
-    if (details.role) {
+    
+    // Show role for technical reference
+    if (details.role && details.role !== details.user_type) {
       items.push(
         <div key="role" className="flex items-center gap-2">
           <span className="font-semibold text-gray-700">Role:</span>
@@ -151,6 +181,8 @@ const AuditLogs = () => {
         </div>
       );
     }
+    
+    // Show email if available
     if (details.email) {
       items.push(
         <div key="email" className="flex items-center gap-2">
