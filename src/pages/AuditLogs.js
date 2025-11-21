@@ -56,6 +56,13 @@ const AuditLogs = () => {
 
   useEffect(() => {
     fetchAuditLogs();
+    
+    // Auto-refresh every 30 seconds to catch new login events
+    const interval = setInterval(() => {
+      fetchAuditLogs();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, [fetchAuditLogs]);
 
   const handleFilterChange = (e) => {
@@ -126,6 +133,32 @@ const AuditLogs = () => {
     }
     
     const items = [];
+    
+    // Login information (username, role, email)
+    if (details.username) {
+      items.push(
+        <div key="username" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Username:</span>
+          <span className="text-gray-900">{details.username}</span>
+        </div>
+      );
+    }
+    if (details.role) {
+      items.push(
+        <div key="role" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Role:</span>
+          <span className="text-blue-600 font-semibold">{details.role}</span>
+        </div>
+      );
+    }
+    if (details.email) {
+      items.push(
+        <div key="email" className="flex items-center gap-2">
+          <span className="font-semibold text-gray-700">Email:</span>
+          <span className="text-gray-900">{details.email}</span>
+        </div>
+      );
+    }
     
     // Customer information
     if (details.customer_name) {
