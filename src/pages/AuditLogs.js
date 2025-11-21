@@ -8,7 +8,7 @@ const AuditLogs = () => {
   const [error, setError] = useState("");
   const [filters, setFilters] = useState({
     user_id: "",
-    action: "",
+    name: "",
     start_date: "",
     end_date: ""
   });
@@ -22,7 +22,7 @@ const AuditLogs = () => {
       const queryParams = new URLSearchParams();
       
       if (filters.user_id) queryParams.append('user_id', filters.user_id);
-      if (filters.action) queryParams.append('action', filters.action);
+      if (filters.name) queryParams.append('name', filters.name);
       if (filters.start_date) queryParams.append('start', filters.start_date);
       if (filters.end_date) queryParams.append('end', filters.end_date);
 
@@ -38,6 +38,9 @@ const AuditLogs = () => {
         
         // If username is not in the row but is in details, use it
         const username = row.username || (details && details.username) || null;
+        
+        // Get full name from row or details
+        const fullName = row.full_name || (details && details.name) || null;
         
         // If details don't exist but we have user_role, construct details for login entries
         if (!details && row.action && row.action.toLowerCase() === 'login' && row.user_role) {
@@ -57,10 +60,16 @@ const AuditLogs = () => {
             .join(' ');
           
           details = {
-            username: username || null,
-            role: role,
-            user_type: userType,
+            name: fullName || username || null,
             description: `${userType} logged in`
+          };
+        } else if (details && !details.name && fullName) {
+          // If details exist but don't have name, add it
+          details.name = fullName;
+        } else if (!details && fullName) {
+          // If no details but we have full name, create basic details
+          details = {
+            name: fullName
           };
         }
         
@@ -99,7 +108,7 @@ const AuditLogs = () => {
   const clearFilters = () => {
     setFilters({
       user_id: "",
-      action: "",
+      name: "",
       start_date: "",
       end_date: ""
     });
@@ -159,7 +168,7 @@ const AuditLogs = () => {
     
     const items = [];
     
-    // Login information - prioritize showing who logged in
+    // Login information - show only Action and Name (last name first)
     // Show description first if available (e.g., "Cashier logged in")
     if (details.description) {
       items.push(
@@ -170,49 +179,23 @@ const AuditLogs = () => {
       );
     }
     
-    // Show user type (who logged in: Cashier, Customer, Encoder, etc.)
-    if (details.user_type) {
-      items.push(
-        <div key="user_type" className="flex items-center gap-2">
-          <span className="font-semibold text-gray-700">User Type:</span>
-          <span className="text-indigo-600 font-semibold">{details.user_type}</span>
-        </div>
-      );
-    }
-    
-    // Show full name if available, otherwise username
+    // Show full name (last name first) if available
     if (details.name) {
+      // Format name as "Last Name, First Name"
+      const nameParts = details.name.trim().split(/\s+/);
+      let formattedName = details.name;
+      
+      if (nameParts.length >= 2) {
+        // If there are at least 2 parts, assume last part is last name
+        const firstName = nameParts.slice(0, -1).join(' ');
+        const lastName = nameParts[nameParts.length - 1];
+        formattedName = `${lastName}, ${firstName}`;
+      }
+      
       items.push(
         <div key="name" className="flex items-center gap-2">
           <span className="font-semibold text-gray-700">Name:</span>
-          <span className="text-gray-900">{details.name}</span>
-        </div>
-      );
-    } else if (details.username) {
-      items.push(
-        <div key="username" className="flex items-center gap-2">
-          <span className="font-semibold text-gray-700">Username:</span>
-          <span className="text-gray-900">{details.username}</span>
-        </div>
-      );
-    }
-    
-    // Show role for technical reference
-    if (details.role && details.role !== details.user_type) {
-      items.push(
-        <div key="role" className="flex items-center gap-2">
-          <span className="font-semibold text-gray-700">Role:</span>
-          <span className="text-blue-600 font-semibold">{details.role}</span>
-        </div>
-      );
-    }
-    
-    // Show email if available
-    if (details.email) {
-      items.push(
-        <div key="email" className="flex items-center gap-2">
-          <span className="font-semibold text-gray-700">Email:</span>
-          <span className="text-gray-900">{details.email}</span>
+          <span className="text-gray-900">{formattedName}</span>
         </div>
       );
     }
@@ -452,13 +435,13 @@ const AuditLogs = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Action</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
               type="text"
-              name="action"
-              value={filters.action}
+              name="name"
+              value={filters.name}
               onChange={handleFilterChange}
-              placeholder="e.g., payment, bill"
+              placeholder="Enter name to search"
               className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 bg-white shadow-sm hover:shadow-md"
             />
           </div>
