@@ -9,8 +9,17 @@ const CustomerCreditDisplay = ({ customerId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Check if user is actually a customer before fetching credit info
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userRole = (user.role || '').toString().trim().toLowerCase().replace(/\s+/g, '_');
+  const isCustomer = userRole === 'customer';
+
   const fetchCreditInfo = useCallback(async () => {
-    if (!customerId) return;
+    // Only fetch if customerId exists AND user is a customer
+    if (!customerId || !isCustomer) {
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
@@ -28,11 +37,16 @@ const CustomerCreditDisplay = ({ customerId }) => {
     } finally {
       setLoading(false);
     }
-  }, [customerId]);
+  }, [customerId, isCustomer]);
 
   useEffect(() => {
     fetchCreditInfo();
   }, [fetchCreditInfo]);
+
+  // Don't render anything if user is not a customer
+  if (!isCustomer) {
+    return null;
+  }
 
   if (loading) {
     return (
