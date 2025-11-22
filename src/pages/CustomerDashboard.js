@@ -36,6 +36,30 @@ const CustomerDashboard = () => {
   const [showPaymentConfirmModal, setShowPaymentConfirmModal] = useState(false);
   const [pendingPaymentData, setPendingPaymentData] = useState(null);
 
+  // Verify user is actually a customer - redirect if not
+  React.useEffect(() => {
+    const normalizeRole = (r) => (r || '').toString().trim().toLowerCase().replace(/\s+/g, '_');
+    const userRole = normalizeRole(customer?.role || localStorage.getItem('role') || '');
+    
+    console.log('CustomerDashboard - Checking role:', userRole);
+    
+    if (userRole !== 'customer') {
+      console.error('CustomerDashboard - User is not a customer! Role:', userRole);
+      // Redirect based on actual role
+      const roleToPath = {
+        'admin': '/dashboard',
+        'cashier': '/cashier-dashboard',
+        'encoder': '/encoder-dashboard',
+        'finance_officer': '/finance-dashboard',
+        'financeofficer': '/finance-dashboard'
+      };
+      const redirectPath = roleToPath[userRole] || '/unauthorized';
+      console.log('CustomerDashboard - Redirecting to:', redirectPath);
+      window.location.href = redirectPath;
+      return;
+    }
+  }, [customer]);
+
   const fetchBills = useCallback(async (showNotif = false) => {
     try {
       if (!customerId) {
