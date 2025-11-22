@@ -5,7 +5,10 @@ import apiClient from "../api/client";
 function ProtectedRoute({ allowedRoles }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const role = user.role;
+  // Get role from user object or fallback to localStorage role, then normalize
+  const rawRole = user.role || localStorage.getItem("role") || "";
+  const normalizeRole = (r) => (r || '').toString().trim().toLowerCase().replace(/\s+/g, '_');
+  const role = normalizeRole(rawRole);
   const token = localStorage.getItem("token");
   const location = useLocation();
 
@@ -67,19 +70,19 @@ function ProtectedRoute({ allowedRoles }) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // Robust normalization for role comparison
-  const normalizeRole = (r) => (r || '').toLowerCase().replace(/\s+/g, '_').trim();
-  const normalizedRole = normalizeRole(role);
+  // Robust normalization for role comparison (role is already normalized above)
   const normalizedAllowedRoles = allowedRoles.map(normalizeRole);
 
   // Extra debug logging
-  console.log("Raw role from localStorage:", role);
-  console.log("Normalized role:", normalizedRole);
-  console.log("Allowed roles:", allowedRoles);
-  console.log("Normalized allowed roles:", normalizedAllowedRoles);
-  console.log("Includes?", normalizedAllowedRoles.includes(normalizedRole));
+  console.log("ProtectedRoute - Raw role from localStorage:", rawRole);
+  console.log("ProtectedRoute - Normalized role:", role);
+  console.log("ProtectedRoute - Allowed roles:", allowedRoles);
+  console.log("ProtectedRoute - Normalized allowed roles:", normalizedAllowedRoles);
+  console.log("ProtectedRoute - Includes?", normalizedAllowedRoles.includes(role));
+  console.log("ProtectedRoute - Current path:", location.pathname);
 
-  if (!normalizedAllowedRoles.includes(normalizedRole)) {
+  if (!normalizedAllowedRoles.includes(role)) {
+    console.error("ProtectedRoute - Access denied. Role:", role, "not in allowed roles:", normalizedAllowedRoles);
     return <Navigate to="/unauthorized" replace />;
   }
   return <Outlet />;
