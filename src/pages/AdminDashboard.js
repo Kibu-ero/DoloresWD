@@ -68,12 +68,12 @@ const DashboardContent = ({ displayName }) => {
   return (
     <>
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white/70 rounded-xl shadow p-4 gap-4 md:gap-0">
-        <h2 className="text-2xl md:text-3xl font-bold text-blue-900">Welcome, {displayName}</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-brand-700">Welcome, {displayName}</h2>
         <div className="flex items-center space-x-3">
-          <span className="bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold shadow">
+          <span className="bg-gradient-to-r from-brand-500 to-brand-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold shadow">
             {displayName.charAt(0)}
           </span>
-          <span className="text-blue-900 font-semibold">{displayName}</span>
+          <span className="text-brand-700 font-semibold">{displayName}</span>
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
@@ -81,7 +81,7 @@ const DashboardContent = ({ displayName }) => {
           className="bg-white/80 p-6 rounded-xl shadow flex items-center hover:shadow-lg transition cursor-pointer"
           onClick={() => setOpenModal('employees')}
         >
-          <FiUsers className="text-blue-600 text-3xl mr-4" />
+          <FiUsers className="text-brand-600 text-3xl mr-4" />
           <div>
             <p className="text-gray-500">Total Employees</p>
             <p className="text-2xl font-bold">{stats.employees}</p>
@@ -144,7 +144,7 @@ const DashboardContent = ({ displayName }) => {
         </div>
       )}
       <div className="bg-white/80 rounded-xl shadow p-4 sm:p-8 overflow-x-auto mt-8">
-        <h3 className="text-lg font-bold mb-2 text-blue-900">Pending User Registrations</h3>
+        <h3 className="text-lg font-bold mb-2 text-brand-700">Pending User Registrations</h3>
         {approveMsg && <div className="mb-2 text-green-700 font-semibold">{approveMsg}</div>}
         {loadingPending ? (
           <div>Loading...</div>
@@ -183,7 +183,7 @@ const DashboardContent = ({ displayName }) => {
         )}
       </div>
       <div className="bg-white/80 rounded-xl shadow p-4 sm:p-8 overflow-x-auto">
-        <h3 className="text-xl font-semibold text-blue-800 mb-4">System Overview</h3>
+        <h3 className="text-xl font-semibold text-brand-700 mb-4">System Overview</h3>
         <p className="text-gray-700">
           This is your admin dashboard. Use the sidebar to navigate between different management sections.
         </p>
@@ -226,7 +226,7 @@ const AdminDashboard = () => {
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <aside
-        className={`transition-all duration-300 bg-[#232946] flex flex-col min-h-full px-2 shadow-2xl relative z-10
+        className={`transition-all duration-300 bg-gradient-to-b from-brand-600 via-brand-500 to-brand-400 flex flex-col min-h-full px-2 shadow-2xl relative z-10
           ${sidebarOpen ? "w-56 md:w-64" : "w-20 md:w-24"}
         `}
       >
@@ -269,7 +269,7 @@ const AdminDashboard = () => {
                 key={link.label}
                 onClick={() => setSelectedTab(link.label)}
                 className={`group flex items-center w-full py-3 px-2 rounded-xl transition-all relative
-                  ${selectedTab === link.label ? "bg-blue-600 text-white shadow-lg" : "hover:bg-[#2d3250] text-gray-400"}
+                  ${selectedTab === link.label ? "bg-white text-brand-700 shadow-lg" : "hover:bg-brand-300/30 text-white"}
                 `}
                 title={link.label}
               >
@@ -283,7 +283,7 @@ const AdminDashboard = () => {
                   {link.label}
                 </span>
                 {selectedTab === link.label && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-400 rounded-r-lg"></span>
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-200 rounded-r-lg"></span>
                 )}
               </button>
             ))}
@@ -315,7 +315,7 @@ const AdminDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300 min-h-screen flex flex-col">
+      <main className="flex-1 p-6 bg-gradient-to-br from-brand-50 via-blue-50 to-brand-100 min-h-screen flex flex-col">
         <div className="flex-1 flex flex-col justify-start">
           <ContentComponent displayName={displayName} />
         </div>
