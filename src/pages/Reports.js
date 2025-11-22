@@ -52,13 +52,17 @@ const REPORTS_BY_ROLE = {
 };
 
 const Reports = () => {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const role = user?.role || 'customer';
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  // Normalize role for consistency
+  const normalizeRole = (r) => (r || '').toString().trim().toLowerCase().replace(/\s+/g, '_');
+  const rawRole = user?.role || localStorage.getItem('role') || 'customer';
+  const role = normalizeRole(rawRole);
   const token = localStorage.getItem('token');
   
   console.log('Reports component - User info:', user);
   console.log('Reports component - Token exists:', !!token);
-  console.log('Reports component - Role:', role);
+  console.log('Reports component - Raw role:', rawRole);
+  console.log('Reports component - Normalized role:', role);
   
   const availableReports = REPORTS_BY_ROLE[role] || REPORTS_BY_ROLE['customer'];
   const [activeTab, setActiveTab] = useState(availableReports[0].key);
@@ -170,8 +174,8 @@ const Reports = () => {
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
         return {
-          from: weekStart.toISOString().split('T')[0],
-          to: weekEnd.toISOString().split('T')[0]
+          from: formatDateLocal(weekStart),
+          to: formatDateLocal(weekEnd)
         };
       
       case 'last-week':
@@ -180,8 +184,8 @@ const Reports = () => {
         const lastWeekEnd = new Date(lastWeekStart);
         lastWeekEnd.setDate(lastWeekStart.getDate() + 6); // Last week end
         return {
-          from: lastWeekStart.toISOString().split('T')[0],
-          to: lastWeekEnd.toISOString().split('T')[0]
+          from: formatDateLocal(lastWeekStart),
+          to: formatDateLocal(lastWeekEnd)
         };
       
       case 'this-month':
@@ -196,8 +200,8 @@ const Reports = () => {
         const lastMonthStart = new Date(year, month - 1, 1);
         const lastMonthEnd = new Date(year, month, 0);
         return {
-          from: lastMonthStart.toISOString().split('T')[0],
-          to: lastMonthEnd.toISOString().split('T')[0]
+          from: formatDateLocal(lastMonthStart),
+          to: formatDateLocal(lastMonthEnd)
         };
       
       case 'this-quarter':
@@ -205,40 +209,40 @@ const Reports = () => {
         const quarterStart = new Date(year, quarter * 3, 1);
         const quarterEnd = new Date(year, quarter * 3 + 3, 0);
         return {
-          from: quarterStart.toISOString().split('T')[0],
-          to: quarterEnd.toISOString().split('T')[0]
+          from: formatDateLocal(quarterStart),
+          to: formatDateLocal(quarterEnd)
         };
       
       case 'this-year':
         const yearStart = new Date(year, 0, 1);
         const yearEnd = new Date(year, 11, 31);
         return {
-          from: yearStart.toISOString().split('T')[0],
-          to: yearEnd.toISOString().split('T')[0]
+          from: formatDateLocal(yearStart),
+          to: formatDateLocal(yearEnd)
         };
       
       case 'last-year':
         const lastYearStart = new Date(year - 1, 0, 1);
         const lastYearEnd = new Date(year - 1, 11, 31);
         return {
-          from: lastYearStart.toISOString().split('T')[0],
-          to: lastYearEnd.toISOString().split('T')[0]
+          from: formatDateLocal(lastYearStart),
+          to: formatDateLocal(lastYearEnd)
         };
       
       case 'last-30-days':
         const thirtyDaysAgo = new Date(today);
         thirtyDaysAgo.setDate(date - 30);
         return {
-          from: thirtyDaysAgo.toISOString().split('T')[0],
-          to: today.toISOString().split('T')[0]
+          from: formatDateLocal(thirtyDaysAgo),
+          to: formatDateLocal(today)
         };
       
       case 'last-90-days':
         const ninetyDaysAgo = new Date(today);
         ninetyDaysAgo.setDate(date - 90);
         return {
-          from: ninetyDaysAgo.toISOString().split('T')[0],
-          to: today.toISOString().split('T')[0]
+          from: formatDateLocal(ninetyDaysAgo),
+          to: formatDateLocal(today)
         };
       
       default:
@@ -938,7 +942,7 @@ const Reports = () => {
 
       {/* Billing Sheet Modal */}
       {showBillingSheet && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50 p-4">
+        <div className="billing-sheet-modal fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg max-w-full w-full max-h-[95vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
               <div className="flex items-center justify-between">
