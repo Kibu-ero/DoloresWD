@@ -58,31 +58,43 @@ const Login = () => {
       const { token, userId, username: userUsername, email: userEmail, role, firstName, lastName } = response.data;
       if (!token || !role) throw new Error("Token or role not received from backend");
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
-      localStorage.setItem("user", JSON.stringify({ userId, username: userUsername, email: userEmail, role, firstName, lastName }));
+      // Normalize role: trim whitespace, convert to lowercase, replace spaces with underscores
+      const normalizedRole = (role || '').toString().trim().toLowerCase().replace(/\s+/g, '_');
+      
+      console.log("Login success - Raw role:", role);
+      console.log("Login success - Normalized role:", normalizedRole);
 
-      console.log("Login success, role:", role);
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", normalizedRole);
+      localStorage.setItem("user", JSON.stringify({ userId, username: userUsername, email: userEmail, role: normalizedRole, firstName, lastName }));
+
       console.log("User in localStorage:", JSON.parse(localStorage.getItem('user')));
 
       // Replace history so the Back button won't return to the login page
-      switch (role.toLowerCase()) {
+      switch (normalizedRole) {
         case "admin":
+          console.log("Navigating to admin dashboard");
           navigate("/dashboard", { replace: true });
           break;
         case "cashier":
+          console.log("Navigating to cashier dashboard");
           navigate("/cashier-dashboard", { replace: true });
           break;
         case "customer":
+          console.log("Navigating to customer dashboard");
           navigate("/customer-dashboard", { replace: true });
           break;
         case "encoder":
+          console.log("Navigating to encoder dashboard");
           navigate("/encoder-dashboard", { replace: true });
           break;
         case "finance_officer":
+        case "financeofficer":
+          console.log("Navigating to finance dashboard");
           navigate("/finance-dashboard", { replace: true });
           break;
         default:
+          console.error("Unknown role:", normalizedRole, "Raw role was:", role);
           navigate("/unauthorized", { replace: true });
       }
     } catch (error) {
