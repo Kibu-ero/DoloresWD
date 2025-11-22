@@ -250,17 +250,17 @@ const EncoderDashboard = () => {
           <>
             {/* Header only for dashboard */}
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white/70 rounded-xl shadow p-4 gap-4 md:gap-0">
-              <h2 className="text-2xl md:text-3xl font-bold text-blue-900">Welcome, {displayName}</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-brand-700">Welcome, {displayName}</h2>
               <div className="flex items-center space-x-3">
-                <span className="bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold shadow">
+                <span className="bg-gradient-to-r from-brand-500 to-brand-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold shadow">
                   {displayName.charAt(0)}
                 </span>
-                <span className="text-blue-900 font-semibold">{displayName}</span>
+                <span className="text-brand-700 font-semibold">{displayName}</span>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white/80 p-6 rounded-xl shadow flex items-center">
-                <FiEdit className="text-blue-600 text-3xl mr-4" />
+                <FiEdit className="text-brand-600 text-3xl mr-4" />
                 <div>
                   <p className="text-gray-500">Readings Entered</p>
                   <p className="text-2xl font-bold">12</p>
@@ -282,7 +282,7 @@ const EncoderDashboard = () => {
               </div>
             </div>
             <div className="bg-white/80 rounded-xl shadow p-4 sm:p-8 overflow-x-auto">
-              <h3 className="text-xl font-semibold text-blue-800 mb-4">Encoder Overview</h3>
+              <h3 className="text-xl font-semibold text-brand-700 mb-4">Encoder Overview</h3>
               <p className="text-gray-700">
                 Welcome to BillLink Encoder. Use the sidebar to input readings, generate bills, and view reports.
               </p>
@@ -300,7 +300,7 @@ const EncoderDashboard = () => {
                   <select
                     value={selectedBarangay}
                     onChange={e => setSelectedBarangay(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   >
                     {barangays.map(brgy => (
                       <option key={brgy} value={brgy}>{brgy}</option>
@@ -318,7 +318,7 @@ const EncoderDashboard = () => {
                     }}
                     onFocus={() => setShowCustomerDropdown(true)}
                     placeholder="Type name or meter number..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   />
                   {showCustomerDropdown && customerSearch && filteredCustomers.length > 0 && (
                     <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
@@ -384,7 +384,7 @@ const EncoderDashboard = () => {
                   type="date"
                   value={dueDate || calculateDueDate()}
                   onChange={e => setDueDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   required
                   readOnly
                 />
@@ -394,7 +394,7 @@ const EncoderDashboard = () => {
               </div>
               <button
                 type="submit"
-                className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
+                className="w-full py-3 bg-gradient-to-r from-brand-500 to-brand-700 text-white rounded-lg font-semibold hover:from-brand-600 hover:to-brand-800 transition-all duration-200"
                 disabled={loading}
               >
                 {loading ? 'Generating Bill...' : 'Generate Bill'}
@@ -455,9 +455,9 @@ const EncoderDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300">
+    <div className="flex h-screen bg-gradient-to-br from-brand-50 via-blue-50 to-brand-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-gradient-to-b from-blue-800 to-blue-600 shadow-lg flex flex-col rounded-r-3xl">
+      <aside className="w-64 bg-gradient-to-b from-brand-600 via-brand-500 to-brand-400 shadow-lg flex flex-col rounded-r-3xl">
         <div className="p-6 border-b border-blue-700">
           <h1 className="text-2xl font-bold text-white tracking-wide">BillLink Encoder</h1>
         </div>
@@ -468,8 +468,8 @@ const EncoderDashboard = () => {
               onClick={() => setActiveTab(link.tab)}
               className={`w-full flex items-center px-6 py-3 my-1 rounded-l-full transition-all
                 ${isActive(link.tab)
-                  ? "bg-white text-blue-800 shadow font-bold"
-                  : "text-blue-100 hover:bg-blue-700 hover:text-white"}
+                  ? "bg-white text-brand-700 shadow font-bold"
+                  : "text-white hover:bg-brand-300/30 hover:text-white"}
               `}
             >
               <span className="mr-3 text-lg">{link.icon}</span>
@@ -479,7 +479,7 @@ const EncoderDashboard = () => {
         </nav>
         <button
           onClick={handleLogout}
-          className="flex items-center px-6 py-3 text-red-200 hover:bg-red-600 border-t border-blue-700"
+          className="flex items-center px-6 py-3 text-red-100 hover:bg-red-600/30 border-t border-brand-300/30"
         >
           <FiLogOut className="mr-3" /> Logout
         </button>
@@ -492,7 +492,7 @@ const EncoderDashboard = () => {
         {showConfirmModal && pendingBill && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-2 sm:p-0">
             <div className="bg-white rounded-xl shadow-xl p-4 sm:p-8 max-w-md w-full relative">
-              <h3 className="text-xl font-bold text-blue-900 mb-4">Confirm Bill Generation</h3>
+              <h3 className="text-xl font-bold text-brand-700 mb-4">Confirm Bill Generation</h3>
               <div className="mb-4 space-y-2 text-gray-800">
                 <div><span className="font-semibold">Customer:</span> {pendingBill.customer.last_name && pendingBill.customer.first_name ? `${pendingBill.customer.last_name}, ${pendingBill.customer.first_name}` : pendingBill.customer.name}</div>
                 <div><span className="font-semibold">Meter Number:</span> {pendingBill.customer.meter_number}</div>
@@ -509,7 +509,7 @@ const EncoderDashboard = () => {
                 </button>
                 <button
                   onClick={handleConfirmGenerate}
-                  className="px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition-colors"
+                  className="px-5 py-2 rounded-lg bg-gradient-to-r from-brand-500 to-brand-700 text-white font-semibold shadow hover:from-brand-600 hover:to-brand-800 transition-all"
                   disabled={loading}
                 >
                   {loading ? 'Generating...' : 'Confirm'}
