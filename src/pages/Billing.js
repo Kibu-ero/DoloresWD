@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/client';
-import { FiSearch, FiCheckCircle, FiArchive } from "react-icons/fi";
+import { FiSearch, FiCheckCircle, FiArchive, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { formatCurrency } from '../utils/currencyFormatter';
 import NotificationModal from '../components/common/NotificationModal';
 
@@ -67,6 +67,7 @@ const Billing = () => {
 
   const [showConfirmAddModal, setShowConfirmAddModal] = useState(false);
   const [pendingBillData, setPendingBillData] = useState(null);
+  const [expandedCustomerId, setExpandedCustomerId] = useState(null); // Track which customer row is expanded
   
   // Notification modal state
   const [notificationModal, setNotificationModal] = useState({
@@ -530,78 +531,161 @@ const Billing = () => {
             </thead>
             <tbody className="bg-white/30 divide-y divide-gray-200">
               {uniqueCustomers.length > 0 ? (
-                paginatedCustomers.map((customer) => (
-                  <tr key={customer.customer_id} className="hover:bg-blue-50 transition-colors duration-150">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {customer.last_name && customer.first_name
-                          ? `${customer.last_name}, ${customer.first_name}`.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
-                          : customer.customer_name
-                            ? (() => {
-                                const parts = customer.customer_name.split(" ");
-                                if (parts.length >= 2) {
-                                  return `${parts[1]}, ${parts[0]}`.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-                                }
-                                return customer.customer_name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-                              })()
-                            : ""}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{customer.meter_number}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
-                      <div className="font-medium">#{customer.latest_bill.bill_id}</div>
-                      <div className="text-xs text-gray-500">
-                        {formatCurrency(customer.latest_bill.amount_due)}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Due: {new Date(customer.latest_bill.due_date).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
-                      {customer.total_outstanding > 0 ? (
-                        <span className="text-red-600 font-semibold">
-                          {formatCurrency(customer.total_outstanding)}
-                        </span>
-                      ) : (
-                        <span className="text-green-600">₱0.00</span>
+                paginatedCustomers.map((customer) => {
+                  const isExpanded = expandedCustomerId === customer.customer_id;
+                  return (
+                    <React.Fragment key={customer.customer_id}>
+                      <tr 
+                        className="hover:bg-brand-50 transition-colors duration-150 cursor-pointer"
+                        onClick={() => setExpandedCustomerId(isExpanded ? null : customer.customer_id)}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? (
+                              <FiChevronUp className="text-brand-600" />
+                            ) : (
+                              <FiChevronDown className="text-brand-600" />
+                            )}
+                            <div className="text-sm font-medium text-gray-900">
+                              {customer.last_name && customer.first_name
+                                ? `${customer.last_name}, ${customer.first_name}`.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
+                                : customer.customer_name
+                                  ? (() => {
+                                      const parts = customer.customer_name.split(" ");
+                                      if (parts.length >= 2) {
+                                        return `${parts[1]}, ${parts[0]}`.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                                      }
+                                      return customer.customer_name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                                    })()
+                                  : ""}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">{customer.meter_number}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
+                          <div className="font-medium">#{customer.latest_bill.bill_id}</div>
+                          <div className="text-xs text-gray-500">
+                            {formatCurrency(customer.latest_bill.amount_due)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Due: {new Date(customer.latest_bill.due_date).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+                          {customer.total_outstanding > 0 ? (
+                            <span className="text-red-600 font-semibold">
+                              {formatCurrency(customer.total_outstanding)}
+                            </span>
+                          ) : (
+                            <span className="text-green-600">₱0.00</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
+                            {customer.total_bills} bill{customer.total_bills !== 1 ? 's' : ''}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            customer.status === "Paid" 
+                              ? "bg-green-100 text-green-800" 
+                              : customer.status === "Overdue" 
+                              ? "bg-red-100 text-red-800" 
+                              : customer.status === "Partially Paid"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {customer.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => handleArchiveBill(customer.latest_bill.bill_id)}
+                            className="bg-gray-500 text-white px-3 py-2 rounded-md hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
+                            title="Archive Latest Bill"
+                          >
+                            <FiArchive />
+                          </button>
+                          <button
+                            onClick={() => setShowAddBillModal(true)}
+                            className="ml-2 bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
+                            title="Add New Bill"
+                          >
+                            <FiCheckCircle />
+                          </button>
+                        </td>
+                      </tr>
+                      {/* Expanded Row - Show All Bills */}
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan="7" className="px-6 py-4 bg-gradient-to-r from-brand-50 to-white border-t-2 border-brand-200">
+                            <div className="space-y-3">
+                              <h4 className="font-semibold text-brand-700 text-sm mb-3">
+                                All Bills ({customer.all_bills.length})
+                              </h4>
+                              <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200 text-xs">
+                                  <thead className="bg-brand-100">
+                                    <tr>
+                                      <th className="px-4 py-2 text-left text-xs font-semibold text-brand-700 uppercase">Bill ID</th>
+                                      <th className="px-4 py-2 text-center text-xs font-semibold text-brand-700 uppercase">Previous Reading</th>
+                                      <th className="px-4 py-2 text-center text-xs font-semibold text-brand-700 uppercase">Current Reading</th>
+                                      <th className="px-4 py-2 text-center text-xs font-semibold text-brand-700 uppercase">Consumption</th>
+                                      <th className="px-4 py-2 text-center text-xs font-semibold text-brand-700 uppercase">Amount Due</th>
+                                      <th className="px-4 py-2 text-center text-xs font-semibold text-brand-700 uppercase">Due Date</th>
+                                      <th className="px-4 py-2 text-center text-xs font-semibold text-brand-700 uppercase">Status</th>
+                                      <th className="px-4 py-2 text-center text-xs font-semibold text-brand-700 uppercase">Created</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="bg-white divide-y divide-gray-200">
+                                    {customer.all_bills.map((bill) => (
+                                      <tr key={bill.bill_id} className="hover:bg-brand-50 transition-colors">
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                          #{bill.bill_id}
+                                        </td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600 text-center">
+                                          {bill.previous_reading || 'N/A'}
+                                        </td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600 text-center">
+                                          {bill.current_reading || 'N/A'}
+                                        </td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600 text-center">
+                                          {bill.consumption ? `${Math.round(bill.consumption)} m³` : 'N/A'}
+                                        </td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+                                          {formatCurrency(bill.amount_due || 0)}
+                                        </td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600 text-center">
+                                          {bill.due_date ? new Date(bill.due_date).toLocaleDateString() : 'N/A'}
+                                        </td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-center">
+                                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                            bill.status === "Paid" 
+                                              ? "bg-green-100 text-green-800" 
+                                              : bill.status === "Overdue" 
+                                              ? "bg-red-100 text-red-800" 
+                                              : bill.status === "Partially Paid"
+                                              ? "bg-yellow-100 text-yellow-800"
+                                              : "bg-gray-100 text-gray-800"
+                                          }`}>
+                                            {bill.status}
+                                          </span>
+                                        </td>
+                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-center">
+                                          {bill.created_at ? new Date(bill.created_at).toLocaleDateString() : 'N/A'}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {customer.total_bills} bill{customer.total_bills !== 1 ? 's' : ''}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        customer.status === "Paid" 
-                          ? "bg-green-100 text-green-800" 
-                          : customer.status === "Overdue" 
-                          ? "bg-red-100 text-red-800" 
-                          : customer.status === "Partially Paid"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {customer.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleArchiveBill(customer.latest_bill.bill_id)}
-                        className="bg-gray-500 text-white px-3 py-2 rounded-md hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
-                        title="Archive Latest Bill"
-                      >
-                        <FiArchive />
-                      </button>
-                      <button
-                        onClick={() => setShowAddBillModal(true)}
-                        className="ml-2 bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
-                        title="Add New Bill"
-                      >
-                        <FiCheckCircle />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                    </React.Fragment>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
