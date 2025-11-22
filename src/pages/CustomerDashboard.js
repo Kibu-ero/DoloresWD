@@ -155,11 +155,11 @@ const CustomerDashboard = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Top Bar - keeping existing dark theme */}
-      <div className="bg-[#232946] flex items-center justify-between px-4 pt-8 pb-4">
+      {/* Top Bar */}
+      <div className="bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400 flex items-center justify-between px-4 pt-8 pb-4 shadow-lg">
         {/* Welcome */}
         <div>
-          <h1 className="text-3xl font-bold text-white drop-shadow-lg">Welcome, <span className="text-blue-400">{displayName}</span>!</h1>
+          <h1 className="text-3xl font-bold text-white drop-shadow-lg">Welcome, <span className="text-brand-100">{displayName}</span>!</h1>
         </div>
         {/* User Bar */}
         <div className="flex items-center space-x-6 relative">
@@ -174,7 +174,7 @@ const CustomerDashboard = () => {
               className="flex items-center focus:outline-none"
               onClick={() => setDropdownOpen((open) => !open)}
             >
-              <span className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-bold border-2 border-blue-400 shadow-md hover:shadow-lg transition-all">
+              <span className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-brand-700 text-xl font-bold border-2 border-brand-200 shadow-md hover:shadow-lg transition-all">
                 {displayInitial}
               </span>
               <svg className="w-5 h-5 ml-2 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -188,13 +188,13 @@ const CustomerDashboard = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-2 w-56 bg-[#232946] rounded-xl shadow-2xl py-2 z-50 border border-gray-800"
+                  className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl py-2 z-50 border border-brand-200"
                 >
                   <div className="px-4 py-2 flex items-center space-x-3 border-b border-gray-700">
-                    <span className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white text-lg font-bold border-2 border-blue-400">{displayInitial}</span>
+                    <span className="w-9 h-9 rounded-full bg-gradient-to-r from-brand-500 to-brand-700 flex items-center justify-center text-white text-lg font-bold border-2 border-brand-300">{displayInitial}</span>
                     <div>
-                      <div className="text-white font-semibold text-base">{displayName}</div>
-                      <div className="text-xs text-gray-400">Customer</div>
+                      <div className="text-brand-700 font-semibold text-base">{displayName}</div>
+                      <div className="text-xs text-gray-500">Customer</div>
                     </div>
                   </div>
                   <button
@@ -213,8 +213,8 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* Main Content - updated to light theme */}
-      <div className="bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300 min-h-screen">
+      {/* Main Content */}
+      <div className="bg-gradient-to-br from-brand-50 via-blue-50 to-brand-100 min-h-screen">
         {/* Main Content */}
         <div className="max-w-6xl mx-auto py-8">
           {/* Credit Balance Display */}
@@ -226,23 +226,23 @@ const CustomerDashboard = () => {
           
           <div className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden border border-blue-100 mt-6">
             {/* Bills Table Header and Tabs */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between px-6 pt-6 pb-2 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 border-b border-blue-800 rounded-t-2xl">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between px-6 pt-6 pb-2 bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400 border-b border-brand-300 rounded-t-2xl">
               <h2 className="text-2xl font-bold text-white drop-shadow">Your Water Bills</h2>
               <div className="mt-4 md:mt-0 flex space-x-2 bg-white/20 rounded-full p-1 shadow-inner">
                 <button
-                  className={`px-4 py-1 rounded-full font-semibold transition-all text-sm focus:outline-none bg-blue-400 text-white shadow`}
+                  className={`px-4 py-1 rounded-full font-semibold transition-all text-sm focus:outline-none bg-white text-brand-700 shadow`}
                   onClick={handleManualRefresh}
                 >
                   Refresh
                 </button>
                 <button
-                  className={`px-4 py-1 rounded-full font-semibold transition-all text-sm focus:outline-none ${viewMode === 'current' ? 'bg-blue-400 text-white shadow' : 'text-blue-100 hover:bg-blue-900/30'}`}
+                  className={`px-4 py-1 rounded-full font-semibold transition-all text-sm focus:outline-none ${viewMode === 'current' ? 'bg-white text-brand-700 shadow' : 'text-white hover:bg-brand-300/30'}`}
                   onClick={() => setViewMode('current')}
                 >
                   Current Bills & Payment
                 </button>
                 <button
-                  className={`px-4 py-1 rounded-full font-semibold transition-all text-sm focus:outline-none ${viewMode === 'past' ? 'bg-blue-400 text-white shadow' : 'text-blue-100 hover:bg-blue-900/30'}`}
+                  className={`px-4 py-1 rounded-full font-semibold transition-all text-sm focus:outline-none ${viewMode === 'past' ? 'bg-white text-brand-700 shadow' : 'text-white hover:bg-brand-300/30'}`}
                   onClick={() => setViewMode('past')}
                 >
                   Paid / Past Bills
@@ -286,7 +286,7 @@ const CustomerDashboard = () => {
                         .filter(bill => viewMode === 'current' ? bill.status !== 'Paid' : bill.status === 'Paid')
                         .map((bill) => (
                           <React.Fragment key={bill.billId}>
-                            <tr className="hover:bg-blue-900/20 transition-all">
+                            <tr className="hover:bg-brand-100/30 transition-all">
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 flex items-center gap-2">
                                 <button
                                   className="focus:outline-none"
@@ -294,14 +294,14 @@ const CustomerDashboard = () => {
                                   aria-label={expandedBillId === bill.billId ? 'Collapse details' : 'Expand details'}
                                 >
                                   {expandedBillId === bill.billId ? (
-                                    <FiChevronUp className="text-blue-300" />
+                                    <FiChevronUp className="text-brand-600" />
                                   ) : (
-                                    <FiChevronDown className="text-blue-300" />
+                                    <FiChevronDown className="text-brand-600" />
                                   )}
                                 </button>
                                 {formatLongDate(bill.created_at || bill.createdAt)}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-900 font-bold">{formatCurrency(bill.amount)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-brand-700 font-bold">{formatCurrency(bill.amount)}</td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex flex-col space-y-1">
                                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -329,7 +329,7 @@ const CustomerDashboard = () => {
                                 {viewMode === 'current' ? (
                                   <button
                                     onClick={() => setSelectedBill(bill)}
-                                    className="text-blue-600 hover:text-blue-800 font-bold transition-all"
+                                    className="text-brand-600 hover:text-brand-800 font-bold transition-all"
                                   >
                                     Pay Now
                                   </button>
@@ -340,22 +340,22 @@ const CustomerDashboard = () => {
                             </tr>
                             {expandedBillId === bill.billId && (
                               <tr>
-                                <td colSpan={4} className="bg-[#232946] px-8 py-4 text-white rounded-b-xl border-t border-gray-800 animate-fade-in">
+                                <td colSpan={4} className="bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400 px-8 py-4 text-white rounded-b-xl border-t border-brand-300 animate-fade-in">
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                      <div className="font-semibold text-blue-200">Water Consumed:</div>
+                                      <div className="font-semibold text-brand-100">Water Consumed:</div>
                                       <div className="text-lg font-bold text-white">{bill.consumption} m³</div>
                                     </div>
                                     <div>
-                                      <div className="font-semibold text-blue-200">Previous Reading:</div>
+                                      <div className="font-semibold text-brand-100">Previous Reading:</div>
                                       <div className="text-lg text-white">{bill.previous_reading}</div>
                                     </div>
                                     <div>
-                                      <div className="font-semibold text-blue-200">Current Reading:</div>
+                                      <div className="font-semibold text-brand-100">Current Reading:</div>
                                       <div className="text-lg text-white">{bill.current_reading}</div>
                                     </div>
                                     <div>
-                                      <div className="font-semibold text-blue-200">Due Date:</div>
+                                      <div className="font-semibold text-brand-100">Due Date:</div>
                                       <div className="text-lg text-white">{bill.dueDate || (bill.due_date ? (typeof bill.due_date === 'string' ? bill.due_date : new Date(bill.due_date).toLocaleDateString()) : 'N/A')}</div>
                                     </div>
                                   </div>
@@ -385,17 +385,17 @@ const CustomerDashboard = () => {
 
             <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-6">
-                <h3 className="text-xl leading-6 font-bold text-blue-900 mb-4">
+                <h3 className="text-xl leading-6 font-bold text-brand-700 mb-4">
                   Payment for Bill #{selectedBill?.billId || selectedBill?.id || 'N/A'}
                 </h3>
                 {/* GCash Info Section */}
-                <div className="mb-6 flex flex-col items-center justify-center bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <span className="text-blue-800 font-bold text-lg mb-1">Pay via GCash</span>
-                  <span className="text-blue-700 font-semibold text-base mb-2">GCash Number: 09481128717</span>
+                <div className="mb-6 flex flex-col items-center justify-center bg-brand-50 rounded-lg p-4 border border-brand-200">
+                  <span className="text-brand-700 font-bold text-lg mb-1">Pay via GCash</span>
+                  <span className="text-brand-600 font-semibold text-base mb-2">GCash Number: 09481128717</span>
                   <img
                     src="/gcash main.jpg"
                     alt="GCash QR Code"
-                    className="w-48 h-48 object-contain rounded-xl shadow border-2 border-blue-200"
+                    className="w-48 h-48 object-contain rounded-xl shadow border-2 border-brand-200"
                     style={{ background: '#fff' }}
                   />
                   <span className="text-xs text-gray-500 mt-2">Scan this QR code or use the number above to pay</span>
@@ -424,7 +424,7 @@ const CustomerDashboard = () => {
                         id="paymentMethod"
                         value={paymentMethod}
                         onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
                         required
                         disabled
                       >
@@ -441,7 +441,7 @@ const CustomerDashboard = () => {
                         id="referenceNumber"
                         value={referenceNumber}
                         onChange={(e) => setReferenceNumber(e.target.value)}
-                        className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
                         placeholder="Enter GCash transaction reference number"
                         required
                       />
@@ -455,7 +455,7 @@ const CustomerDashboard = () => {
                         Payment Proof (Screenshot)
                         <button
                           type="button"
-                          className="ml-1 text-blue-500 hover:text-blue-700 focus:outline-none"
+                          className="ml-1 text-brand-600 hover:text-brand-700 focus:outline-none"
                           onClick={() => setShowProofHelp(true)}
                           aria-label="How to upload a file"
                         >
@@ -487,7 +487,7 @@ const CustomerDashboard = () => {
                               <div className="flex text-sm text-gray-600">
                                 <label
                                   htmlFor="file-upload"
-                                  className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none"
+                                  className="relative cursor-pointer bg-white rounded-md font-medium text-brand-600 hover:text-brand-500 focus-within:outline-none"
                                 >
                                   <span>Upload a file</span>
                                   <input
@@ -520,14 +520,14 @@ const CustomerDashboard = () => {
                         setPaymentProof(null);
                         setPreviewImage(null);
                       }}
-                      className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                      className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 sm:mt-0 sm:col-start-1 sm:text-sm"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className={`w-full inline-flex justify-center rounded-lg border border-transparent shadow px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm ${
+                      className={`w-full inline-flex justify-center rounded-lg border border-transparent shadow px-4 py-2 bg-gradient-to-r from-brand-500 to-brand-700 text-base font-medium text-white hover:from-brand-600 hover:to-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 sm:col-start-2 sm:text-sm ${
                         isSubmitting ? 'opacity-75 cursor-not-allowed' : ''
                       }`}
                     >
@@ -578,15 +578,15 @@ const CustomerDashboard = () => {
               >
                 ×
               </button>
-              <h2 className="text-lg font-bold mb-2 text-blue-700 flex items-center gap-2">
+              <h2 className="text-lg font-bold mb-2 text-brand-700 flex items-center gap-2">
                 <FiChevronDown className="inline" /> How to Upload Payment Proof
               </h2>
               <ol className="list-decimal list-inside text-gray-700 space-y-2 text-base">
                 <li>Take a screenshot or photo of your payment confirmation from GCash.</li>
-                <li>Click <span className="font-semibold text-blue-600">Upload a file</span> or drag and drop your image into the upload area.</li>
+                <li>Click <span className="font-semibold text-brand-600">Upload a file</span> or drag and drop your image into the upload area.</li>
                 <li>Make sure your file is a PNG or JPG and less than 5MB.</li>
                 <li>Once uploaded, you will see a preview of your image.</li>
-                <li>Click <span className="font-semibold text-blue-600">Submit Payment</span> to finish.</li>
+                <li>Click <span className="font-semibold text-brand-600">Submit Payment</span> to finish.</li>
               </ol>
             </motion.div>
           </motion.div>
@@ -611,8 +611,8 @@ const CustomerDashboard = () => {
             </div>
             
             <div className="space-y-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2">Payment Details</h4>
+                <div className="bg-brand-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-brand-700 mb-2">Payment Details</h4>
                 <div className="space-y-2 text-sm">
                   <div><span className="font-medium">Bill ID:</span> {pendingPaymentData.billId}</div>
                   <div><span className="font-medium">Amount:</span> {formatCurrency(pendingPaymentData.amount)}</div>
@@ -643,7 +643,7 @@ const CustomerDashboard = () => {
               <button
                 onClick={handleConfirmPaymentSubmit}
                 disabled={isSubmitting}
-                className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 ${
+                className={`px-6 py-2 bg-gradient-to-r from-brand-500 to-brand-700 text-white rounded-lg hover:from-brand-600 hover:to-brand-800 transition-all duration-200 ${
                   isSubmitting ? 'opacity-75 cursor-not-allowed' : ''
                 }`}
               >
