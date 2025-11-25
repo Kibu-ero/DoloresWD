@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiPlus, FiMinus, FiEdit, FiDollarSign, FiCheckCircle } from 'react-icons/fi';
-import apiClient from '../api';
-import { formatCurrency } from '../utils/currencyFormatter';
+import { FiPlus, FiMinus, FiEdit, FiCheckCircle } from 'react-icons/fi';
+import apiClient from '../api/client';
+import { formatCurrency, formatNumber } from '../utils/currencyFormatter';
 
 const CreditManager = () => {
   const [customers, setCustomers] = useState([]);
@@ -56,6 +56,7 @@ const CreditManager = () => {
   const handleAddCredit = async (e) => {
     e.preventDefault();
     try {
+      setMessage('');
       const response = await apiClient.post('/credits/add', {
         customerId: selectedCustomer.id,
         amount: parseFloat(creditForm.amount),
@@ -64,15 +65,18 @@ const CreditManager = () => {
       });
 
       if (response.data.success) {
-        setMessage(response.data.message);
+        setMessage(response.data.message || 'Credit added successfully');
         setShowAddCreditModal(false);
         setCreditForm({ amount: '', description: '', reason: '' });
-        fetchCustomerCredits(selectedCustomer.id);
-        fetchCustomersWithCredits();
+        await fetchCustomerCredits(selectedCustomer.id);
+        await fetchCustomersWithCredits();
+      } else {
+        setMessage(response.data.message || 'Error adding credit');
       }
     } catch (error) {
       console.error('Error adding credit:', error);
-      setMessage('Error adding credit');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Error adding credit';
+      setMessage(errorMessage);
     }
   };
 
@@ -80,6 +84,7 @@ const CreditManager = () => {
   const handleDeductCredit = async (e) => {
     e.preventDefault();
     try {
+      setMessage('');
       const response = await apiClient.post('/credits/deduct', {
         customerId: selectedCustomer.id,
         amount: parseFloat(creditForm.amount),
@@ -88,15 +93,18 @@ const CreditManager = () => {
       });
 
       if (response.data.success) {
-        setMessage(response.data.message);
+        setMessage(response.data.message || 'Credit deducted successfully');
         setShowDeductCreditModal(false);
         setCreditForm({ amount: '', description: '', reason: '' });
-        fetchCustomerCredits(selectedCustomer.id);
-        fetchCustomersWithCredits();
+        await fetchCustomerCredits(selectedCustomer.id);
+        await fetchCustomersWithCredits();
+      } else {
+        setMessage(response.data.message || 'Error deducting credit');
       }
     } catch (error) {
       console.error('Error deducting credit:', error);
-      setMessage(error.response?.data?.message || 'Error deducting credit');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Error deducting credit';
+      setMessage(errorMessage);
     }
   };
 
@@ -104,6 +112,7 @@ const CreditManager = () => {
   const handleAdjustCredit = async (e) => {
     e.preventDefault();
     try {
+      setMessage('');
       const response = await apiClient.post('/credits/adjust', {
         customerId: selectedCustomer.id,
         newBalance: parseFloat(creditForm.amount),
@@ -111,15 +120,18 @@ const CreditManager = () => {
       });
 
       if (response.data.success) {
-        setMessage(response.data.message);
+        setMessage(response.data.message || 'Credit balance adjusted successfully');
         setShowAdjustModal(false);
         setCreditForm({ amount: '', description: '', reason: '' });
-        fetchCustomerCredits(selectedCustomer.id);
-        fetchCustomersWithCredits();
+        await fetchCustomerCredits(selectedCustomer.id);
+        await fetchCustomersWithCredits();
+      } else {
+        setMessage(response.data.message || 'Error adjusting credit balance');
       }
     } catch (error) {
       console.error('Error adjusting credit:', error);
-      setMessage('Error adjusting credit balance');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Error adjusting credit balance';
+      setMessage(errorMessage);
     }
   };
 
@@ -150,7 +162,11 @@ const CreditManager = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800"
+          className={`mb-4 p-4 border rounded-lg ${
+            message.toLowerCase().includes('error') || message.toLowerCase().includes('failed')
+              ? 'bg-red-50 border-red-200 text-red-800'
+              : 'bg-green-50 border-green-200 text-green-800'
+          }`}
         >
           {message}
         </motion.div>
@@ -184,11 +200,11 @@ const CreditManager = () => {
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-green-600">
-                        {formatCurrency(customer.credit_balance)}
+                        {formatNumber(customer.credit_balance)}
                       </div>
                       {customer.credit_limit > 0 && (
                         <div className="text-xs text-gray-500">
-                          Limit: {formatCurrency(customer.credit_limit)}
+                          Limit: {formatNumber(customer.credit_limit)}
                         </div>
                       )}
                     </div>
@@ -244,10 +260,9 @@ const CreditManager = () => {
                   <div>
                     <div className="text-sm text-gray-600">Current Balance</div>
                     <div className="text-2xl font-bold text-green-600">
-                      {formatCurrency(selectedCustomer.credit_balance)}
+                      {formatNumber(selectedCustomer.credit_balance)}
                     </div>
                   </div>
-                  <FiDollarSign className="w-8 h-8 text-green-500" />
                 </div>
               </div>
 
@@ -270,10 +285,10 @@ const CreditManager = () => {
                         </div>
                         <div className="text-right">
                           <div className={`font-bold ${transaction.transaction_type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
-                            {transaction.transaction_type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                            {transaction.transaction_type === 'credit' ? '+' : '-'}{formatNumber(transaction.amount)}
                           </div>
                           <div className="text-xs text-gray-500">
-                            Balance: {formatCurrency(transaction.new_balance)}
+                            Balance: {formatNumber(transaction.new_balance)}
                           </div>
                         </div>
                       </div>
@@ -364,7 +379,7 @@ const CreditManager = () => {
                   required
                 />
                 <div className="text-sm text-gray-500 mt-1">
-                  Available: {formatCurrency(selectedCustomer?.credit_balance || 0)}
+                  Available: {formatNumber(selectedCustomer?.credit_balance || 0)}
                 </div>
               </div>
               <div className="mb-4">
@@ -418,7 +433,7 @@ const CreditManager = () => {
                   required
                 />
                 <div className="text-sm text-gray-500 mt-1">
-                  Current: {formatCurrency(selectedCustomer?.credit_balance || 0)}
+                  Current: {formatNumber(selectedCustomer?.credit_balance || 0)}
                 </div>
               </div>
               <div className="mb-4">
