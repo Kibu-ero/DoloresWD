@@ -440,7 +440,7 @@ const Reports = () => {
             return value;
           }
         } else if ((col.includes('amount') || col.includes('collected') || col.includes('billed')) && !col.includes('average')) {
-          // Format for PDF compatibility - avoid special characters
+          // Format for PDF compatibility - add commas, no currency symbol
           if (typeof value === 'number') {
             return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           }
@@ -453,6 +453,12 @@ const Reports = () => {
         } else if ((col.includes('count') || col.includes('quantity')) && typeof value === 'number') {
           // Format count as integer (no decimals)
           return Math.round(value).toLocaleString('en-PH');
+        } else if ((col.includes('days') && col.includes('overdue')) || col.includes('daysoverdue')) {
+          // Format days overdue as integer (no decimals)
+          return Math.round(Number(value)).toString();
+        } else if (col.includes('account') && col.includes('number')) {
+          // Remove commas from account number
+          return String(value).replace(/,/g, '');
         }
         return value;
       })
@@ -675,6 +681,14 @@ const Reports = () => {
                                 {Math.round(Number(val)).toLocaleString()}
                               </span>
                             </div>
+                          ) : (/daysoverdue|days.*overdue/i.test(col) && !isNaN(val)) ? (
+                            <div className="flex items-center">
+                              <span className="font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full">
+                                {Math.round(Number(val))}
+                              </span>
+                            </div>
+                          ) : (/accountnumber|account.*number/i.test(col)) ? (
+                            <span className="text-gray-700 font-medium">{String(val).replace(/,/g, '')}</span>
                           ) : ((/date|created_at|updated_at|submitted_at|payment_date|due_date/i.test(col) || /^\d{4}-\d{2}-\d{2}T/.test(val)) && val) ? (
                             <span className="text-gray-700 font-medium">
                               {(() => {
