@@ -388,11 +388,25 @@ const CustomerLedger = ({
 
   const handlePrint = () => {
     try {
-      const ledgerNode = document.querySelector('.ledger-wrapper');
+      // Try multiple selectors to find the ledger content
+      let ledgerNode = document.querySelector('.ledger-wrapper');
       if (!ledgerNode) {
+        ledgerNode = document.querySelector('.ledger-container');
+      }
+      if (!ledgerNode) {
+        // Try to find it within the modal
+        const modal = document.querySelector('.ledger-modal');
+        if (modal) {
+          ledgerNode = modal.querySelector('.ledger-wrapper') || modal.querySelector('.ledger-container');
+        }
+      }
+      
+      if (!ledgerNode) {
+        console.error('Ledger node not found');
         window.print();
         return;
       }
+      
       // Use hidden iframe so print keeps current styles and doesn't open a tab
       const iframe = document.createElement('iframe');
       iframe.style.position = 'fixed';
@@ -412,9 +426,11 @@ const CustomerLedger = ({
 
       // Clone the ledger content and remove any buttons before injecting
       const clonedNode = ledgerNode.cloneNode(true);
-      // Remove all buttons from the cloned content
+      // Remove all buttons and modal headers from the cloned content
       const buttons = clonedNode.querySelectorAll('button');
       buttons.forEach(btn => btn.remove());
+      const modalHeaders = clonedNode.querySelectorAll('.sticky, .receipt-modal-header');
+      modalHeaders.forEach(header => header.remove());
 
       // Inject cloned ledger content
       doc.body.appendChild(clonedNode);
@@ -426,6 +442,7 @@ const CustomerLedger = ({
         setTimeout(() => document.body.removeChild(iframe), 100);
       }, 50);
     } catch (e) {
+      console.error('Print error:', e);
       window.print();
     }
   };
