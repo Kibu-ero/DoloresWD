@@ -21,155 +21,169 @@
 
 /* Print styles for ledger and billing sheet */
 @media print {
+  /* Ledger-specific page settings (landscape) */
   @page {
     margin: 10mm;
     size: landscape;
   }
   
-  body {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  
-  /* Let browser manage viewport size for accurate scaling */
-
-  /* Removed rotation fallback; rely on proper @page landscape */
-  
-  /* Print ONLY the ledger and billing sheet */
-  /* Chrome: hide app siblings via #root to avoid removing modal itself */
-  /* Receipt print styles are in receiptPrint.css */
-  #root > *:not(.ledger-modal):not(.billing-sheet-modal) { 
+  /* Hide everything except ledger modal and print area */
+  body > *:not(.ledger-modal):not(.billing-sheet-modal):not(.ledger-wrapper) {
     display: none !important;
-    visibility: hidden !important;
   }
-  .ledger-modal { display: block !important; position: static !important; }
-  .ledger-modal * { visibility: visible !important; }
-  .ledger-modal .ledger-wrapper { width: 100% !important; max-width: none !important; margin: 0 !important; }
   
-  /* Billing sheet modal print styles */
-  .billing-sheet-modal { display: block !important; position: static !important; }
-  .billing-sheet-modal * { visibility: visible !important; }
-  .billing-sheet-modal .billing-sheet-container { width: 100% !important; max-width: none !important; margin: 0 !important; }
-
-  /* Ensure modal container renders fully in print */
-  .ledger-modal > div {
-    position: static !important;
+  /* Show ledger modal */
+  .ledger-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     width: 100% !important;
-    max-width: none !important;
-    max-height: none !important;
-    overflow: visible !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    border: none !important;
+    height: 100% !important;
+    background: white !important;
+    background-color: white !important;
+    z-index: 9999 !important;
     padding: 0 !important;
     margin: 0 !important;
-  }
-  .ledger-modal .sticky { display: none !important; }
-  .ledger-modal .p-6 { padding: 0 !important; }
-  
-  /* Billing sheet modal container print styles */
-  .billing-sheet-modal > div {
-    position: static !important;
-    width: 100% !important;
-    max-width: none !important;
-    max-height: none !important;
     overflow: visible !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+    display: block !important;
+    visibility: visible !important;
   }
-  .billing-sheet-modal .sticky { display: none !important; }
-  .billing-sheet-modal .p-6 { padding: 0 !important; }
   
+  /* When ledger is rendered directly */
   .ledger-wrapper {
     position: relative !important;
-    left: auto !important;
-    top: auto !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
-    max-width: none !important;
-    margin: 0 auto !important;
+    background: white !important;
+    background-color: white !important;
+    display: block !important;
+    visibility: visible !important;
   }
   
-  body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .print\\:hidden {
+  /* Hide modal header */
+  .ledger-modal .sticky {
     display: none !important;
   }
   
-  .border-gray-800 {
+  /* Show ledger container */
+  .ledger-modal .ledger-container,
+  .ledger-wrapper .ledger-container {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    background-color: white !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+  
+  /* Show ledger wrapper content */
+  .ledger-wrapper {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    background-color: white !important;
+  }
+  
+  /* Make sure everything inside ledger is visible */
+  .ledger-modal *,
+  .ledger-wrapper * {
+    visibility: visible !important;
+    color: #000000 !important;
+  }
+  
+  /* Ensure proper display types */
+  .ledger-wrapper > div {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  .ledger-wrapper .grid {
+    display: grid !important;
+    visibility: visible !important;
+  }
+  
+  .ledger-wrapper .flex {
+    display: flex !important;
+    visibility: visible !important;
+  }
+  
+  /* Text elements */
+  .ledger-wrapper p,
+  .ledger-wrapper div,
+  .ledger-wrapper span,
+  .ledger-wrapper h1,
+  .ledger-wrapper h2,
+  .ledger-wrapper h3,
+  .ledger-wrapper h4,
+  .ledger-wrapper h5,
+  .ledger-wrapper h6 {
+    visibility: visible !important;
+    color: #000000 !important;
+  }
+  
+  /* Borders */
+  .ledger-wrapper .border,
+  .ledger-wrapper .border-2,
+  .ledger-wrapper .border-b,
+  .ledger-wrapper .border-t {
     border-color: #1f2937 !important;
+    visibility: visible !important;
   }
   
-  .border-gray-300 {
-    border-color: #d1d5db !important;
+  /* Tables */
+  .ledger-wrapper table,
+  .ledger-table {
+    visibility: visible !important;
+    border-collapse: collapse !important;
+    width: 100% !important;
+    display: table !important;
   }
   
-  .border-gray-400 {
-    border-color: #9ca3af !important;
+  .ledger-wrapper table td,
+  .ledger-wrapper table th,
+  .ledger-table td,
+  .ledger-table th {
+    visibility: visible !important;
+    border: 1px solid #000 !important;
+    padding: 4px !important;
+    display: table-cell !important;
+    color: #000000 !important;
   }
   
-  /* Ensure proper spacing in print */
-  .py-4 {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+  /* Hide buttons */
+  button {
+    display: none !important;
   }
   
-  .py-2 {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
+  /* Body settings */
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
-  .py-3 {
-    padding-top: 0.75rem !important;
-    padding-bottom: 0.75rem !important;
+  /* Force color printing */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
-  .px-6 {
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
-  }
-  
-  .px-4 {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-  
-  .mb-2 {
-    margin-bottom: 0.5rem !important;
-  }
-  
-  .mb-3 {
-    margin-bottom: 0.75rem !important;
-  }
-  
-  .mb-4 {
-    margin-bottom: 1rem !important;
-  }
-  
-  .mt-4 {
-    margin-top: 1rem !important;
-  }
-  
-  .mt-6 {
-    margin-top: 1.5rem !important;
-  }
-  
-  .space-y-2 > * + * {
-    margin-top: 0.5rem !important;
-  }
-  
-  .space-y-3 > * + * {
-    margin-top: 0.75rem !important;
-  }
-  
-  /* Receipt print styles moved to receiptPrint.css */
-  
-  /* Ledger print styles */
+  /* Ledger container specific styles */
   .ledger-container {
     position: relative !important;
     left: auto !important;
@@ -181,17 +195,16 @@
     box-shadow: none !important;
     page-break-inside: avoid;
     break-inside: avoid;
-  }
-
-  .ledger-wrapper {
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
+    background: white !important;
+    display: block !important;
+    visibility: visible !important;
   }
 
   /* Make customer info header more compact */
   .ledger-container .grid {
     gap: 4px !important;
+    display: grid !important;
+    visibility: visible !important;
   }
 
   .ledger-container .space-y-3 > * + * {
@@ -201,23 +214,24 @@
   .ledger-container .flex {
     font-size: 9px !important;
     line-height: 1.2 !important;
-  }
-
-  .ledger-container {
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
+    display: flex !important;
+    visibility: visible !important;
   }
 
   .ledger-container > div:first-child {
     padding: 2px !important;
     margin-bottom: 1px !important;
+    display: block !important;
+    visibility: visible !important;
   }
 
   .ledger-container h1 {
     margin: 0 !important;
     padding: 4px !important;
     font-size: 14px !important;
+    display: block !important;
+    visibility: visible !important;
+    color: #000000 !important;
   }
 
   .ledger-table {
@@ -226,6 +240,8 @@
     width: 100% !important;
     table-layout: fixed !important;
     margin: 0 !important;
+    display: table !important;
+    visibility: visible !important;
   }
 
   .ledger-table th,
@@ -235,6 +251,9 @@
     word-wrap: break-word !important;
     overflow-wrap: break-word !important;
     page-break-inside: avoid !important;
+    display: table-cell !important;
+    visibility: visible !important;
+    color: #000000 !important;
   }
 
   .ledger-table th {
@@ -249,7 +268,11 @@
     line-height: 1.2 !important;
   }
   
-  .ledger-table tr { page-break-inside: avoid !important; }
+  .ledger-table tr { 
+    page-break-inside: avoid !important;
+    display: table-row !important;
+    visibility: visible !important;
+  }
 
   /* Optimize column widths for maximum space usage */
   .ledger-table th:nth-child(1), /* Date */
@@ -296,8 +319,37 @@
     width: 9% !important;
     text-align: right !important;
   }
-
+  
+  .print\\:hidden {
+    display: none !important;
+  }
+  
+  .border-gray-800 {
+    border-color: #1f2937 !important;
+  }
+  
+  .border-gray-300 {
+    border-color: #d1d5db !important;
+  }
+  
+  .border-gray-400 {
+    border-color: #9ca3af !important;
+  }
+  
   /* Billing Sheet print styles */
+  .billing-sheet-modal { 
+    display: block !important; 
+    position: static !important; 
+  }
+  .billing-sheet-modal * { 
+    visibility: visible !important; 
+  }
+  .billing-sheet-modal .billing-sheet-container { 
+    width: 100% !important; 
+    max-width: none !important; 
+    margin: 0 !important; 
+  }
+  
   .billing-sheet-container {
     width: 100% !important;
     max-width: none !important;
