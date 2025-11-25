@@ -105,7 +105,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 via-blue-50 to-brand-100 p-4 relative overflow-hidden">
-      {/* Billink Logo/Name in upper left */}
+      {/* Dolores Water District Logo in upper left */}
       <motion.div 
         className="absolute top-6 left-6 z-20"
         initial={{ opacity: 0, x: -20 }}
@@ -118,12 +118,9 @@ const Login = () => {
         >
           <img 
             src="/logodolores.png"
-            alt="Billink Logo"
+            alt="Dolores Water District Logo"
             className="w-10 h-10 rounded-full object-cover border-2 border-brand-500/50 shadow-lg group-hover:border-brand-400 transition-all duration-300"
           />
-          <span className="text-2xl font-bold text-gray-800 tracking-wide group-hover:text-brand-600 transition-colors duration-300">
-            Billink
-          </span>
         </button>
       </motion.div>
 
