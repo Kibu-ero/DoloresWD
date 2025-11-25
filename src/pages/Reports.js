@@ -461,8 +461,9 @@ const Reports = () => {
             return value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
           }
           return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        } else if (col.includes('rate') && typeof value === 'number') {
-          return `${value.toFixed(2)}%`;
+        } else if ((col.includes('rate') || col.includes('collectionrate')) && typeof value === 'number') {
+          // Format rate with 2 decimal places max
+          return `${Number(value).toFixed(2)}%`;
         } else if ((col.includes('count') || col.includes('quantity')) && typeof value === 'number') {
           // Format count as integer (no decimals)
           return Math.round(value).toLocaleString('en-PH');
@@ -723,8 +724,18 @@ const Reports = () => {
                             </div>
                           ) : (/accountnumber|account.*number/i.test(col)) ? (
                             <span className="text-gray-700 font-medium">
-                              {typeof val === 'number' ? val.toString() : String(val).replace(/,/g, '')}
+                              {(() => {
+                                if (val === null || val === undefined || val === '') return '';
+                                const str = typeof val === 'number' ? val.toString() : String(val);
+                                return str.replace(/,/g, '');
+                              })()}
                             </span>
+                          ) : (/rate|collectionrate/i.test(col) && !isNaN(val)) ? (
+                            <div className="flex items-center">
+                              <span className="font-bold text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                                {Number(val).toFixed(2)}%
+                              </span>
+                            </div>
                           ) : (/lastpayment/i.test(col) && val) ? (
                             <span className="text-gray-700 font-medium">
                               {(() => {
