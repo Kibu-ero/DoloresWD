@@ -446,13 +446,20 @@ const Reports = () => {
             return value;
           }
         } else if ((col.includes('amount') || col.includes('collected') || col.includes('billed')) && !col.includes('average')) {
-          // Format for PDF compatibility - add commas, no currency symbol
+          // Format for PDF compatibility - add commas, reduce zeros
           if (typeof value === 'number') {
+            // If it's a whole number, don't show decimals
+            if (value % 1 === 0) {
+              return value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
             return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           }
           return value;
         } else if (col.includes('average') && col.includes('amount') && typeof value === 'number') {
-          // Format average amount with reasonable decimal places (2 max)
+          // Format average amount - reduce zeros if whole number
+          if (value % 1 === 0) {
+            return value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+          }
           return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         } else if (col.includes('rate') && typeof value === 'number') {
           return `${value.toFixed(2)}%`;
@@ -489,8 +496,17 @@ const Reports = () => {
           // Format count as integer (no decimals, no currency)
           formattedValue = Math.round(Number(value)).toLocaleString('en-PH');
         } else if (key.includes('amount') || key.includes('total') || key.includes('collected') || key.includes('billed')) {
-          // Format amounts without currency symbol
-          formattedValue = typeof value === 'number' ? value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value;
+          // Format amounts without currency symbol, reduce zeros
+          if (typeof value === 'number') {
+            // If it's a whole number, don't show decimals
+            if (value % 1 === 0) {
+              formattedValue = value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            } else {
+              formattedValue = value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+          } else {
+            formattedValue = value;
+          }
         } else {
           formattedValue = value;
         }
@@ -683,7 +699,14 @@ const Reports = () => {
                           {(/amount|total|balance|revenue|payment|due|paid|fee|charge|price|cost/i.test(col) && !isNaN(val) && !/count/i.test(col)) ? (
                             <div className="flex items-center">
                               <span className="font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                                {formatNumber(Number(val))}
+                                {(() => {
+                                  const num = Number(val);
+                                  // If it's a whole number, don't show decimals
+                                  if (num % 1 === 0) {
+                                    return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                                  }
+                                  return formatNumber(num);
+                                })()}
                               </span>
                             </div>
                           ) : (/count|quantity/i.test(col) && !isNaN(val)) ? (
