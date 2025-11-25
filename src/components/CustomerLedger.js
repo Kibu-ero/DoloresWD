@@ -387,8 +387,47 @@ const CustomerLedger = ({
   }, [customerId, fetchLedgerData]);
 
   const handlePrint = () => {
-    // Simply use window.print() - the CSS media queries in index.css will handle the styling
-    window.print();
+    try {
+      const ledgerNode = document.querySelector('.ledger-wrapper');
+      if (!ledgerNode) {
+        window.print();
+        return;
+      }
+      // Use hidden iframe so print keeps current styles and doesn't open a tab
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      const headHtml = document.head.innerHTML || '';
+      const extraStyles = '<style>@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:white !important;} .ledger-wrapper{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;background:white !important;} .ledger-wrapper *{visibility:visible !important;color:#000 !important;} .ledger-container{width:100% !important;background:white !important;} .ledger-table{width:100% !important;border-collapse:collapse !important;} .ledger-table th,.ledger-table td{border:1px solid #000 !important;padding:4px !important;visibility:visible !important;color:#000 !important;} button{display:none !important;} .print\\:hidden{display:none !important;} table{display:table !important;visibility:visible !important;} tr{display:table-row !important;visibility:visible !important;} td,th{display:table-cell !important;visibility:visible !important;color:#000 !important;} div{display:block !important;visibility:visible !important;color:#000 !important;} span{display:inline !important;visibility:visible !important;color:#000 !important;} p{display:block !important;visibility:visible !important;color:#000 !important;} h1,h2,h3,h4,h5,h6{display:block !important;visibility:visible !important;color:#000 !important;}</style>';
+      doc.open();
+      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${headHtml}${extraStyles}</head><body></body></html>`);
+      doc.close();
+
+      // Clone the ledger content and remove any buttons before injecting
+      const clonedNode = ledgerNode.cloneNode(true);
+      // Remove all buttons from the cloned content
+      const buttons = clonedNode.querySelectorAll('button');
+      buttons.forEach(btn => btn.remove());
+
+      // Inject cloned ledger content
+      doc.body.appendChild(clonedNode);
+
+      // Print and cleanup
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => document.body.removeChild(iframe), 100);
+      }, 50);
+    } catch (e) {
+      window.print();
+    }
   };
 
   const handleDownload = async () => {
