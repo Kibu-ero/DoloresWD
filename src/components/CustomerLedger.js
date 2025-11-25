@@ -405,13 +405,19 @@ const CustomerLedger = ({
 
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       const headHtml = document.head.innerHTML || '';
-      const extraStyles = '<style>@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;} .ledger-wrapper{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;} .ledger-container{width:100% !important;}</style>';
+      const extraStyles = '<style>@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:white !important;} .ledger-wrapper{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;background:white !important;} .ledger-wrapper *{visibility:visible !important;color:#000 !important;} .ledger-container{width:100% !important;background:white !important;} .ledger-table{width:100% !important;border-collapse:collapse !important;} .ledger-table th,.ledger-table td{border:1px solid #000 !important;padding:4px !important;visibility:visible !important;color:#000 !important;} button{display:none !important;} .print\\:hidden{display:none !important;}</style>';
       doc.open();
       doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${headHtml}${extraStyles}</head><body></body></html>`);
       doc.close();
 
-      // Inject cloned ledger
-      doc.body.appendChild(ledgerNode.cloneNode(true));
+      // Clone the ledger content and remove any buttons before injecting
+      const clonedNode = ledgerNode.cloneNode(true);
+      // Remove all buttons from the cloned content
+      const buttons = clonedNode.querySelectorAll('button');
+      buttons.forEach(btn => btn.remove());
+
+      // Inject cloned ledger content
+      doc.body.appendChild(clonedNode);
 
       // Print and cleanup
       setTimeout(() => {
