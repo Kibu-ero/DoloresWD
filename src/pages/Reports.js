@@ -1,1352 +1,1758 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import apiClient from '../api/client';
-import { formatCurrency, formatNumber } from '../utils/currencyFormatter';
-import CustomerLedger from '../components/CustomerLedger';
-import BillingSheet from '../components/BillingSheet';
+const express = require('express');
+const router = express.Router();
+const pool = require('../db');
+const { authenticateToken } = require('../middleware/auth');
+const ExcelJS = require('exceljs');
+const db = require('../db');
+const authMiddleware = require('../middleware/authmiddleware');
 
-// Role-based report definitions
-const REPORTS_BY_ROLE = {
-  admin: [
-    { key: 'collection', label: 'Collection Summary' },
-    { key: 'outstanding', label: 'Outstanding Balances' },
-    { key: 'revenue', label: 'Revenue Report' },
-    { key: 'monthly-stats', label: 'Monthly Statistics' },
-    { key: 'audit', label: 'Audit Logs' },
-    { key: 'approvals', label: 'Approval Logs' },
-    { key: 'transactions', label: 'Transaction Logs' },
-    { key: 'ledger', label: 'Customer Ledger' },
-    { key: 'billing-sheet', label: 'Daily Collector Billing Sheet' },
-  ],
-  cashier: [
-    { key: 'collection', label: 'Collection Summary' },
-    { key: 'outstanding', label: 'Outstanding Balances' },
-    { key: 'revenue', label: 'Revenue Report' },
-    { key: 'monthly-stats', label: 'Monthly Statistics' },
-    { key: 'transactions', label: 'Transaction Logs' },
-    { key: 'ledger', label: 'Customer Ledger' },
-    { key: 'billing-sheet', label: 'Daily Collector Billing Sheet' },
-  ],
-  encoder: [
-    { key: 'meter-reading', label: 'Meter Reading Input' },
-    { key: 'collection', label: 'Collection Summary' },
-    { key: 'outstanding', label: 'Outstanding Balances' },
-    { key: 'revenue', label: 'Revenue Report' },
-    { key: 'monthly-stats', label: 'Monthly Statistics' },
-  ],
-  finance_officer: [
-    { key: 'collection', label: 'Collection Summary' },
-    { key: 'outstanding', label: 'Outstanding Balances' },
-    { key: 'revenue', label: 'Revenue Report' },
-    { key: 'monthly-stats', label: 'Monthly Statistics' },
-    { key: 'ledger', label: 'Customer Ledger' },
-    { key: 'billing-sheet', label: 'Daily Collector Billing Sheet' },
-  ],
-  customer: [
-    { key: 'personal-billing', label: 'Billing History' },
-    { key: 'payment-history', label: 'Payment History' },
-    { key: 'outstanding-balance', label: 'Outstanding Balance' },
-    { key: 'proof-of-payment', label: 'Proof of Payment' },
-  ],
+// Test endpoint to check database connection (no auth required) - MUST BE BEFORE AUTH MIDDLEWARE
+router.get('/test-db', async (req, res) => {
+  try {
+    // Test basic database connection and check data in each table
+    const queries = [
+      'SELECT COUNT(*) as count FROM customer_accounts',
+      'SELECT COUNT(*) as count FROM bills',
+      'SELECT COUNT(*) as count FROM cashier_billing',
+      'SELECT COUNT(*) as count FROM payment_submissions',
+      'SELECT COUNT(*) as count FROM billing'
+    ];
+    
+    const results = {};
+    for (let i = 0; i < queries.length; i++) {
+      const result = await pool.query(queries[i]);
+      const tableName = queries[i].split('FROM ')[1];
+      results[tableName] = result.rows[0].count;
+    }
+    
+    // Get sample data from each table to understand the structure
+    const sampleData = {};
+    
+    if (results.customer_accounts > 0) {
+      const customers = await pool.query('SELECT id, first_name, last_name, meter_number, status FROM customer_accounts LIMIT 3');
+      sampleData.customers = customers.rows;
+    }
+    
+    if (results.bills > 0) {
+      const bills = await pool.query('SELECT id, customer_id, amount_due, status, due_date, payment_date FROM bills LIMIT 3');
+      sampleData.bills = bills.rows;
+    }
+    
+    if (results.cashier_billing > 0) {
+      const cashierBilling = await pool.query('SELECT id, customer_id, amount_paid, payment_date, payment_method FROM cashier_billing LIMIT 3');
+      sampleData.cashier_billing = cashierBilling.rows;
+    }
+    
+    if (results.payment_submissions > 0) {
+      const paymentSubmissions = await pool.query('SELECT id, customer_id, amount, payment_method, created_at, status FROM payment_submissions LIMIT 3');
+      sampleData.payment_submissions = paymentSubmissions.rows;
+    }
+    
+    if (results.billing > 0) {
+      const billing = await pool.query('SELECT bill_id, customer_id, amount_due, status, due_date FROM billing LIMIT 3');
+      sampleData.billing = billing.rows;
+    }
+    
+    // Also get all data from cashier_billing to see what we're working with
+    const allCashierData = await pool.query('SELECT * FROM cashier_billing LIMIT 5');
+    const allSubmissionData = await pool.query('SELECT * FROM payment_submissions LIMIT 5');
+    
+    res.json({ 
+      message: 'Database connection successful',
+      tableCounts: results,
+      sampleData: sampleData,
+      allCashierData: allCashierData.rows,
+      allSubmissionData: allSubmissionData.rows,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Database test failed:', err);
+    res.status(500).json({ 
+      error: 'Database connection failed',
+      details: err.message 
+    });
+  }
+});
+
+// Middleware to check if user has permission to access reports
+const checkReportAccess = (req, res, next) => {
+  const rawRole = req.user && req.user.role ? String(req.user.role) : '';
+  const userRole = rawRole.toLowerCase().replace(/\s+/g, '_');
+  console.log('CheckReportAccess - User role:', rawRole, '->', userRole);
+  
+  // Allow common finance role variants and others
+  const allowedRoles = new Set([
+    'admin',
+    'cashier',
+    'encoder',
+    'finance_officer',
+    'finance_manager',
+    'finance',
+    'manager',
+    'finance_manager_dashboard',
+    'customer'
+  ]);
+  
+  if (!allowedRoles.has(userRole)) {
+    console.log('Access denied for role:', userRole);
+    return res.status(403).json({ error: 'Access denied to reports', role: rawRole });
+  }
+  
+  console.log('Access granted for role:', userRole);
+  next();
 };
 
-const Reports = () => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  // Normalize role for consistency
-  const normalizeRole = (r) => (r || '').toString().trim().toLowerCase().replace(/\s+/g, '_');
-  const rawRole = user?.role || localStorage.getItem('role') || 'customer';
-  const role = normalizeRole(rawRole);
-  const token = localStorage.getItem('token');
+// Middleware to check admin-only access (audit logs, approval tracking)
+const checkAdminAccess = (req, res, next) => {
+  const userRole = req.user.role;
   
-  console.log('Reports component - User info:', user);
-  console.log('Reports component - Token exists:', !!token);
-  console.log('Reports component - Raw role:', rawRole);
-  console.log('Reports component - Normalized role:', role);
-  
-  const availableReports = REPORTS_BY_ROLE[role] || REPORTS_BY_ROLE['customer'];
-  const [activeTab, setActiveTab] = useState(availableReports[0].key);
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [meterReadings, setMeterReadings] = useState([]); // For encoder
-  const [error, setError] = useState('');
-  const [timePeriod, setTimePeriod] = useState('custom'); // daily, weekly, monthly, yearly, custom
-  const [groupBy, setGroupBy] = useState('day'); // day, week, month, year
-  const [selectedCustomerForLedger, setSelectedCustomerForLedger] = useState('');
+  if (userRole !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
 
-  // Helper function to format dates in local time (avoid UTC conversion)
-  const formatDateLocal = (date) => {
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-  const [customers, setCustomers] = useState([]);
-  const [showLedger, setShowLedger] = useState(false);
-  const [selectedMonthForBillingSheet, setSelectedMonthForBillingSheet] = useState('DECEMBER');
-  const [selectedYearForBillingSheet, setSelectedYearForBillingSheet] = useState('2024');
-  const [selectedCollectorForBillingSheet, setSelectedCollectorForBillingSheet] = useState('ALL');
-  const [availableZones, setAvailableZones] = useState([]);
-  const [loadingZones, setLoadingZones] = useState(false);
-  const [showBillingSheet, setShowBillingSheet] = useState(false);
-  const [showPDFPreview, setShowPDFPreview] = useState(false);
-  const [previewPDF, setPreviewPDF] = useState(null);
-
-  // Fetch customers when ledger tab is active
-  useEffect(() => {
-    if (activeTab === 'ledger') {
-      fetchCustomers();
-    }
-  }, [activeTab]);
-
-  // Fetch customers for ledger
-  const fetchCustomers = async () => {
-    try {
-      const res = await apiClient.get('/customers');
-      setCustomers(res.data);
-    } catch (err) {
-      console.error('Error fetching customers:', err);
-    }
-  };
-
-  // Fetch available zones for billing sheet
-  const fetchAvailableZones = useCallback(async () => {
-    setLoadingZones(true);
-    try {
-      const monthNum = getMonthNumber(selectedMonthForBillingSheet) + 1;
-      const res = await apiClient.get('/reports/billing-sheet-zones', {
-        params: { month: monthNum, year: selectedYearForBillingSheet }
-      });
-      setAvailableZones(res.data || []);
-      // If current selection is not in available zones, reset to 'ALL'
-      if (selectedCollectorForBillingSheet !== 'ALL' && 
-          !res.data.includes(selectedCollectorForBillingSheet)) {
-        setSelectedCollectorForBillingSheet('ALL');
+// Middleware to filter data based on user role
+const filterDataByRole = (userRole, data, type) => {
+  switch (userRole) {
+    case 'admin':
+      return data; // Full access
+    case 'cashier':
+      if (type === 'audit' || type === 'approvals') {
+        return []; // No access to audit or approval data
       }
-    } catch (err) {
-      console.error('Error fetching zones:', err);
-      setAvailableZones([]);
-    } finally {
-      setLoadingZones(false);
-    }
-  }, [selectedMonthForBillingSheet, selectedYearForBillingSheet, selectedCollectorForBillingSheet]);
-
-  // Fetch available zones when billing sheet tab is active or month/year changes
-  useEffect(() => {
-    if (activeTab === 'billing-sheet') {
-      fetchAvailableZones();
-    }
-  }, [activeTab, selectedMonthForBillingSheet, selectedYearForBillingSheet, fetchAvailableZones]);
-
-  const getMonthNumber = (monthName) => {
-    const months = {
-      'JANUARY': 0, 'FEBRUARY': 1, 'MARCH': 2, 'APRIL': 3,
-      'MAY': 4, 'JUNE': 5, 'JULY': 6, 'AUGUST': 7,
-      'SEPTEMBER': 8, 'OCTOBER': 9, 'NOVEMBER': 10, 'DECEMBER': 11
-    };
-    return months[monthName.toUpperCase()] || 0;
-  };
-
-  // Helper function to get date ranges for predefined periods
-  const getDateRange = (period) => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const date = today.getDate();
-
-    switch (period) {
-      case 'today':
-        const todayStr = formatDateLocal(today);
-        return { from: todayStr, to: todayStr };
-      
-      case 'yesterday':
-        const yesterday = new Date(today);
-        yesterday.setDate(date - 1);
-        const yesterdayStr = formatDateLocal(yesterday);
-        return { from: yesterdayStr, to: yesterdayStr };
-      
-      case 'this-week':
-        const weekStart = new Date(today);
-        weekStart.setDate(date - today.getDay()); // Start of week (Sunday)
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
-        return {
-          from: formatDateLocal(weekStart),
-          to: formatDateLocal(weekEnd)
-        };
-      
-      case 'last-week':
-        const lastWeekStart = new Date(today);
-        lastWeekStart.setDate(date - today.getDay() - 7); // Last week start
-        const lastWeekEnd = new Date(lastWeekStart);
-        lastWeekEnd.setDate(lastWeekStart.getDate() + 6); // Last week end
-        return {
-          from: formatDateLocal(lastWeekStart),
-          to: formatDateLocal(lastWeekEnd)
-        };
-      
-      case 'this-month':
-        const monthStart = new Date(year, month, 1);
-        const monthEnd = new Date(year, month + 1, 0);
-        return {
-          from: formatDateLocal(monthStart),
-          to: formatDateLocal(monthEnd)
-        };
-      
-      case 'last-month':
-        const lastMonthStart = new Date(year, month - 1, 1);
-        const lastMonthEnd = new Date(year, month, 0);
-        return {
-          from: formatDateLocal(lastMonthStart),
-          to: formatDateLocal(lastMonthEnd)
-        };
-      
-      case 'this-quarter':
-        const quarter = Math.floor(month / 3);
-        const quarterStart = new Date(year, quarter * 3, 1);
-        const quarterEnd = new Date(year, quarter * 3 + 3, 0);
-        return {
-          from: formatDateLocal(quarterStart),
-          to: formatDateLocal(quarterEnd)
-        };
-      
-      case 'this-year':
-        const yearStart = new Date(year, 0, 1);
-        const yearEnd = new Date(year, 11, 31);
-        return {
-          from: formatDateLocal(yearStart),
-          to: formatDateLocal(yearEnd)
-        };
-      
-      case 'last-year':
-        const lastYearStart = new Date(year - 1, 0, 1);
-        const lastYearEnd = new Date(year - 1, 11, 31);
-        return {
-          from: formatDateLocal(lastYearStart),
-          to: formatDateLocal(lastYearEnd)
-        };
-      
-      case 'last-30-days':
-        const thirtyDaysAgo = new Date(today);
-        thirtyDaysAgo.setDate(date - 30);
-        return {
-          from: formatDateLocal(thirtyDaysAgo),
-          to: formatDateLocal(today)
-        };
-      
-      case 'last-90-days':
-        const ninetyDaysAgo = new Date(today);
-        ninetyDaysAgo.setDate(date - 90);
-        return {
-          from: formatDateLocal(ninetyDaysAgo),
-          to: formatDateLocal(today)
-        };
-      
-      default:
-        return { from: '', to: '' };
-    }
-  };
-
-  // Handle time period change
-  const handleTimePeriodChange = (period) => {
-    setTimePeriod(period);
-    if (period !== 'custom') {
-      const dateRange = getDateRange(period);
-      setFrom(dateRange.from);
-      setTo(dateRange.to);
-    }
-  };
-
-  useEffect(() => {
-    // Check if user is logged in
-    if (!user || !token) {
-      setError('Please log in to view reports');
-      return;
-    }
-    
-    console.log('Reports component - User info:', user);
-    console.log('Reports component - Token exists:', !!token);
-    console.log('Reports component - Role:', role);
-    console.log('Reports component - Available reports:', availableReports);
-    console.log('Reports component - activeTab:', activeTab, 'role:', role);
-    
-    if (activeTab === 'meter-reading') {
-      fetchMeterReadings();
-    } else if (activeTab === 'billing-sheet' || activeTab === 'ledger') {
-      // These tabs render custom components that fetch their own data
-      setData([]);
-      setError('');
-      setLoading(false);
-    } else {
-      fetchData();
-    }
-    // eslint-disable-next-line
-  }, [activeTab, from, to, timePeriod, groupBy]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    setError('');
-    
-    if (!token) {
-      setError('Authentication token not found. Please log in again.');
-      setLoading(false);
-      return;
-    }
-    
-    let url = `/reports/${activeTab}`;
-    const params = [];
-    if (from) params.push(`startDate=${from}`);
-    if (to) params.push(`endDate=${to}`);
-    if (activeTab === 'collection' && groupBy !== 'day') params.push(`groupBy=${groupBy}`);
-    if (params.length) url += '?' + params.join('&');
-    
-    console.log('Fetching report data from:', url);
-    console.log('User token:', token ? 'Token exists' : 'No token');
-    
-    try {
-      const res = await apiClient.get(url);
-      console.log('Report data received:', res.data);
-      
-      // Handle enhanced collection summary response format
-      if (res.data && res.data.data && Array.isArray(res.data.data)) {
-        setData(res.data.data);
-      } else if (Array.isArray(res.data)) {
-        setData(res.data);
-      } else {
-        setData([]);
+      return data; // Access to financial data
+    case 'encoder':
+      if (type === 'audit' || type === 'approvals' || type === 'transactions') {
+        return []; // No access to audit, approval, or transaction data
       }
-    } catch (err) {
-      console.error('Error fetching report data:', err.response || err);
-      console.error('Error details:', {
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data,
-        message: err.message
-      });
-      
-      if (err.response?.status === 401) {
-        setError('Authentication failed. Please log in again.');
-      } else if (err.response?.status === 403) {
-        setError('Access denied. You do not have permission to view this report.');
-      } else {
-        setError(`Error loading report: ${err.response?.data?.message || err.message}`);
-      }
-      
-      setData([]);
-    }
-    setLoading(false);
-  };
+      return data.filter(item => item.type === 'bill' || item.description?.includes('Bill')); // Only billing data
+    default:
+      return [];
+  }
+};
 
-  // Encoder: fetch customers for meter reading
-  const fetchMeterReadings = async () => {
-    setLoading(true);
-    try {
-      const res = await apiClient.get('/customers');
-      setMeterReadings(res.data);
-    } catch (err) {
-      console.error('Error fetching customers:', err);
-      setMeterReadings([]);
-    }
-    setLoading(false);
-  };
+// Apply authentication and permission middleware to all routes
+router.use(authenticateToken, checkReportAccess);
 
-  // Encoder: submit meter reading
-  const submitReading = async (customerId, reading) => {
-    try {
-      await apiClient.post(`/meter-readings`, { customerId, reading });
-      fetchMeterReadings();
-    } catch (err) {
-      console.error('Error submitting reading:', err);
-      alert('Failed to submit reading');
-    }
-  };
+// Test endpoint to check authentication (requires auth)
+router.get('/test-auth', async (req, res) => {
+  res.json({ 
+    message: 'Authentication successful',
+    user: req.user,
+    timestamp: new Date().toISOString()
+  });
+});
 
-  // Generate PDF content (for both preview and export)
-  const generatePDFContent = () => {
-    if (!data.length) {
-      return null;
-    }
-
-    const doc = new jsPDF();
+// Collection Summary Report
+router.get('/collection', async (req, res) => {
+  console.log('Collection report requested by user:', req.user);
+  try {
+    const { startDate, endDate } = req.query;
+    console.log('Collection report params:', { startDate, endDate });
     
-    // Find the current report label
-    const currentReport = availableReports.find(report => report.key === activeTab);
-    const reportTitle = currentReport ? currentReport.label : `${activeTab} Report`;
+    // PostgreSQL query to get actual payment collections
+    let query;
+    let params = [];
     
-    // Add title
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text(reportTitle, 20, 20);
-    
-    // Add subtitle with date range
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    const dateRange = from && to ? `Period: ${from} to ${to}` : 'All Time';
-    doc.text(dateRange, 20, 30);
-    
-    // Add current date/time
-    const currentDate = new Date().toLocaleDateString('en-PH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    doc.text(`Generated on: ${currentDate}`, 20, 36);
-    
-    // Prepare table data
-    const columns = Object.keys(data[0]).map(col => {
-      // Convert column names to user-friendly labels (remove any currency symbols)
-      let label;
-      switch(col.toLowerCase()) {
-        case 'date': label = 'Date'; break;
-        case 'paymentcount': label = 'Payment Count'; break;
-        case 'averageamount': label = 'Average Amount'; break;
-        case 'source': label = 'Payment Source'; break;
-        case 'customername': label = 'Customer Name'; break;
-        case 'amountdue': label = 'Amount Due'; break;
-        case 'due_date': label = 'Due Date'; break;
-        case 'daysoverdue': label = 'Days Overdue'; break;
-        case 'lastpayment': label = 'Last Payment'; break;
-        case 'accountnumber': label = 'Account Number'; break;
-        case 'month': label = 'Month'; break;
-        case 'totalrevenue': label = 'Total Revenue'; break;
-        case 'collectedamount': label = 'Collected Amount'; break;
-        case 'billedamount': label = 'Billed Amount'; break;
-        case 'collectionrate': label = 'Collection Rate (%)'; break;
-        case 'activecustomers': label = 'Active Customers'; break;
-        case 'totalbilled': label = 'Total Billed'; break;
-        case 'totalcollected': label = 'Total Collected'; break;
-        case 'unpaidbills': label = 'Unpaid Bills'; break;
-        case 'averagebillamount': label = 'Average Bill Amount'; break;
-        default: 
-          label = col.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-          // Remove any currency symbols from the label
-          label = label.replace(/\$\s*/g, '').replace(/₱\s*/g, '').trim();
-      }
-      return label;
-    });
-    
-    const rows = data.map(row => 
-      Object.keys(data[0]).map(col => {
-        const value = row[col];
-        // Format values appropriately
-        if ((col.includes('date') || col.includes('created_at') || col.includes('updated_at') || col.includes('submitted_at') || col.includes('payment_date') || col.includes('due_date') || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value))) && value) {
-          try {
-            const date = new Date(value);
-            return isNaN(date.getTime()) ? value : date.toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            });
-          } catch {
-            return value;
-          }
-        } else if ((col.includes('amount') || col.includes('collected') || col.includes('billed')) && !col.includes('average')) {
-          // Format for PDF compatibility - add commas, reduce zeros
-          if (typeof value === 'number') {
-            // If it's a whole number, don't show decimals
-            if (value % 1 === 0) {
-              return value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-            }
-            return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          }
-          return value;
-        } else if (col.includes('average') && col.includes('amount') && typeof value === 'number') {
-          // Format average amount - reduce zeros if whole number
-          if (value % 1 === 0) {
-            return value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-          }
-          return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        } else if ((col.includes('rate') || col.includes('collectionrate')) && typeof value === 'number') {
-          // Format rate with 2 decimal places max
-          return `${Number(value).toFixed(2)}%`;
-        } else if ((col.includes('count') || col.includes('quantity')) && typeof value === 'number') {
-          // Format count as integer (no decimals)
-          return Math.round(value).toLocaleString('en-PH');
-        } else if ((col.includes('days') && col.includes('overdue')) || col.includes('daysoverdue')) {
-          // Format days overdue as integer (no decimals)
-          return Math.round(Number(value)).toString();
-        } else if (col.includes('account') && col.includes('number')) {
-          // Remove commas from account number
-          return String(value).replace(/,/g, '');
-        }
-        return value;
-      })
-    );
-    
-    // Add summary if applicable
-    const summary = calculateSummary();
-    let startY = 45;
-    
-    if (summary && Object.keys(summary).length > 0) {
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Summary:', 20, startY);
-      startY += 8;
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      Object.entries(summary).forEach(([key, value]) => {
-        const label = columns[Object.keys(data[0]).indexOf(key)] || key;
-        let formattedValue;
-        if (key.includes('count') || key.includes('quantity')) {
-          // Format count as integer (no decimals, no currency)
-          formattedValue = Math.round(Number(value)).toLocaleString('en-PH');
-        } else if (key.includes('amount') || key.includes('total') || key.includes('collected') || key.includes('billed')) {
-          // Format amounts without currency symbol, reduce zeros
-          if (typeof value === 'number') {
-            // If it's a whole number, don't show decimals
-            if (value % 1 === 0) {
-              formattedValue = value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-            } else {
-              formattedValue = value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            }
-          } else {
-            formattedValue = value;
-          }
-        } else {
-          formattedValue = value;
-        }
-        doc.text(`${label}: ${formattedValue}`, 20, startY);
-        startY += 6;
-      });
-      startY += 10;
-    }
-    
-    // Add the table
-    doc.autoTable({
-      head: [columns],
-      body: rows,
-      startY: startY,
-      styles: {
-        fontSize: 9,
-        cellPadding: 3,
-      },
-      headStyles: {
-        fillColor: [66, 139, 202], // Blue header
-        textColor: 255,
-        fontStyle: 'bold'
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245]
-      },
-      margin: { top: startY, right: 20, bottom: 20, left: 20 }
-    });
-    
-    // Add page number and footer
-    const finalY = doc.internal.pageSize.height - 15;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.text('Dolores Water District - Billing System', 20, finalY);
-    doc.text(`Page 1`, doc.internal.pageSize.width - 30, finalY, { align: 'right' });
-    
-    return doc;
-  };
-
-  // Export PDF directly
-  const exportPDF = () => {
-    const doc = generatePDFContent();
-    if (!doc) {
-      alert('No data to export');
-      return;
-    }
-    doc.save(`${activeTab}_report_${new Date().toISOString().split('T')[0]}.pdf`);
-  };
-
-  // Preview PDF
-  const previewPDFReport = () => {
-    const doc = generatePDFContent();
-    if (!doc) {
-      alert('No data to preview');
-      return;
-    }
-    
-    // Convert PDF to data URL for preview
-    const pdfDataUrl = doc.output('datauristring');
-    setPreviewPDF(pdfDataUrl);
-    setShowPDFPreview(true);
-  };
-
-  // Calculate summary statistics for collections
-  const calculateSummary = () => {
-    if (!data.length) return null;
-    
-    const totals = data.reduce((acc, row) => {
-      // Look for amount-related fields
-      Object.entries(row).forEach(([key, value]) => {
-        if (/amount|total|balance|revenue|payment|paid|collection/i.test(key) && !isNaN(value)) {
-          acc[key] = (acc[key] || 0) + Number(value);
-        }
-        if (/count|quantity/i.test(key) && !isNaN(value)) {
-          acc[key] = (acc[key] || 0) + Number(value);
-        }
-      });
-      return acc;
-    }, {});
-    
-    return totals;
-  };
-
-  // Premium Table Renderer
-  const renderTable = () => {
-    const summary = calculateSummary();
-    
-    return (
-      <div className="space-y-6">
-        {/* Premium Summary Cards */}
-        {(activeTab === 'collection' || activeTab === 'revenue') && summary && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {Object.entries(summary).map(([key, value]) => (
-              <div key={key} className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-6 transform hover:scale-105 transition-all duration-300">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </h3>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mt-2">
-                      {/amount|total|balance|revenue|payment|paid|collection/i.test(key) && !/count/i.test(key)
-                        ? formatNumber(Number(value))
-                        : /count/i.test(key)
-                        ? Math.round(Number(value)).toLocaleString()
-                        : Number(value).toLocaleString()
-                      }
-                    </p>
-                  </div>
-                  <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      {/amount|revenue|payment|paid/i.test(key) ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                      ) : (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      )}
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+    if (startDate && endDate) {
+      // Use date filters for PostgreSQL with your actual schema
+      query = `
+      SELECT 
+          payment_date::date as date,
+          SUM(amount_paid) as totalCollected,
+          COUNT(*) as paymentCount,
+          AVG(amount_paid) as averageAmount,
+          'Cashier Payment' as source
+        FROM cashier_billing
+        WHERE payment_date::date BETWEEN $1::date AND $2::date
+        GROUP BY payment_date::date
         
-        {/* Premium Data Table */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              {activeTab.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} Data
-              <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                {data.length} records
-              </span>
-            </h3>
-          </div>
-          
-          <div className="overflow-x-auto">
-            {data.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="mx-auto w-24 h-24 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">No Data Available</h3>
-                <p className="text-gray-500 mb-4">
-                  We couldn't find any data for the selected criteria.
-                </p>
-                <div className="text-sm text-gray-400 space-y-1">
-                  <p>• No data exists in the database yet</p>
-                  <p>• The selected date range has no records</p>
-                  <p>• There was an error fetching the data</p>
-                </div>
-                <button 
-                  onClick={fetchData}
-                  className="mt-6 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  Try Again
-                </button>
-              </div>
-            ) : (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                  <tr>
-                    {data[0] && Object.keys(data[0]).map((col, index) => {
-                      // Clean column header - remove dollar signs and other currency symbols
-                      let headerText = col.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                      headerText = headerText.replace(/\$\s*/g, '').replace(/₱\s*/g, '').trim();
-                      return (
-                        <th key={col} className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          <div className="flex items-center space-x-1">
-                            <span>{headerText}</span>
-                            {/amount|revenue|payment/i.test(col) && !/count/i.test(col) && (
-                              <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                              </svg>
-                            )}
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
-                  {data.map((row, idx) => (
-                    <tr key={idx} className={`hover:bg-blue-50 transition-colors duration-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                      {Object.entries(row).map(([col, val], i) => (
-                        <td key={i} className="px-6 py-4 whitespace-nowrap text-sm">
-                          {(/amount|total|balance|revenue|payment|due|paid|fee|charge|price|cost/i.test(col) && !isNaN(val) && !/count/i.test(col)) ? (
-                            <div className="flex items-center">
-                              <span className="font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                                {(() => {
-                                  const num = Number(val);
-                                  // If it's a whole number, don't show decimals
-                                  if (num % 1 === 0) {
-                                    return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-                                  }
-                                  return formatNumber(num);
-                                })()}
-                              </span>
-                            </div>
-                          ) : (/count|quantity/i.test(col) && !isNaN(val)) ? (
-                            <div className="flex items-center">
-                              <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                                {Math.round(Number(val)).toLocaleString()}
-                              </span>
-                            </div>
-                          ) : (/daysoverdue|days.*overdue/i.test(col) && !isNaN(val)) ? (
-                            <div className="flex items-center">
-                              <span className="font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full">
-                                {Math.round(Number(val))}
-                              </span>
-                            </div>
-                          ) : (/accountnumber|account.*number/i.test(col)) ? (
-                            <span className="text-gray-700 font-medium">
-                              {(() => {
-                                if (val === null || val === undefined || val === '') return '';
-                                const str = typeof val === 'number' ? val.toString() : String(val);
-                                return str.replace(/,/g, '');
-                              })()}
-                            </span>
-                          ) : (/rate|collectionrate/i.test(col) && !isNaN(val)) ? (
-                            <div className="flex items-center">
-                              <span className="font-bold text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
-                                {Number(val).toFixed(2)}%
-                              </span>
-                            </div>
-                          ) : (/lastpayment/i.test(col) && val) ? (
-                            <span className="text-gray-700 font-medium">
-                              {(() => {
-                                try {
-                                  const date = new Date(val);
-                                  return isNaN(date.getTime()) ? val : date.toLocaleDateString('en-US', { 
-                                    year: 'numeric', 
-                                    month: 'long', 
-                                    day: 'numeric' 
-                                  });
-                                } catch {
-                                  return val;
-                                }
-                              })()}
-                            </span>
-                          ) : ((/date|created_at|updated_at|submitted_at|payment_date|due_date/i.test(col) || /^\d{4}-\d{2}-\d{2}T/.test(val)) && val) ? (
-                            <span className="text-gray-700 font-medium">
-                              {(() => {
-                                try {
-                                  const date = new Date(val);
-                                  return isNaN(date.getTime()) ? val : date.toLocaleDateString('en-US', { 
-                                    year: 'numeric', 
-                                    month: 'long', 
-                                    day: 'numeric' 
-                                  });
-                                } catch {
-                                  return val;
-                                }
-                              })()}
-                            </span>
-                          ) : (/status/i.test(col)) ? (
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              val === 'Paid' || val === 'Active' || val === 'approved' 
-                                ? 'bg-green-100 text-green-800' 
-                                : val === 'Unpaid' || val === 'Pending' 
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : val === 'Overdue' || val === 'Rejected'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {val}
-                            </span>
-                          ) : (
-                            <span className="text-gray-700 font-medium">{val}</span>
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-      </div>
+        UNION ALL
+        
+        SELECT 
+          created_at::date as date,
+        SUM(amount) as totalCollected,
+        COUNT(*) as paymentCount,
+          AVG(amount) as averageAmount,
+          'Online Payment' as source
+        FROM payment_submissions
+        WHERE status = 'approved' AND created_at::date BETWEEN $1::date AND $2::date
+        GROUP BY created_at::date
+        
+        ORDER BY date DESC
+      `;
+      params = [startDate, endDate];
+    } else {
+      // Show recent data without date filters
+      query = `
+        SELECT 
+          payment_date::date as date,
+          SUM(amount_paid) as totalCollected,
+          COUNT(*) as paymentCount,
+          AVG(amount_paid) as averageAmount,
+          'Cashier Payment' as source
+        FROM cashier_billing
+        WHERE payment_date IS NOT NULL
+        GROUP BY payment_date::date
+        
+        UNION ALL
+        
+        SELECT 
+          created_at::date as date,
+          SUM(amount) as totalCollected,
+          COUNT(*) as paymentCount,
+          AVG(amount) as averageAmount,
+          'Online Payment' as source
+        FROM payment_submissions
+        WHERE status = 'approved' AND created_at IS NOT NULL
+        GROUP BY created_at::date
+        
+        ORDER BY date DESC
+        LIMIT 30
+      `;
+    }
+    
+    console.log('Executing PostgreSQL query:', query);
+    console.log('Query params:', params);
+    const result = await pool.query(query, params);
+    console.log('Collection report result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching collection report:', err);
+    res.status(500).json({ message: 'Error fetching collection report', error: err.message });
+  }
+});
+
+// Enhanced Collection Summary with Period Aggregation
+router.get('/collection-summary', async (req, res) => {
+  console.log('Enhanced collection summary requested by user:', req.user);
+  try {
+    const { startDate, endDate, groupBy = 'day' } = req.query;
+    console.log('Collection summary params:', { startDate, endDate, groupBy });
+    
+    // Determine the date format based on groupBy parameter
+    let dateFormat;
+    let dateGrouping;
+    
+    switch (groupBy) {
+      case 'year':
+        dateFormat = 'YYYY';
+        dateGrouping = 'EXTRACT(YEAR FROM payment_date)';
+        break;
+      case 'month':
+        dateFormat = 'YYYY-MM';
+        dateGrouping = "TO_CHAR(payment_date, 'YYYY-MM')";
+        break;
+      case 'week':
+        dateFormat = 'YYYY-"W"WW';
+        dateGrouping = "TO_CHAR(payment_date, 'YYYY-\"W\"WW')";
+        break;
+      case 'day':
+      default:
+        dateFormat = 'YYYY-MM-DD';
+        dateGrouping = 'DATE(payment_date)';
+        break;
+    }
+    
+    let query = `
+      WITH collection_data AS (
+        -- Cashier payments
+        SELECT 
+          ${dateGrouping} as period,
+          'Cashier Payment' as source,
+          SUM(amount_paid) as total_amount,
+          COUNT(*) as transaction_count,
+          AVG(amount_paid) as average_amount
+        FROM cashier_billing 
+        WHERE payment_date IS NOT NULL
+        ${startDate && endDate ? 'AND payment_date BETWEEN $1 AND $2' : ''}
+        GROUP BY ${dateGrouping}
+        
+        UNION ALL
+        
+        -- Payment submissions
+        SELECT 
+          ${dateGrouping.replace('payment_date', 'created_at')} as period,
+          'Online Payment' as source,
+          SUM(amount) as total_amount,
+          COUNT(*) as transaction_count,
+          AVG(amount) as average_amount
+        FROM payment_submissions
+        WHERE created_at IS NOT NULL
+        ${startDate && endDate ? 'AND created_at BETWEEN $1 AND $2' : ''}
+        GROUP BY ${dateGrouping.replace('payment_date', 'created_at')}
+      )
+      SELECT 
+        period,
+        SUM(total_amount) as totalCollected,
+        SUM(transaction_count) as paymentCount,
+        AVG(average_amount) as averageAmount,
+        COUNT(DISTINCT source) as sourceCount
+      FROM collection_data
+      GROUP BY period
+      ORDER BY period DESC
+      LIMIT 50
+    `;
+    
+    const params = startDate && endDate ? [startDate, endDate] : [];
+    
+    console.log('Executing enhanced query:', query);
+    console.log('Query params:', params);
+    const result = await pool.query(query, params);
+    
+    // Add summary statistics
+    const summaryQuery = `
+      SELECT 
+        COUNT(*) as total_transactions,
+        SUM(amount_paid) as total_collections,
+        AVG(amount_paid) as average_payment,
+        MIN(amount_paid) as min_payment,
+        MAX(amount_paid) as max_payment
+      FROM cashier_billing
+      WHERE payment_date IS NOT NULL
+      ${startDate && endDate ? 'AND payment_date BETWEEN $1 AND $2' : ''}
+    `;
+    
+    const summaryResult = await pool.query(summaryQuery, params);
+    
+    console.log('Collection summary result:', result.rows);
+    res.json({
+      data: result.rows,
+      summary: summaryResult.rows[0],
+      period: groupBy,
+      dateRange: { startDate, endDate }
+    });
+  } catch (err) {
+    console.error('Error fetching collection summary:', err);
+    res.status(500).json({ message: 'Error fetching collection summary' });
+  }
+});
+
+
+
+
+
+// Audit Logs Report (Admin only)
+router.get('/audit', checkAdminAccess, async (req, res) => {
+  console.log('Audit logs requested by user:', req.user);
+  try {
+    const { startDate, endDate } = req.query;
+    console.log('Audit logs params:', { startDate, endDate });
+    
+    // Create audit log from actual system activities
+    let query = `
+      SELECT 
+        'Bill Created' as action,
+        'Admin' as user_name,
+        'Created bill ID: ' || b.id || ' for customer ' || ca.first_name || ' ' || ca.last_name as description,
+        b.created_at as timestamp,
+        'bills' as table_name,
+        'Success' as status
+      FROM bills b
+      LEFT JOIN customer_accounts ca ON b.customer_id = ca.id
+      WHERE b.created_at IS NOT NULL
+      ${startDate && endDate ? 'AND b.created_at BETWEEN $1::timestamp AND $2::timestamp' : ''}
+      
+      UNION ALL
+      
+      SELECT 
+        'Payment Processed' as action,
+        'Cashier' as user_name,
+        'Processed payment of ₱' || cb.amount_paid || ' for customer ' || ca.first_name || ' ' || ca.last_name as description,
+        cb.created_at as timestamp,
+        'cashier_billing' as table_name,
+        cb.status as status
+      FROM cashier_billing cb
+      LEFT JOIN customer_accounts ca ON cb.customer_id = ca.id
+      WHERE cb.created_at IS NOT NULL
+      ${startDate && endDate ? 'AND cb.created_at BETWEEN $1::timestamp AND $2::timestamp' : ''}
+      
+      UNION ALL
+      
+      SELECT 
+        'Payment Submission' as action,
+        ca.first_name || ' ' || ca.last_name as user_name,
+        'Submitted online payment of ₱' || ps.amount || ' via ' || ps.payment_method as description,
+        ps.created_at as timestamp,
+        'payment_submissions' as table_name,
+        ps.status as status
+      FROM payment_submissions ps
+      LEFT JOIN customer_accounts ca ON ps.customer_id = ca.id
+      WHERE ps.created_at IS NOT NULL
+      ${startDate && endDate ? 'AND ps.created_at BETWEEN $1::timestamp AND $2::timestamp' : ''}
+      
+      ORDER BY timestamp DESC
+      LIMIT 100
+    `;
+    
+    const params = startDate && endDate ? [startDate, endDate] : [];
+    const result = await pool.query(query, params);
+    
+    console.log('Audit logs result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching audit logs:', err);
+    res.status(500).json({ message: 'Error fetching audit logs', error: err.message });
+  }
+});
+
+// Approval Logs Report (Admin/Finance only)
+router.get('/approvals', async (req, res) => {
+  console.log('Approval logs requested by user:', req.user);
+  try {
+    const { startDate, endDate } = req.query;
+    console.log('Approval logs params:', { startDate, endDate });
+    
+    // Get payment submission approval history
+    let query;
+    let params = [];
+    
+    if (startDate && endDate) {
+      query = `
+        SELECT 
+          ps.id as submission_id,
+          ps.customer_id,
+          ps.amount,
+          ps.status,
+          ps.payment_method,
+          ps.created_at as submission_date,
+          ps.updated_at as approval_date,
+          ca.first_name || ' ' || ca.last_name as customer_name,
+          ca.meter_number,
+          CASE 
+            WHEN ps.status = 'approved' THEN 'Payment Approved'
+            WHEN ps.status = 'rejected' THEN 'Payment Rejected'
+            ELSE 'Payment Pending'
+          END as action,
+          CASE 
+            WHEN ps.status = 'pending' THEN 'Awaiting Review'
+            WHEN ps.status = 'approved' THEN 'Approved by Cashier'
+            WHEN ps.status = 'rejected' THEN 'Rejected - Invalid Documentation'
+            ELSE ps.status
+          END as approval_notes
+        FROM payment_submissions ps
+        LEFT JOIN customer_accounts ca ON ps.customer_id = ca.id
+        WHERE ps.created_at BETWEEN $1::timestamp AND $2::timestamp
+        ORDER BY ps.updated_at DESC, ps.created_at DESC
+        LIMIT 100
+      `;
+      params = [startDate, endDate];
+    } else {
+      query = `
+        SELECT 
+          ps.id as submission_id,
+          ps.customer_id,
+          ps.amount,
+          ps.status,
+          ps.payment_method,
+          ps.created_at as submission_date,
+          ps.updated_at as approval_date,
+          ca.first_name || ' ' || ca.last_name as customer_name,
+          ca.meter_number,
+          CASE 
+            WHEN ps.status = 'approved' THEN 'Payment Approved'
+            WHEN ps.status = 'rejected' THEN 'Payment Rejected'
+            ELSE 'Payment Pending'
+          END as action,
+          CASE 
+            WHEN ps.status = 'pending' THEN 'Awaiting Review'
+            WHEN ps.status = 'approved' THEN 'Approved by Cashier'
+            WHEN ps.status = 'rejected' THEN 'Rejected - Invalid Documentation'
+            ELSE ps.status
+          END as approval_notes
+        FROM payment_submissions ps
+        LEFT JOIN customer_accounts ca ON ps.customer_id = ca.id
+        WHERE ps.created_at IS NOT NULL
+        ORDER BY ps.updated_at DESC, ps.created_at DESC
+        LIMIT 50
+      `;
+    }
+    
+    const result = await pool.query(query, params);
+    
+    console.log('Approval logs result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching approval logs:', err);
+    res.status(500).json({ message: 'Error fetching approval logs', error: err.message });
+  }
+});
+
+// Transaction Logs Report
+router.get('/transactions', async (req, res) => {
+  console.log('Transaction logs requested by user:', req.user);
+  try {
+    const { startDate, endDate } = req.query;
+    console.log('Transaction logs params:', { startDate, endDate });
+    
+    let query;
+    let params = [];
+    
+    if (startDate && endDate) {
+      query = `
+        SELECT 
+          cb.id as transaction_id,
+          cb.customer_id,
+          cb.amount_paid,
+          cb.payment_date::text as payment_date,
+          cb.payment_method,
+          cb.receipt_number,
+          ca.first_name || ' ' || ca.last_name as customer_name,
+          ca.meter_number,
+          'Cashier Payment' as transaction_type,
+          cb.status
+        FROM cashier_billing cb
+        LEFT JOIN customer_accounts ca ON cb.customer_id = ca.id
+        WHERE cb.payment_date IS NOT NULL
+          AND cb.payment_date::date BETWEEN $1::date AND $2::date
+        
+        UNION ALL
+        
+        SELECT 
+          ps.id as transaction_id,
+          ps.customer_id,
+          ps.amount as amount_paid,
+          ps.created_at::text as payment_date,
+          ps.payment_method,
+          'Online-' || ps.id as receipt_number,
+          ca.first_name || ' ' || ca.last_name as customer_name,
+          ca.meter_number,
+          'Online Payment' as transaction_type,
+          ps.status
+        FROM payment_submissions ps
+        LEFT JOIN customer_accounts ca ON ps.customer_id = ca.id
+        WHERE ps.created_at IS NOT NULL
+          AND ps.created_at::date BETWEEN $1::date AND $2::date
+        
+        ORDER BY payment_date DESC
+        LIMIT 100
+      `;
+      params = [startDate, endDate];
+    } else {
+      query = `
+        SELECT 
+          cb.id as transaction_id,
+          cb.customer_id,
+          cb.amount_paid,
+          cb.payment_date::text as payment_date,
+          cb.payment_method,
+          cb.receipt_number,
+          ca.first_name || ' ' || ca.last_name as customer_name,
+          ca.meter_number,
+          'Cashier Payment' as transaction_type,
+          cb.status
+        FROM cashier_billing cb
+        LEFT JOIN customer_accounts ca ON cb.customer_id = ca.id
+        WHERE cb.payment_date IS NOT NULL
+        
+        UNION ALL
+        
+        SELECT 
+          ps.id as transaction_id,
+          ps.customer_id,
+          ps.amount as amount_paid,
+          ps.created_at::text as payment_date,
+          ps.payment_method,
+          'Online-' || ps.id as receipt_number,
+          ca.first_name || ' ' || ca.last_name as customer_name,
+          ca.meter_number,
+          'Online Payment' as transaction_type,
+          ps.status
+        FROM payment_submissions ps
+        LEFT JOIN customer_accounts ca ON ps.customer_id = ca.id
+        WHERE ps.created_at IS NOT NULL
+        
+        ORDER BY payment_date DESC
+        LIMIT 50
+      `;
+    }
+    
+    const result = await pool.query(query, params);
+    
+    console.log('Transaction logs result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching transaction logs:', err);
+    res.status(500).json({ message: 'Error fetching transaction logs', error: err.message });
+  }
+});
+
+// Outstanding Balances Report
+router.get('/outstanding', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    console.log('Outstanding balances report params:', { startDate, endDate });
+    
+    let query;
+    let params = [];
+    
+    if (startDate && endDate) {
+      query = `
+        SELECT 
+          ca.first_name || ' ' || ca.last_name as customerName,
+          ca.meter_number as accountNumber,
+          b.amount_due as amountDue,
+          b.due_date,
+          b.status,
+          GREATEST(0, (CURRENT_DATE - DATE(b.due_date))) as daysOverdue,
+          (
+            SELECT MAX(payment_date)
+            FROM cashier_billing cb
+            WHERE cb.customer_id = b.customer_id
+          ) as lastPayment
+        FROM billing b
+        LEFT JOIN customer_accounts ca ON b.customer_id = ca.id
+        WHERE (b.status IN ('Unpaid','Overdue') OR DATE(b.due_date) < CURRENT_DATE)
+          AND DATE(b.due_date) BETWEEN $1::date AND $2::date
+        ORDER BY daysOverdue DESC
+        LIMIT 100
+      `;
+      params = [startDate, endDate];
+    } else {
+      query = `
+        SELECT 
+          ca.first_name || ' ' || ca.last_name as customerName,
+          ca.meter_number as accountNumber,
+          b.amount_due as amountDue,
+          b.due_date,
+          b.status,
+          GREATEST(0, (CURRENT_DATE - DATE(b.due_date))) as daysOverdue,
+          (
+            SELECT MAX(payment_date)
+            FROM cashier_billing cb
+            WHERE cb.customer_id = b.customer_id
+          ) as lastPayment
+        FROM billing b
+        LEFT JOIN customer_accounts ca ON b.customer_id = ca.id
+        WHERE (b.status IN ('Unpaid','Overdue') OR DATE(b.due_date) < CURRENT_DATE)
+        ORDER BY daysOverdue DESC
+        LIMIT 50
+      `;
+    }
+    
+    console.log('Executing outstanding query with params:', params);
+    const result = await pool.query(query, params);
+    console.log('Outstanding balances result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching outstanding balances:', err);
+    res.status(500).json({ message: 'Error fetching outstanding balances', error: err.message });
+  }
+});
+
+// Revenue Report
+router.get('/revenue', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    console.log('Revenue report params:', { startDate, endDate });
+    
+    let query;
+    let params = [];
+    
+    if (startDate && endDate) {
+      query = `
+      SELECT 
+          DATE_TRUNC('month', b.created_at) as month,
+          SUM(b.amount_due) as totalRevenue,
+          SUM(CASE WHEN b.status = 'Paid' THEN b.amount_due ELSE 0 END) as collectedAmount,
+          SUM(b.amount_due) as billedAmount,
+          CASE 
+            WHEN SUM(b.amount_due) > 0 THEN 
+              (SUM(CASE WHEN b.status = 'Paid' THEN b.amount_due ELSE 0 END) / SUM(b.amount_due)) * 100
+            ELSE 0
+          END as collectionRate
+      FROM billing b
+        WHERE b.created_at BETWEEN $1::timestamp AND $2::timestamp
+        GROUP BY DATE_TRUNC('month', b.created_at)
+      ORDER BY month DESC
+    `;
+      params = [startDate, endDate];
+    } else {
+      query = `
+        SELECT 
+          DATE_TRUNC('month', b.created_at) as month,
+          SUM(b.amount_due) as totalRevenue,
+          SUM(CASE WHEN b.status = 'Paid' THEN b.amount_due ELSE 0 END) as collectedAmount,
+          SUM(b.amount_due) as billedAmount,
+          CASE 
+            WHEN SUM(b.amount_due) > 0 THEN 
+              (SUM(CASE WHEN b.status = 'Paid' THEN b.amount_due ELSE 0 END) / SUM(b.amount_due)) * 100
+            ELSE 0
+          END as collectionRate
+        FROM billing b
+        WHERE b.created_at IS NOT NULL
+        GROUP BY DATE_TRUNC('month', b.created_at)
+        ORDER BY month DESC
+      `;
+    }
+    
+    console.log('Executing revenue query with params:', params);
+    const result = await pool.query(query, params);
+    console.log('Revenue report result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching revenue report:', err);
+    res.status(500).json({ message: 'Error fetching revenue report', error: err.message });
+  }
+});
+
+// Monthly Statistics
+router.get('/monthly-stats', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    console.log('Monthly stats report params:', { startDate, endDate });
+    
+    let query;
+    let params = [];
+    
+    if (startDate && endDate) {
+      query = `
+      SELECT 
+          DATE_TRUNC('month', b.created_at) as month,
+        COUNT(DISTINCT b.customer_id) as activeCustomers,
+          SUM(b.amount_due) as totalBilled,
+          SUM(CASE WHEN b.status = 'Paid' THEN b.amount_due ELSE 0 END) as totalCollected,
+          COUNT(CASE WHEN b.status = 'Unpaid' OR b.status IS NULL THEN 1 END) as unpaidBills,
+          AVG(b.amount_due) as averageBillAmount
+      FROM billing b
+        WHERE b.created_at BETWEEN $1::timestamp AND $2::timestamp
+        GROUP BY DATE_TRUNC('month', b.created_at)
+      ORDER BY month DESC
+    `;
+      params = [startDate, endDate];
+    } else {
+      query = `
+        SELECT 
+          DATE_TRUNC('month', b.created_at) as month,
+          COUNT(DISTINCT b.customer_id) as activeCustomers,
+          SUM(b.amount_due) as totalBilled,
+          SUM(CASE WHEN b.status = 'Paid' THEN b.amount_due ELSE 0 END) as totalCollected,
+          COUNT(CASE WHEN b.status = 'Unpaid' OR b.status IS NULL THEN 1 END) as unpaidBills,
+          AVG(b.amount_due) as averageBillAmount
+        FROM billing b
+        WHERE b.created_at IS NOT NULL
+        GROUP BY DATE_TRUNC('month', b.created_at)
+        ORDER BY month DESC
+      `;
+    }
+    
+    console.log('Executing monthly stats query with params:', params);
+    const result = await pool.query(query, params);
+    console.log('Monthly stats result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching monthly statistics:', err);
+    res.status(500).json({ message: 'Error fetching monthly statistics', error: err.message });
+  }
+});
+
+// Get available zones for billing sheet
+// Daily Collector Billing Sheet - month/year and optional zone/collector
+router.get('/daily-collector', async (req, res) => {
+  try {
+    const { month, year, collector, zone } = req.query; // month as 1-12 or name, year as 4-digit
+    if (!month || !year) {
+      return res.status(400).json({ error: 'month and year are required' });
+    }
+
+    // Normalize month to number 1-12
+    const monthMap = {
+      'JANUARY': 1,'FEBRUARY': 2,'MARCH': 3,'APRIL': 4,'MAY': 5,'JUNE': 6,
+      'JULY': 7,'AUGUST': 8,'SEPTEMBER': 9,'OCTOBER': 10,'NOVEMBER': 11,'DECEMBER': 12
+    };
+    const m = isNaN(month) ? (monthMap[String(month).toUpperCase()] || 1) : parseInt(month, 10);
+    const y = parseInt(year, 10);
+
+    console.log('Daily collector query params:', { month: m, year: y, collector, zone });
+
+    const params = [m, y];
+    let whereFilter = '';
+    
+    // Support both collector (legacy) and zone parameter
+    const filterValue = zone || collector;
+    
+    // If filter is provided and not 'ALL', add WHERE clause
+    if (filterValue && filterValue.toUpperCase() !== 'ALL' && filterValue !== '') {
+      params.push(filterValue);
+      // Match by barangay or city (no b.zone column in current schema)
+      whereFilter = ' AND (ca.barangay = $3 OR ca.city = $3)';
+    }
+
+    const query = `
+      SELECT 
+        COALESCE(NULLIF(TRIM(ca.barangay), ''), NULLIF(TRIM(ca.city), ''), '') AS zone,
+        COALESCE(ca.first_name || ' ' || ca.last_name, '') AS name,
+        TRIM(BOTH ', ' FROM COALESCE(ca.province,'') || ', ' || COALESCE(ca.city,'') || ', ' || COALESCE(ca.barangay,'')) AS address,
+        CASE WHEN (DATE_PART('year', CURRENT_DATE) - DATE_PART('year', COALESCE(ca.birthdate, CURRENT_DATE))) >= 60 THEN 'SC' ELSE 'ACTIVE' END AS status1,
+        COALESCE(ca.status,'') AS status2,
+        COALESCE(b.current_reading,0) AS present_reading,
+        COALESCE(b.previous_reading,0) AS previous_reading,
+        COALESCE(b.current_reading,0) - COALESCE(b.previous_reading,0) AS used,
+        COALESCE(b.amount_due,0) AS bill_amount,
+        CASE WHEN (DATE_PART('year', CURRENT_DATE) - DATE_PART('year', COALESCE(ca.birthdate, CURRENT_DATE))) >= 60 THEN ROUND(COALESCE(b.amount_due,0) * 0.05,2) ELSE 0 END AS scd,
+        GREATEST(COALESCE(b.amount_due,0) - (CASE WHEN (DATE_PART('year', CURRENT_DATE) - DATE_PART('year', COALESCE(ca.birthdate, CURRENT_DATE))) >= 60 THEN ROUND(COALESCE(b.amount_due,0) * 0.05,2) ELSE 0 END),0) AS total_amount,
+        COALESCE(cb.receipt_number,'') AS or_number,
+        TO_CHAR(COALESCE(cb.payment_date, b.due_date), 'MM-DD') AS pay_date,
+        COALESCE(cb.penalty_paid,0) AS penalty,
+        GREATEST(COALESCE(b.amount_due,0) + COALESCE(cb.penalty_paid,0) - (CASE WHEN (DATE_PART('year', CURRENT_DATE) - DATE_PART('year', COALESCE(ca.birthdate, CURRENT_DATE))) >= 60 THEN ROUND(COALESCE(b.amount_due,0) * 0.05,2) ELSE 0 END),0) AS after_due,
+        0 AS surcharge
+      FROM billing b
+      LEFT JOIN customer_accounts ca ON b.customer_id = ca.id
+      LEFT JOIN cashier_billing cb ON cb.bill_id = b.bill_id
+      WHERE EXTRACT(MONTH FROM b.created_at) = $1 AND EXTRACT(YEAR FROM b.created_at) = $2 ${whereFilter}
+      ORDER BY ca.last_name, ca.first_name
+    `;
+
+    console.log('Executing query with params:', params);
+    const result = await pool.query(query, params);
+    console.log(`Query returned ${result.rows.length} rows`);
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching daily collector sheet:', err);
+    console.error('Error details:', {
+      message: err.message,
+      stack: err.stack,
+      query: err.query,
+      parameters: err.parameters
+    });
+    res.status(500).json({ 
+      error: 'Error fetching daily collector sheet',
+      message: err.message,
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+  }
+});
+
+router.get('/billing-sheet-zones', async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    if (!month || !year) {
+      return res.status(400).json({ error: 'month and year are required' });
+    }
+
+    const monthMap = {
+      'JANUARY': 1, 'FEBRUARY': 2, 'MARCH': 3, 'APRIL': 4, 'MAY': 5, 'JUNE': 6,
+      'JULY': 7, 'AUGUST': 8, 'SEPTEMBER': 9, 'OCTOBER': 10, 'NOVEMBER': 11, 'DECEMBER': 12
+    };
+    const m = isNaN(month) ? (monthMap[String(month).toUpperCase()] || parseInt(month, 10)) : parseInt(month, 10);
+    const y = parseInt(year, 10);
+
+    const query = `
+      SELECT DISTINCT 
+        COALESCE(NULLIF(TRIM(ca.barangay), ''), NULLIF(TRIM(ca.city), ''), 'Unspecified') AS zone
+      FROM billing b
+      LEFT JOIN customer_accounts ca ON b.customer_id = ca.id
+      WHERE EXTRACT(MONTH FROM b.created_at) = $1 
+        AND EXTRACT(YEAR FROM b.created_at) = $2
+      ORDER BY zone
+    `;
+
+    const result = await pool.query(query, [m, y]);
+    res.json(result.rows.map(row => row.zone));
+  } catch (err) {
+    console.error('Error fetching zones:', err);
+    res.status(500).json({ message: 'Error fetching zones', error: err.message });
+  }
+});
+
+// Export to Excel
+router.get('/:reportType/export', async (req, res) => {
+  try {
+    const { reportType } = req.params;
+    const { startDate, endDate } = req.query;
+    
+    let query;
+    let filename;
+    let sheetName;
+
+    switch (reportType) {
+      case 'collection':
+        query = `
+          SELECT 
+            DATE(payment_date) as date,
+            SUM(amount) as totalCollected,
+            COUNT(*) as paymentCount,
+            AVG(amount) as averageAmount
+          FROM payments
+          WHERE payment_date BETWEEN $1 AND $2
+          GROUP BY DATE(payment_date)
+          ORDER BY date DESC
+        `;
+        filename = 'collection-report';
+        sheetName = 'Collection Summary';
+        break;
+
+      case 'outstanding':
+        query = `
+          SELECT 
+            c.first_name || ' ' || c.last_name as customerName,
+            c.account_number,
+            b.amount as amountDue,
+            DATE_PART('day', CURRENT_DATE - b.due_date) as daysOverdue,
+            (
+              SELECT MAX(payment_date)
+              FROM payments p
+              WHERE p.customer_id = c.id
+            ) as lastPayment
+          FROM bills b
+          JOIN customers c ON b.customer_id = c.id
+          WHERE b.status = 'Unpaid'
+            AND b.due_date BETWEEN $1 AND $2
+          ORDER BY daysOverdue DESC
+        `;
+        filename = 'outstanding-balances';
+        sheetName = 'Outstanding Balances';
+        break;
+
+      case 'revenue':
+        query = `
+          SELECT 
+            DATE_TRUNC('month', b.due_date) as month,
+            SUM(b.amount) as totalRevenue,
+            SUM(CASE WHEN b.status = 'Paid' THEN b.amount ELSE 0 END) as collectedAmount,
+            SUM(b.amount) as billedAmount,
+            SUM(CASE WHEN b.status = 'Paid' THEN b.amount ELSE 0 END) / NULLIF(SUM(b.amount), 0) as collectionRate
+          FROM bills b
+          WHERE b.due_date BETWEEN $1 AND $2
+          GROUP BY DATE_TRUNC('month', b.due_date)
+          ORDER BY month DESC
+        `;
+        filename = 'revenue-report';
+        sheetName = 'Revenue Report';
+        break;
+
+      default:
+        return res.status(400).json({ message: 'Invalid report type' });
+    }
+
+    const result = await pool.query(query, [startDate, endDate]);
+    
+    // Create Excel workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(sheetName);
+
+    // Add headers
+    const headers = Object.keys(result.rows[0] || {});
+    worksheet.addRow(headers);
+
+    // Add data
+    result.rows.forEach(row => {
+      worksheet.addRow(Object.values(row));
+    });
+
+    // Style the worksheet
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.columns.forEach(column => {
+      column.width = 15;
+    });
+
+    // Set response headers
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     );
-  };
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${filename}-${new Date().toISOString().split('T')[0]}.xlsx`
+    );
 
-  // Encoder: Meter reading input UI
-  const renderMeterReading = () => (
-    <div>
-      <h3 className="font-bold mb-2">Input Meter Readings</h3>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200 text-xs md:text-sm">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 border">Customer</th>
-              <th className="px-4 py-2 border">Current Reading</th>
-              <th className="px-4 py-2 border">New Reading</th>
-              <th className="px-4 py-2 border">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {meterReadings.length === 0 ? (
-              <tr><td colSpan={4} className="text-center py-4">No customers</td></tr>
-            ) : (
-              meterReadings.map((cust, idx) => (
-                <tr key={idx}>
-                  <td className="px-4 py-2 border">{cust.name || cust.first_name + ' ' + cust.last_name}</td>
-                  <td className="px-4 py-2 border">{cust.current_reading || '-'}</td>
-                  <td className="px-4 py-2 border">
-                    <input type="number" min="0" className="border rounded px-2 w-24" id={`reading-${cust.id}`} />
-                  </td>
-                  <td className="px-4 py-2 border">
-                    <button className="bg-blue-600 text-white px-2 py-1 rounded" onClick={() => {
-                      const val = document.getElementById(`reading-${cust.id}`).value;
-                      if (val) submitReading(cust.id, val);
-                    }}>Submit</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+    // Write to response
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error('Error generating Excel report:', err);
+    res.status(500).json({ message: 'Error generating Excel report' });
+  }
+});
 
-  // Customer Ledger UI
-  const renderLedger = () => (
-    <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/20 p-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-        <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        Customer Ledger Report
-      </h3>
+// Overview Report
+router.get('/overview', authMiddleware, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    // Get total bills
+    const billsQuery = `
+      SELECT COUNT(*) as "totalBills", COALESCE(SUM(amount_due), 0) as "totalRevenue"
+      FROM billing 
+      WHERE created_at BETWEEN $1::timestamp AND $2::timestamp
+    `;
+    
+    // Get pending approvals
+    const approvalsQuery = `
+      SELECT COUNT(*) as "pendingApprovals"
+      FROM approval_requests 
+      WHERE status = 'pending' AND created_at BETWEEN $1::timestamp AND $2::timestamp
+    `;
+    
+    // Get active customers
+    const customersQuery = `
+      SELECT COUNT(*) as "activeCustomers"
+      FROM customer_accounts 
+      WHERE status = 'active'
+    `;
+
+    const billsResult = await db.query(billsQuery, [startDate, endDate]);
+    const approvalsResult = await db.query(approvalsQuery, [startDate, endDate]);
+    const customersResult = await db.query(customersQuery);
+
+    const overview = {
+      totalBills: parseInt(billsResult.rows[0]?.totalBills) || 0,
+      totalRevenue: parseFloat(billsResult.rows[0]?.totalRevenue) || 0,
+      pendingApprovals: parseInt(approvalsResult.rows[0]?.pendingApprovals) || 0,
+      activeCustomers: parseInt(customersResult.rows[0]?.activeCustomers) || 0
+    };
+
+    res.json(overview);
+  } catch (error) {
+    console.error('Error fetching overview report:', error);
+    res.status(500).json({ error: 'Failed to fetch overview report', detail: error.message });
+  }
+});
+
+// Customer Ledger
+router.get('/ledger', async (req, res) => {
+  try {
+    const { startDate, endDate, customerId } = req.query;
+    console.log('Customer ledger report params:', { startDate, endDate, customerId });
+
+    const hasRange = Boolean(startDate && endDate);
+    const params = [];
+
+    // Bills (debits)
+    let billsWhere = 'b.created_at IS NOT NULL';
+    if (hasRange) {
+      billsWhere += ` AND DATE(b.created_at) BETWEEN $${params.length + 1} AND $${params.length + 2}`;
+      params.push(startDate, endDate);
+    }
+    if (customerId) {
+      billsWhere += ` AND b.customer_id = $${params.length + 1}`;
+      params.push(customerId);
+    }
+
+    // Payments (credits)
+    let payWhere = 'cb.payment_date IS NOT NULL';
+    if (hasRange) {
+      payWhere += ` AND DATE(cb.payment_date) BETWEEN $${params.length + 1} AND $${params.length + 2}`;
+      params.push(startDate, endDate);
+    }
+    if (customerId) {
+      payWhere += ` AND cb.customer_id = $${params.length + 1}`;
+      params.push(customerId);
+    }
+
+    const query = `
+      SELECT 
+        b.created_at::date AS date,
+        ca.first_name || ' ' || ca.last_name AS "customerName",
+        'Bill Generated' AS description,
+        b.amount_due AS debit,
+        0 AS credit
+      FROM billing b
+      JOIN customer_accounts ca ON b.customer_id = ca.id
+      WHERE ${billsWhere}
+
+      UNION ALL
+
+      SELECT 
+        cb.payment_date::date AS date,
+        ca.first_name || ' ' || ca.last_name AS "customerName",
+        'Payment Received' AS description,
+        0 AS debit,
+        cb.amount_paid AS credit
+      FROM cashier_billing cb
+      JOIN customer_accounts ca ON cb.customer_id = ca.id
+      WHERE ${payWhere}
+
+      ORDER BY date DESC
+      LIMIT 500
+    `;
+
+    console.log('Executing ledger query with params:', params);
+    const result = await pool.query(query, params);
+    // Compute running balance on server if desired; for now return rows
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching customer ledger:', err);
+    res.status(500).json({ error: 'Failed to fetch customer ledger', detail: err.message });
+  }
+});
+
+// Audit Logs
+router.get('/audit', authMiddleware, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const query = `
+      SELECT 
+        created_at as timestamp,
+        user_name as user,
+        action,
+        details,
+        ip_address as "ipAddress"
+      FROM audit_logs 
+      WHERE created_at BETWEEN $1 AND $2
+      ORDER BY created_at DESC
+      LIMIT 1000
+    `;
+
+    const results = await db.query(query, [startDate, endDate]);
+    res.json(results.rows);
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    res.status(500).json({ error: 'Failed to fetch audit logs' });
+  }
+});
+
+// Transaction Logs
+router.get('/transactions', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    console.log('Transaction logs report params:', { startDate, endDate });
+    
+    // Use cashier_billing and payment_submissions as transaction logs
+    let query;
+    let params = [];
+    
+    if (startDate && endDate) {
+      query = `
+        SELECT 
+          payment_date as date,
+          id as "transactionId",
+          ca.first_name || ' ' || ca.last_name as "customerName",
+          'Cashier Payment' as type,
+          amount_paid as amount,
+          status
+        FROM cashier_billing cb
+        JOIN customer_accounts ca ON cb.customer_id = ca.id
+        WHERE cb.payment_date BETWEEN $1 AND $2
+        
+        UNION ALL
+        
+      SELECT 
+        created_at as date,
+        id as "transactionId",
+          ca.first_name || ' ' || ca.last_name as "customerName",
+          'Customer Payment' as type,
+        amount,
+        status
+        FROM payment_submissions ps
+        JOIN customer_accounts ca ON ps.customer_id = ca.id
+        WHERE ps.created_at BETWEEN $3 AND $4
+        
+        ORDER BY date DESC
+      `;
+      params = [startDate, endDate, startDate, endDate];
+    } else {
+      query = `
+        SELECT 
+          payment_date as date,
+          id as "transactionId",
+          ca.first_name || ' ' || ca.last_name as "customerName",
+          'Cashier Payment' as type,
+          amount_paid as amount,
+          status
+        FROM cashier_billing cb
+        JOIN customer_accounts ca ON cb.customer_id = ca.id
+        WHERE cb.payment_date IS NOT NULL
+        
+        UNION ALL
+        
+        SELECT 
+          created_at as date,
+          id as "transactionId",
+          ca.first_name || ' ' || ca.last_name as "customerName",
+          'Customer Payment' as type,
+          amount,
+          status
+        FROM payment_submissions ps
+        JOIN customer_accounts ca ON ps.customer_id = ca.id
+        WHERE ps.created_at IS NOT NULL
+        
+        ORDER BY date DESC
+    `;
+    }
+    
+    console.log('Executing transactions query with params:', params);
+    const result = await pool.query(query, params);
+    console.log('Transaction logs result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching transaction logs:', err);
+    res.status(500).json({ error: 'Failed to fetch transaction logs' });
+  }
+});
+
+// Approval Logs (using audit_logs table)
+router.get('/approvals', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    console.log('Approval logs report params:', { startDate, endDate });
+    
+    let query;
+    let params = [];
+    
+    if (startDate && endDate) {
+      query = `
+      SELECT 
+          timestamp as date,
+          id as "requestId",
+          'User ' || user_id as requestor,
+          action as type,
+          'System' as approver,
+          CASE 
+            WHEN action LIKE '%approve%' THEN 'Approved'
+            WHEN action LIKE '%reject%' THEN 'Rejected'
+            ELSE 'Pending'
+          END as status
+        FROM audit_logs 
+        WHERE timestamp BETWEEN $1 AND $2
+          AND (action LIKE '%approve%' OR action LIKE '%reject%' OR action LIKE '%request%')
+        ORDER BY timestamp DESC
+      `;
+      params = [startDate, endDate];
+    } else {
+      query = `
+        SELECT 
+          timestamp as date,
+          id as "requestId",
+          'User ' || user_id as requestor,
+          action as type,
+          'System' as approver,
+          CASE 
+            WHEN action LIKE '%approve%' THEN 'Approved'
+            WHEN action LIKE '%reject%' THEN 'Rejected'
+            ELSE 'Pending'
+          END as status
+        FROM audit_logs 
+        WHERE action LIKE '%approve%' OR action LIKE '%reject%' OR action LIKE '%request%'
+        ORDER BY timestamp DESC
+    `;
+    }
+    
+    console.log('Executing approvals query with params:', params);
+    const result = await pool.query(query, params);
+    console.log('Approval logs result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching approval logs:', err);
+    res.status(500).json({ error: 'Failed to fetch approval logs' });
+  }
+});
+
+// Export Reports
+router.post('/export/:type', authMiddleware, async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { startDate, endDate, customerId } = req.body;
+    
+    // Implementation for exporting reports to CSV/PDF
+    // This would generate and return a file download
+    
+    res.json({ message: `${type} report exported successfully` });
+  } catch (error) {
+    console.error('Error exporting report:', error);
+    res.status(500).json({ error: 'Failed to export report' });
+  }
+});
+
+// Overview Report
+router.get('/overview', authMiddleware, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    // Get total bills
+    const billsQuery = `
+      SELECT COUNT(*) as "totalBills", COALESCE(SUM(amount_due), 0) as "totalRevenue"
+      FROM billing 
+      WHERE created_at BETWEEN $1::timestamp AND $2::timestamp
+    `;
+    
+    // Get pending approvals
+    const approvalsQuery = `
+      SELECT COUNT(*) as "pendingApprovals"
+      FROM approval_requests 
+      WHERE status = 'pending' AND created_at BETWEEN $1::timestamp AND $2::timestamp
+    `;
+    
+    // Get active customers
+    const customersQuery = `
+      SELECT COUNT(*) as "activeCustomers"
+      FROM customer_accounts 
+      WHERE status = 'active'
+    `;
+
+    const billsResult = await db.query(billsQuery, [startDate, endDate]);
+    const approvalsResult = await db.query(approvalsQuery, [startDate, endDate]);
+    const customersResult = await db.query(customersQuery);
+
+    const overview = {
+      totalBills: parseInt(billsResult.rows[0]?.totalBills) || 0,
+      totalRevenue: parseFloat(billsResult.rows[0]?.totalRevenue) || 0,
+      pendingApprovals: parseInt(approvalsResult.rows[0]?.pendingApprovals) || 0,
+      activeCustomers: parseInt(customersResult.rows[0]?.activeCustomers) || 0
+    };
+
+    res.json(overview);
+  } catch (error) {
+    console.error('Error fetching overview report:', error);
+    res.status(500).json({ error: 'Failed to fetch overview report', detail: error.message });
+  }
+});
+
+// Customer Ledger
+router.get('/ledger', async (req, res) => {
+  console.log('Customer ledger requested by user:', req.user);
+  try {
+    const { startDate, endDate, customerId } = req.query;
+    console.log('Customer ledger params:', { startDate, endDate, customerId });
+    
+    let query;
+    let params = [];
+    
+    if (customerId) {
+      // Specific customer ledger
+      if (startDate && endDate) {
+        query = `
+      SELECT 
+            'Bill' as transaction_type,
+            b.id as reference_id,
+            b.billing_date as transaction_date,
+            b.amount_due as amount,
+            b.status,
+            'Debit' as type,
+            ca.first_name || ' ' || ca.last_name as customer_name,
+            ca.meter_number
+      FROM bills b
+          LEFT JOIN customer_accounts ca ON b.customer_id = ca.id
+          WHERE b.customer_id = $1 AND b.billing_date::date BETWEEN $2::date AND $3::date
+          
+      UNION ALL
+          
+      SELECT 
+            'Payment' as transaction_type,
+            cb.id as reference_id,
+            cb.payment_date::date as transaction_date,
+            cb.amount_paid as amount,
+            cb.status,
+            'Credit' as type,
+            ca.first_name || ' ' || ca.last_name as customer_name,
+            ca.meter_number
+          FROM cashier_billing cb
+          LEFT JOIN customer_accounts ca ON cb.customer_id = ca.id
+          WHERE cb.customer_id = $1 AND cb.payment_date::date BETWEEN $2::date AND $3::date
+          
+          ORDER BY transaction_date DESC
+        `;
+        params = [customerId, startDate, endDate];
+      } else {
+        query = `
+          SELECT 
+            'Bill' as transaction_type,
+            b.id as reference_id,
+            b.billing_date as transaction_date,
+            b.amount_due as amount,
+            b.status,
+            'Debit' as type,
+            ca.first_name || ' ' || ca.last_name as customer_name,
+            ca.meter_number
+          FROM bills b
+          LEFT JOIN customer_accounts ca ON b.customer_id = ca.id
+          WHERE b.customer_id = $1
+          
+          UNION ALL
+          
+          SELECT 
+            'Payment' as transaction_type,
+            cb.id as reference_id,
+            cb.payment_date::date as transaction_date,
+            cb.amount_paid as amount,
+            cb.status,
+            'Credit' as type,
+            ca.first_name || ' ' || ca.last_name as customer_name,
+            ca.meter_number
+          FROM cashier_billing cb
+          LEFT JOIN customer_accounts ca ON cb.customer_id = ca.id
+          WHERE cb.customer_id = $1
+          
+          ORDER BY transaction_date DESC
+          LIMIT 50
+        `;
+        params = [customerId];
+      }
+    } else {
+      // All customers summary
+      query = `
+        SELECT 
+          ca.id as customer_id,
+          ca.first_name || ' ' || ca.last_name as customer_name,
+          ca.meter_number,
+          COALESCE(total_bills.amount, 0) as total_billed,
+          COALESCE(total_payments.amount, 0) as total_paid,
+          COALESCE(total_bills.amount, 0) - COALESCE(total_payments.amount, 0) as outstanding_balance
+        FROM customer_accounts ca
+        LEFT JOIN (
+          SELECT customer_id, SUM(amount_due) as amount
+          FROM bills
+          GROUP BY customer_id
+        ) total_bills ON ca.id = total_bills.customer_id
+        LEFT JOIN (
+          SELECT customer_id, SUM(amount_paid) as amount
+          FROM cashier_billing
+          GROUP BY customer_id
+        ) total_payments ON ca.id = total_payments.customer_id
+        ORDER BY outstanding_balance DESC
+        LIMIT 100
+      `;
+    }
+    
+    const result = await pool.query(query, params);
+    
+    console.log('Customer ledger result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching customer ledger:', err);
+    res.status(500).json({ message: 'Error fetching customer ledger', error: err.message });
+  }
+});
+
+// Customer-specific reports (already implemented above in the main customer reports section)
+
+// Audit Logs (Admin Only)
+router.get('/audit', authMiddleware, checkAdminAccess, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const query = `
+      SELECT 
+        created_at as timestamp,
+        user_name as user,
+        action,
+        details,
+        ip_address as "ipAddress"
+      FROM audit_logs 
+      WHERE created_at BETWEEN $1 AND $2
+      ORDER BY created_at DESC
+      LIMIT 1000
+    `;
+
+    const results = await db.query(query, [startDate, endDate]);
+    res.json(results.rows);
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    res.status(500).json({ error: 'Failed to fetch audit logs' });
+  }
+});
+
+// Transaction Logs
+router.get('/transactions', authMiddleware, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const query = `
+      SELECT 
+        created_at as date,
+        id as "transactionId",
+        ca.last_name || ', ' || ca.first_name as "customerName",
+        transaction_type as type,
+        amount,
+        status
+      FROM transactions t
+      JOIN customer_accounts ca ON t.customer_id = ca.id
+      WHERE t.created_at BETWEEN $1 AND $2
+      ORDER BY t.created_at DESC
+    `;
+
+    const results = await db.query(query, [startDate, endDate]);
+    
+    // Filter data based on user role
+    const filteredData = filterDataByRole(req.user.role, results.rows, 'transactions');
+    res.json(filteredData);
+  } catch (error) {
+    console.error('Error fetching transaction logs:', error);
+    res.status(500).json({ error: 'Failed to fetch transaction logs' });
+  }
+});
+
+// Approval Logs (Admin Only)
+router.get('/approvals', authMiddleware, checkAdminAccess, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const query = `
+      SELECT 
+        ar.created_at as date,
+        ar.id as "requestId",
+        e.last_name || ', ' || e.first_name as requestor,
+        ar.request_type as type,
+        approver.last_name || ', ' || approver.first_name as approver,
+        ar.status
+      FROM approval_requests ar
+      JOIN employees e ON ar.requestor_id = e.id
+      LEFT JOIN employees approver ON ar.approver_id = approver.id
+      WHERE ar.created_at BETWEEN $1 AND $2
+      ORDER BY ar.created_at DESC
+    `;
+
+    const results = await db.query(query, [startDate, endDate]);
+    res.json(results.rows);
+  } catch (error) {
+    console.error('Error fetching approval logs:', error);
+    res.status(500).json({ error: 'Failed to fetch approval logs' });
+  }
+});
+
+// Export Reports
+router.post('/export/:type', authMiddleware, async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { startDate, endDate, customerId } = req.body;
+    
+    // Check if user has permission to export this type of report
+    if (type === 'audit' || type === 'approvals') {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required for this report type' });
+      }
+    }
+    
+    // Implementation for exporting reports to CSV/PDF
+    // This would generate and return a file download
+    
+    res.json({ message: `${type} report exported successfully` });
+  } catch (error) {
+    console.error('Error exporting report:', error);
+    res.status(500).json({ error: 'Failed to export report' });
+  }
+});
+
+// Billing Report
+router.get('/billing', async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    let query = `
+      SELECT 
+        b.bill_id,
+        ca.first_name || ' ' || ca.last_name AS customer,
+        b.amount,
+        b.status,
+        b.due_date,
+        b.paid_date
+      FROM billing b
+      JOIN customer_accounts ca ON b.customer_id = ca.id
+    `;
+    const params = [];
+    if (from && to) {
+      query += ' WHERE b.due_date BETWEEN $1 AND $2';
+      params.push(from, to);
+    }
+    query += ' ORDER BY b.due_date DESC';
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching billing report:', err);
+    res.status(500).json({ error: 'Error fetching billing report' });
+  }
+});
+
+// Payments Report
+router.get('/payments', async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    let query = `
+      SELECT 
+        p.id,
+        ca.first_name || ' ' || ca.last_name AS customer,
+        p.amount,
+        p.payment_method,
+        p.created_at AS date,
+        p.status
+      FROM payment_submissions p
+      JOIN customer_accounts ca ON p.customer_id = ca.id
+    `;
+    const params = [];
+    if (from && to) {
+      query += ' WHERE p.created_at BETWEEN $1 AND $2';
+      params.push(from, to);
+    }
+    query += ' ORDER BY p.created_at DESC';
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching payments report:', err);
+    res.status(500).json({ error: 'Error fetching payments report' });
+  }
+});
+
+// Customer-specific reports
+// Personal Billing History
+router.get('/personal-billing', async (req, res) => {
+  console.log('Personal billing requested by user:', req.user);
+  try {
+    const { startDate, endDate } = req.query;
+    const userId = req.user.id;
+    console.log('Personal billing params:', { startDate, endDate, userId });
+    
+    const query = `
+      SELECT 
+        b.id as bill_id,
+        b.customer_id,
+        b.amount_due,
+        b.due_date,
+        b.billing_date,
+        b.status,
+        b.consumption,
+        b.current_reading,
+        b.previous_reading,
+        ca.meter_number,
+        ca.first_name || ' ' || ca.last_name as customer_name
+      FROM bills b
+      LEFT JOIN customer_accounts ca ON b.customer_id = ca.id
+      WHERE ca.user_id = $1
+      ${startDate && endDate ? 'AND b.billing_date BETWEEN $2 AND $3' : ''}
+      ORDER BY b.billing_date DESC
+      LIMIT 100
+    `;
+    
+    const params = startDate && endDate ? [userId, startDate, endDate] : [userId];
+    const result = await pool.query(query, params);
+    
+    console.log('Personal billing result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching personal billing:', err);
+    res.status(500).json({ message: 'Error fetching personal billing history' });
+  }
+});
+
+// Payment History
+router.get('/payment-history', async (req, res) => {
+  console.log('Payment history requested by user:', req.user);
+  try {
+    const { startDate, endDate } = req.query;
+    const userId = req.user.id;
+    console.log('Payment history params:', { startDate, endDate, userId });
+    
+    const query = `
+      SELECT 
+        cb.id as payment_id,
+        cb.customer_id,
+        cb.amount_paid,
+        cb.payment_date,
+        cb.payment_method,
+        cb.receipt_number,
+        ca.first_name || ' ' || ca.last_name as customer_name,
+        ca.meter_number,
+        'Cashier Payment' as payment_type
+      FROM cashier_billing cb
+      LEFT JOIN customer_accounts ca ON cb.customer_id = ca.id
+      WHERE ca.user_id = $1
+      ${startDate && endDate ? 'AND cb.payment_date BETWEEN $2 AND $3' : ''}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Customer Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Customer
-          </label>
-          <select
-            value={selectedCustomerForLedger}
-            onChange={(e) => setSelectedCustomerForLedger(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-          >
-            <option value="">Choose a customer...</option>
-            {customers.map(customer => (
-              <option key={customer.id} value={customer.id}>
-                {customer.first_name} {customer.last_name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Customer Info Display */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Customer Information
-          </label>
-          {selectedCustomerForLedger ? (
-            <div className="p-3 bg-gray-50 rounded-xl border">
-              {(() => {
-                const customer = customers.find(c => c.id === parseInt(selectedCustomerForLedger));
-                return customer ? (
-                  <>
-                    <p><strong>Name:</strong> {customer.first_name} {customer.last_name}</p>
-                    <p><strong>Address:</strong> {customer.street || ''}, {customer.barangay || ''}, {customer.city || ''}, {customer.province || ''}</p>
-                    <p><strong>Meter:</strong> {customer.meter_number || 'N/A'}</p>
-                  </>
-                ) : (
-                  <p className="text-gray-500">Customer not found</p>
-                );
-              })()}
-            </div>
-          ) : (
-            <div className="p-3 bg-gray-50 rounded-xl border text-gray-500">
-              Select a customer to see their information
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Generate Ledger Button */}
-      <div className="text-center">
-        <button
-          onClick={() => setShowLedger(true)}
-          disabled={!selectedCustomerForLedger}
-          className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
-            selectedCustomerForLedger
-              ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Generate Customer Ledger
-        </button>
-      </div>
-
-      {/* Ledger Modal */}
-      {showLedger && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50 p-4 ledger-modal">
-          <div className="bg-white rounded-lg shadow-lg max-w-7xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-800">Customer Ledger Card</h2>
-                <button
-                  onClick={() => setShowLedger(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="p-6">
-              <CustomerLedger
-                customerId={parseInt(selectedCustomerForLedger)}
-                onClose={() => setShowLedger(false)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  // Daily Collector Billing Sheet UI
-  const renderBillingSheet = () => (
-    <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/20 p-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-        <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        Daily Collector Billing Sheet Report
-      </h3>
+      UNION ALL
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {/* Month Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Month
-          </label>
-          <select
-            value={selectedMonthForBillingSheet}
-            onChange={(e) => setSelectedMonthForBillingSheet(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-          >
-            <option value="JANUARY">JANUARY</option>
-            <option value="FEBRUARY">FEBRUARY</option>
-            <option value="MARCH">MARCH</option>
-            <option value="APRIL">APRIL</option>
-            <option value="MAY">MAY</option>
-            <option value="JUNE">JUNE</option>
-            <option value="JULY">JULY</option>
-            <option value="AUGUST">AUGUST</option>
-            <option value="SEPTEMBER">SEPTEMBER</option>
-            <option value="OCTOBER">OCTOBER</option>
-            <option value="NOVEMBER">NOVEMBER</option>
-            <option value="DECEMBER">DECEMBER</option>
-          </select>
-        </div>
+      SELECT 
+        ps.id as payment_id,
+        ps.customer_id,
+        ps.amount as amount_paid,
+        ps.created_at as payment_date,
+        ps.payment_method,
+        'Online-' || ps.id as receipt_number,
+        ca.first_name || ' ' || ca.last_name as customer_name,
+        ca.meter_number,
+        'Online Payment' as payment_type
+      FROM payment_submissions ps
+      LEFT JOIN customer_accounts ca ON ps.customer_id = ca.id
+      WHERE ca.user_id = $1
+      ${startDate && endDate ? 'AND ps.created_at BETWEEN $2 AND $3' : ''}
+      
+      ORDER BY payment_date DESC
+      LIMIT 100
+    `;
+    
+    const params = startDate && endDate ? [userId, startDate, endDate] : [userId];
+    const result = await pool.query(query, params);
+    
+    console.log('Payment history result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching payment history:', err);
+    res.status(500).json({ message: 'Error fetching payment history' });
+  }
+});
 
-        {/* Year Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Year
-          </label>
-          <select
-            value={selectedYearForBillingSheet}
-            onChange={(e) => setSelectedYearForBillingSheet(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-          >
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
-          </select>
-        </div>
+// Outstanding Balance
+router.get('/outstanding-balance', async (req, res) => {
+  console.log('Outstanding balance requested by user:', req.user);
+  try {
+    const userId = req.user.id;
+    console.log('Outstanding balance params:', { userId });
+    
+    const query = `
+      SELECT 
+        b.id as bill_id,
+        b.customer_id,
+        b.amount_due,
+        b.due_date,
+        b.billing_date,
+        b.status,
+        b.consumption,
+        ca.meter_number,
+        ca.first_name || ' ' || ca.last_name as customer_name,
+        CASE 
+          WHEN b.due_date < CURRENT_DATE THEN 'Overdue'
+          WHEN b.due_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'Due Soon'
+          ELSE 'Not Due'
+        END as urgency
+      FROM bills b
+      LEFT JOIN customer_accounts ca ON b.customer_id = ca.id
+      WHERE ca.user_id = $1 AND b.status IN ('Pending', 'Overdue')
+      ORDER BY b.due_date ASC
+    `;
+    
+    const result = await pool.query(query, [userId]);
+    
+    console.log('Outstanding balance result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching outstanding balance:', err);
+    res.status(500).json({ message: 'Error fetching outstanding balance' });
+  }
+});
 
-        {/* Zone/Collector Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Zone/Collector
-          </label>
-          <select
-            value={selectedCollectorForBillingSheet}
-            onChange={(e) => setSelectedCollectorForBillingSheet(e.target.value)}
-            disabled={loadingZones}
-            className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-          >
-            <option value="ALL">All Zones</option>
-            {availableZones.map((zone) => (
-              <option key={zone} value={zone}>
-                {zone}
-              </option>
-            ))}
-          </select>
-          {loadingZones && (
-            <p className="text-xs text-gray-500 mt-1">Loading zones...</p>
-          )}
-          {!loadingZones && availableZones.length === 0 && (
-            <p className="text-xs text-gray-500 mt-1">No zones found for this period</p>
-          )}
-        </div>
-      </div>
+// Proof of Payment
+router.get('/proof-of-payment', async (req, res) => {
+  console.log('Proof of payment requested by user:', req.user);
+  try {
+    const userId = req.user.id;
+    console.log('Proof of payment params:', { userId });
+    
+    const query = `
+      SELECT 
+        ps.id,
+        ps.customer_id,
+        ps.amount,
+        ps.payment_method,
+        ps.status,
+        ps.created_at as submission_date,
+        ps.file_path,
+        ca.first_name || ' ' || ca.last_name as customer_name,
+        ca.meter_number
+      FROM payment_submissions ps
+      LEFT JOIN customer_accounts ca ON ps.customer_id = ca.id
+      WHERE ca.user_id = $1
+      ORDER BY ps.created_at DESC
+      LIMIT 50
+    `;
+    
+    const result = await pool.query(query, [userId]);
+    
+    console.log('Proof of payment result:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching proof of payment:', err);
+    res.status(500).json({ message: 'Error fetching proof of payment' });
+  }
+});
 
-      {/* Generate Billing Sheet Button */}
-      <div className="text-center">
-        <button
-          onClick={() => setShowBillingSheet(true)}
-          className="px-8 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600"
-        >
-          <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Generate Daily Collector Billing Sheet
-        </button>
-      </div>
-
-      {/* Billing Sheet Modal */}
-      {showBillingSheet && (
-        <div className="billing-sheet-modal fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-full w-full max-h-[95vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-800">
-                  Daily Collector Billing Sheet - {selectedMonthForBillingSheet} {selectedYearForBillingSheet}
-                </h2>
-                <button
-                  onClick={() => setShowBillingSheet(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="p-6">
-              <BillingSheet
-                month={selectedMonthForBillingSheet}
-                year={selectedYearForBillingSheet}
-                collector={selectedCollectorForBillingSheet === 'ALL' ? '' : selectedCollectorForBillingSheet}
-                onClose={() => setShowBillingSheet(false)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
-        {/* Premium Header */}
-        <div className="mb-8">
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Analytics Dashboard
-                </h1>
-                <p className="text-gray-600 mt-1">Comprehensive reporting for your account</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-xl shadow-lg">
-                  <span className="font-semibold">{availableReports.length}</span>
-                  <span className="text-blue-100 ml-1">Reports</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Premium Tab Navigation */}
-        <div className="mb-6">
-          <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/20 p-2">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
-              {availableReports.map(tab => (
-                <button
-                  key={tab.key}
-                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
-                    activeTab === tab.key 
-                      ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg transform scale-105' 
-                      : 'text-gray-600 hover:bg-white/60 hover:text-blue-600 hover:shadow-md'
-                  }`}
-                  onClick={() => setActiveTab(tab.key)}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        {activeTab !== 'meter-reading' && (
-          <div className="mb-6">
-            <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/20 p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
-                </svg>
-                Report Filters
-              </h3>
-              
-              {/* Premium Filter Controls */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Quick Filters</label>
-                  <select 
-                    value={timePeriod} 
-                    onChange={e => handleTimePeriodChange(e.target.value)}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-                  >
-                    <option value="custom">Custom Range</option>
-                    <optgroup label="Daily">
-                      <option value="today">Today</option>
-                      <option value="yesterday">Yesterday</option>
-                    </optgroup>
-                    <optgroup label="Weekly">
-                      <option value="this-week">This Week</option>
-                      <option value="last-week">Last Week</option>
-                    </optgroup>
-                    <optgroup label="Monthly">
-                      <option value="this-month">This Month</option>
-                      <option value="last-month">Last Month</option>
-                      <option value="last-30-days">Last 30 Days</option>
-                    </optgroup>
-                    <optgroup label="Quarterly">
-                      <option value="this-quarter">This Quarter</option>
-                      <option value="last-90-days">Last 90 Days</option>
-                    </optgroup>
-                    <optgroup label="Yearly">
-                      <option value="this-year">This Year</option>
-                      <option value="last-year">Last Year</option>
-                    </optgroup>
-                  </select>
-                </div>
-                
-                {(activeTab === 'collection' || activeTab === 'revenue') && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Group By</label>
-                    <select 
-                      value={groupBy} 
-                      onChange={e => setGroupBy(e.target.value)}
-                      className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-                    >
-                      <option value="day">Daily</option>
-                      <option value="week">Weekly</option>
-                      <option value="month">Monthly</option>
-                      <option value="year">Yearly</option>
-                    </select>
-                  </div>
-                )}
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">From Date</label>
-                  <input 
-                    type="date" 
-                    value={from} 
-                    onChange={e => {
-                      setFrom(e.target.value);
-                      setTimePeriod('custom');
-                    }} 
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-                    disabled={timePeriod !== 'custom'}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">To Date</label>
-                  <input 
-                    type="date" 
-                    value={to} 
-                    onChange={e => {
-                      setTo(e.target.value);
-                      setTimePeriod('custom');
-                    }} 
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-                    disabled={timePeriod !== 'custom'}
-                  />
-                </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                <button 
-                  onClick={fetchData} 
-                  className="px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center"
-                  disabled={loading}
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  {loading ? 'Loading...' : 'Refresh Data'}
-                </button>
-                
-                <button 
-                  onClick={previewPDFReport} 
-                  className="px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center"
-                  disabled={loading || data.length === 0}
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  Preview PDF
-                </button>
-                
-                <button 
-                  onClick={exportPDF} 
-                  className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center"
-                  disabled={loading || data.length === 0}
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Export PDF
-                </button>
-              </div>
-              
-              {timePeriod !== 'custom' && from && to && (
-                <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                  <div className="text-sm text-blue-800">
-                    <span className="font-semibold">Selected Period:</span> {from} to {to}
-                    {timePeriod && (
-                      <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md text-blue-700 font-medium">
-                        {timePeriod.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        {loading ? (
-          <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/20 p-16 text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-            <p className="mt-4 text-gray-600 font-medium">Loading report data...</p>
-          </div>
-        ) : (
-          <>
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  <span className="text-red-700 font-medium">{error}</span>
-                </div>
-              </div>
-            )}
-            {activeTab === 'meter-reading' ? renderMeterReading() : 
-             activeTab === 'ledger' ? renderLedger() : 
-             activeTab === 'billing-sheet' ? renderBillingSheet() : 
-             renderTable()}
-          </>
-        )}
-      </div>
-
-      {/* PDF Preview Modal */}
-      {showPDFPreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800">
-                PDF Preview - {availableReports.find(report => report.key === activeTab)?.label || `${activeTab} Report`}
-              </h3>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => {
-                    const doc = generatePDFContent();
-                    if (doc) {
-                      doc.save(`${activeTab}_report_${new Date().toISOString().split('T')[0]}.pdf`);
-                    }
-                  }}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Download PDF
-                </button>
-                <button
-                  onClick={() => {
-                    setShowPDFPreview(false);
-                    setPreviewPDF(null);
-                  }}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Close
-                </button>
-              </div>
-            </div>
-
-            {/* PDF Preview Content */}
-            <div className="flex-1 overflow-auto p-4">
-              {previewPDF ? (
-                <iframe
-                  src={previewPDF}
-                  className="w-full h-full border-0 rounded-lg shadow-lg"
-                  title="PDF Preview"
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent mb-4"></div>
-                    <p>Loading PDF preview...</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
-              <div className="flex justify-end space-x-2">
-                <div className="text-sm text-gray-600 flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Preview shows how the PDF will look when downloaded
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default Reports;
-  
+module.exports = router; 
