@@ -28,7 +28,12 @@
   }
   
   /* Hide everything except ledger modal and print area */
-  body > *:not(.ledger-modal):not(.billing-sheet-modal):not(.ledger-wrapper) {
+  body > *:not(.ledger-modal):not(.billing-sheet-modal) {
+    display: none !important;
+  }
+  
+  /* Also hide root children that aren't ledger modal */
+  #root > *:not(.ledger-modal):not(.billing-sheet-modal) {
     display: none !important;
   }
   
