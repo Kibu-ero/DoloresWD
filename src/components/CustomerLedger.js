@@ -306,28 +306,43 @@ const CustomerLedger = ({
       });
       
       // Calculate running balance chronologically
+      // allEntriesWithDates is already sorted by date, so we can use it directly
+      // Create a unique identifier for each entry to track balances
+      let entryCounter = 0;
+      allEntriesWithDates.forEach(entry => {
+        entry._ledgerId = entryCounter++;
+      });
+      
+      // Calculate running balance chronologically
       let runningBalance = 0;
-      const balanceMap = new Map(); // Map to store balance for each entry
+      const balanceMap = new Map(); // Map to store balance for each entry by _ledgerId
       
       allEntriesWithDates.forEach(entry => {
-        if (entry.drBillings > 0) {
-          runningBalance += entry.drBillings;
+        // Add DR (debit/billings) - increases balance
+        const drAmount = parseFloat(entry.drBillings || 0);
+        if (drAmount > 0) {
+          runningBalance += drAmount;
         }
-        if (entry.crCollections > 0) {
-          runningBalance -= entry.crCollections;
+        // Subtract CR (credit/collections) - decreases balance
+        // Note: entry.amount is penalty_paid, which is part of the total payment
+        // So we subtract both crCollections (amount_paid) and amount (penalty_paid)
+        const crAmount = parseFloat(entry.crCollections || 0);
+        const penaltyAmount = parseFloat(entry.amount || 0);
+        const totalCredit = crAmount + penaltyAmount;
+        if (totalCredit > 0) {
+          runningBalance -= totalCredit;
         }
-        if (entry.amount > 0) {
-          runningBalance -= entry.amount; // penalty payments
+        // Store balance using entry's unique ID
+        if (entry._ledgerId !== undefined) {
+          balanceMap.set(entry._ledgerId, runningBalance);
         }
-        // Store balance using entry reference or index
-        balanceMap.set(entry, runningBalance);
       });
       
       // Apply balances to all entries (only for actual transactions, not empty placeholders)
       orderedEntries.forEach(entry => {
-        if (balanceMap.has(entry)) {
+        if (entry._ledgerId !== undefined && balanceMap.has(entry._ledgerId)) {
           // This is an actual transaction with a date - use its calculated balance
-          entry.balance = balanceMap.get(entry);
+          entry.balance = balanceMap.get(entry._ledgerId);
         } else if (!entry.isEmpty && entry.date && entry.date.trim() !== '') {
           // For entries with dates but not in balanceMap (shouldn't happen, but just in case)
           entry.balance = runningBalance;
@@ -337,11 +352,18 @@ const CustomerLedger = ({
         }
       });
 
+      // Calculate totals from actual ledger entries (not orderedEntries which may have empty placeholders)
+      const totalBillings = ledgerEntries.reduce((sum, entry) => sum + (entry.drBillings || 0), 0);
+      const totalCollections = ledgerEntries.reduce((sum, entry) => {
+        // Total collections = amount_paid (crCollections) + penalty_paid (amount)
+        return sum + (entry.crCollections || 0) + (entry.amount || 0);
+      }, 0);
+      
       const formattedData = {
         customer: customer,
         ledgerEntries: orderedEntries,
-        totalBillings: ledgerEntries.reduce((sum, entry) => sum + entry.drBillings, 0),
-        totalCollections: ledgerEntries.reduce((sum, entry) => sum + entry.crCollections + entry.amount, 0),
+        totalBillings: totalBillings,
+        totalCollections: totalCollections,
         currentBalance: runningBalance,
         preparedBy: getCurrentUser()
       };
@@ -651,7 +673,7 @@ const CustomerLedger = ({
                     {entry.crCollections > 0 || entry.amount > 0 ? formatCurrency(entry.crCollections + entry.amount) : ''}
                   </td>
                   <td className="border border-gray-800 px-2 py-1 text-xs text-right font-bold">
-                    {entry.balance !== null && entry.balance !== undefined && entry.balance !== 0 ? formatCurrency(entry.balance) : ''}
+                    {entry.balance !== null && entry.balance !== undefined ? formatCurrency(entry.balance) : ''}
                   </td>
                 </tr>
               ))}
