@@ -404,28 +404,66 @@ const CustomerLedger = ({
       document.body.appendChild(iframe);
 
       const doc = iframe.contentDocument || iframe.contentWindow.document;
+      
+      // Get all stylesheets
+      let stylesheets = '';
+      Array.from(document.styleSheets).forEach((sheet) => {
+        try {
+          if (sheet.href) {
+            stylesheets += `<link rel="stylesheet" href="${sheet.href}">`;
+          } else if (sheet.cssRules) {
+            let cssText = '';
+            Array.from(sheet.cssRules).forEach((rule) => {
+              cssText += rule.cssText;
+            });
+            if (cssText) {
+              stylesheets += `<style>${cssText}</style>`;
+            }
+          }
+        } catch (e) {
+          // Cross-origin stylesheets might fail, skip them
+        }
+      });
+      
       const headHtml = document.head.innerHTML || '';
-      const extraStyles = '<style>@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;background:white !important;} body{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;} *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;} .ledger-wrapper{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;background:white !important;display:block !important;visibility:visible !important;} .ledger-wrapper *{visibility:visible !important;display:block !important;color:#000 !important;background:white !important;} .ledger-wrapper table{display:table !important;visibility:visible !important;} .ledger-wrapper tr{display:table-row !important;visibility:visible !important;} .ledger-wrapper td,.ledger-wrapper th{display:table-cell !important;visibility:visible !important;color:#000 !important;border:1px solid #000 !important;} .ledger-container{width:100% !important;background:white !important;display:block !important;visibility:visible !important;} .ledger-table{width:100% !important;border-collapse:collapse !important;display:table !important;visibility:visible !important;} .ledger-table th,.ledger-table td{border:1px solid #000 !important;padding:4px !important;visibility:visible !important;color:#000 !important;display:table-cell !important;} button{display:none !important;} .print\\:hidden{display:none !important;}</style>';
+      const extraStyles = '<style>@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:white !important;} .ledger-wrapper{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;background:white !important;} .ledger-wrapper *{visibility:visible !important;color:#000 !important;} .ledger-container{width:100% !important;background:white !important;} .ledger-table{width:100% !important;border-collapse:collapse !important;} .ledger-table th,.ledger-table td{border:1px solid #000 !important;padding:4px !important;visibility:visible !important;color:#000 !important;} button{display:none !important;} .print\\:hidden{display:none !important;}</style>';
       doc.open();
-      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${headHtml}${extraStyles}</head><body></body></html>`);
+      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${stylesheets}${extraStyles}</head><body></body></html>`);
       doc.close();
 
-      // Clone the ledger content and remove any buttons before injecting
-      const clonedNode = ledgerNode.cloneNode(true);
-      // Remove all buttons from the cloned content
-      const buttons = clonedNode.querySelectorAll('button');
-      buttons.forEach(btn => btn.remove());
+      // Wait for iframe to be ready
+      iframe.onload = () => {
+        // Clone the ledger content and remove any buttons before injecting
+        const clonedNode = ledgerNode.cloneNode(true);
+        // Remove all buttons from the cloned content
+        const buttons = clonedNode.querySelectorAll('button');
+        buttons.forEach(btn => btn.remove());
 
-      // Inject cloned ledger content
-      doc.body.appendChild(clonedNode);
+        // Inject cloned ledger content
+        doc.body.appendChild(clonedNode);
 
-      // Print and cleanup
+        // Print and cleanup
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+          setTimeout(() => document.body.removeChild(iframe), 100);
+        }, 100);
+      };
+      
+      // Fallback if onload doesn't fire
       setTimeout(() => {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-        setTimeout(() => document.body.removeChild(iframe), 100);
-      }, 50);
+        if (doc.body && doc.body.children.length === 0) {
+          const clonedNode = ledgerNode.cloneNode(true);
+          const buttons = clonedNode.querySelectorAll('button');
+          buttons.forEach(btn => btn.remove());
+          doc.body.appendChild(clonedNode);
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+          setTimeout(() => document.body.removeChild(iframe), 100);
+        }
+      }, 200);
     } catch (e) {
+      console.error('Print error:', e);
       window.print();
     }
   };
