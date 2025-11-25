@@ -399,29 +399,35 @@ const Reports = () => {
     
     // Prepare table data
     const columns = Object.keys(data[0]).map(col => {
-      // Convert column names to user-friendly labels
-      switch(col) {
-        case 'date': return 'Date';
-        case 'paymentcount': return 'Payment Count';
-        case 'averageamount': return 'Average Amount';
-        case 'source': return 'Payment Source';
-        case 'customername': return 'Customer Name';
-        case 'amountdue': return 'Amount Due';
-        case 'due_date': return 'Due Date';
-        case 'daysoverdue': return 'Days Overdue';
-        case 'lastpayment': return 'Last Payment';
-        case 'month': return 'Month';
-        case 'totalrevenue': return 'Total Revenue';
-        case 'collectedamount': return 'Collected Amount';
-        case 'billedamount': return 'Billed Amount';
-        case 'collectionrate': return 'Collection Rate (%)';
-        case 'activecustomers': return 'Active Customers';
-        case 'totalbilled': return 'Total Billed';
-        case 'totalcollected': return 'Total Collected';
-        case 'unpaidbills': return 'Unpaid Bills';
-        case 'averagebillamount': return 'Average Bill Amount';
-        default: return col.charAt(0).toUpperCase() + col.slice(1);
+      // Convert column names to user-friendly labels (remove any currency symbols)
+      let label;
+      switch(col.toLowerCase()) {
+        case 'date': label = 'Date'; break;
+        case 'paymentcount': label = 'Payment Count'; break;
+        case 'averageamount': label = 'Average Amount'; break;
+        case 'source': label = 'Payment Source'; break;
+        case 'customername': label = 'Customer Name'; break;
+        case 'amountdue': label = 'Amount Due'; break;
+        case 'due_date': label = 'Due Date'; break;
+        case 'daysoverdue': label = 'Days Overdue'; break;
+        case 'lastpayment': label = 'Last Payment'; break;
+        case 'accountnumber': label = 'Account Number'; break;
+        case 'month': label = 'Month'; break;
+        case 'totalrevenue': label = 'Total Revenue'; break;
+        case 'collectedamount': label = 'Collected Amount'; break;
+        case 'billedamount': label = 'Billed Amount'; break;
+        case 'collectionrate': label = 'Collection Rate (%)'; break;
+        case 'activecustomers': label = 'Active Customers'; break;
+        case 'totalbilled': label = 'Total Billed'; break;
+        case 'totalcollected': label = 'Total Collected'; break;
+        case 'unpaidbills': label = 'Unpaid Bills'; break;
+        case 'averagebillamount': label = 'Average Bill Amount'; break;
+        default: 
+          label = col.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+          // Remove any currency symbols from the label
+          label = label.replace(/\$\s*/g, '').replace(/₱\s*/g, '').trim();
       }
+      return label;
     });
     
     const rows = data.map(row => 
@@ -650,18 +656,23 @@ const Reports = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
-                    {data[0] && Object.keys(data[0]).map((col, index) => (
-                      <th key={col} className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <div className="flex items-center space-x-1">
-                          <span>{col.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</span>
-                          {/amount|revenue|payment/i.test(col) && (
-                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                            </svg>
-                          )}
-                        </div>
-                      </th>
-                    ))}
+                    {data[0] && Object.keys(data[0]).map((col, index) => {
+                      // Clean column header - remove dollar signs and other currency symbols
+                      let headerText = col.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                      headerText = headerText.replace(/\$\s*/g, '').replace(/₱\s*/g, '').trim();
+                      return (
+                        <th key={col} className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          <div className="flex items-center space-x-1">
+                            <span>{headerText}</span>
+                            {/amount|revenue|payment/i.test(col) && !/count/i.test(col) && (
+                              <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                              </svg>
+                            )}
+                          </div>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
@@ -688,7 +699,24 @@ const Reports = () => {
                               </span>
                             </div>
                           ) : (/accountnumber|account.*number/i.test(col)) ? (
-                            <span className="text-gray-700 font-medium">{String(val).replace(/,/g, '')}</span>
+                            <span className="text-gray-700 font-medium">
+                              {typeof val === 'number' ? val.toString() : String(val).replace(/,/g, '')}
+                            </span>
+                          ) : (/lastpayment/i.test(col) && val) ? (
+                            <span className="text-gray-700 font-medium">
+                              {(() => {
+                                try {
+                                  const date = new Date(val);
+                                  return isNaN(date.getTime()) ? val : date.toLocaleDateString('en-US', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                  });
+                                } catch {
+                                  return val;
+                                }
+                              })()}
+                            </span>
                           ) : ((/date|created_at|updated_at|submitted_at|payment_date|due_date/i.test(col) || /^\d{4}-\d{2}-\d{2}T/.test(val)) && val) ? (
                             <span className="text-gray-700 font-medium">
                               {(() => {
