@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import apiClient from '../api/client';
-import { formatCurrency } from '../utils/currencyFormatter';
+import { formatCurrency, formatNumber } from '../utils/currencyFormatter';
 import CustomerLedger from '../components/CustomerLedger';
 import BillingSheet from '../components/BillingSheet';
 
@@ -439,14 +439,20 @@ const Reports = () => {
           } catch {
             return value;
           }
-        } else if (col.includes('amount') || col.includes('collected') || col.includes('billed')) {
+        } else if ((col.includes('amount') || col.includes('collected') || col.includes('billed')) && !col.includes('average')) {
           // Format for PDF compatibility - avoid special characters
           if (typeof value === 'number') {
-            return `PHP ${value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           }
           return value;
+        } else if (col.includes('average') && col.includes('amount') && typeof value === 'number') {
+          // Format average amount with reasonable decimal places (2 max)
+          return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         } else if (col.includes('rate') && typeof value === 'number') {
           return `${value.toFixed(2)}%`;
+        } else if ((col.includes('count') || col.includes('quantity')) && typeof value === 'number') {
+          // Format count as integer (no decimals)
+          return Math.round(value).toLocaleString('en-PH');
         }
         return value;
       })
@@ -466,9 +472,16 @@ const Reports = () => {
       doc.setFont('helvetica', 'normal');
       Object.entries(summary).forEach(([key, value]) => {
         const label = columns[Object.keys(data[0]).indexOf(key)] || key;
-        const formattedValue = key.includes('amount') || key.includes('total') || key.includes('collected') || key.includes('billed') 
-          ? `PHP ${typeof value === 'number' ? value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`
-          : value;
+        let formattedValue;
+        if (key.includes('count') || key.includes('quantity')) {
+          // Format count as integer (no decimals, no currency)
+          formattedValue = Math.round(Number(value)).toLocaleString('en-PH');
+        } else if (key.includes('amount') || key.includes('total') || key.includes('collected') || key.includes('billed')) {
+          // Format amounts without currency symbol
+          formattedValue = typeof value === 'number' ? value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value;
+        } else {
+          formattedValue = value;
+        }
         doc.text(`${label}: ${formattedValue}`, 20, startY);
         startY += 6;
       });
@@ -566,8 +579,10 @@ const Reports = () => {
                       {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                     </h3>
                     <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mt-2">
-                      {/amount|total|balance|revenue|payment|paid|collection/i.test(key) 
-                        ? formatCurrency(Number(value))
+                      {/amount|total|balance|revenue|payment|paid|collection/i.test(key) && !/count/i.test(key)
+                        ? formatNumber(Number(value))
+                        : /count/i.test(key)
+                        ? Math.round(Number(value)).toLocaleString()
                         : Number(value).toLocaleString()
                       }
                     </p>
@@ -648,16 +663,16 @@ const Reports = () => {
                     <tr key={idx} className={`hover:bg-blue-50 transition-colors duration-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
                       {Object.entries(row).map(([col, val], i) => (
                         <td key={i} className="px-6 py-4 whitespace-nowrap text-sm">
-                          {(/amount|total|balance|revenue|payment|due|paid|fee|charge|price|cost/i.test(col) && !isNaN(val)) ? (
+                          {(/amount|total|balance|revenue|payment|due|paid|fee|charge|price|cost/i.test(col) && !isNaN(val) && !/count/i.test(col)) ? (
                             <div className="flex items-center">
                               <span className="font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                                {formatCurrency(Number(val))}
+                                {formatNumber(Number(val))}
                               </span>
                             </div>
                           ) : (/count|quantity/i.test(col) && !isNaN(val)) ? (
                             <div className="flex items-center">
                               <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                                {Number(val).toLocaleString()}
+                                {Math.round(Number(val)).toLocaleString()}
                               </span>
                             </div>
                           ) : ((/date|created_at|updated_at|submitted_at|payment_date|due_date/i.test(col) || /^\d{4}-\d{2}-\d{2}T/.test(val)) && val) ? (
