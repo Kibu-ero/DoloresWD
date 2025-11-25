@@ -105,25 +105,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 via-blue-50 to-brand-100 p-4 relative overflow-hidden">
-      {/* Dolores Water District Logo in upper left */}
-      <motion.div 
-        className="absolute top-6 left-6 z-20"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center space-x-2 group"
-        >
-          <img 
-            src="/logodolores.png"
-            alt="Dolores Water District Logo"
-            className="w-10 h-10 rounded-full object-cover border-2 border-brand-500/50 shadow-lg group-hover:border-brand-400 transition-all duration-300"
-          />
-        </button>
-      </motion.div>
-
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
         <div className="absolute inset-0" style={{
