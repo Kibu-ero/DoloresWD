@@ -230,12 +230,11 @@ const AdminDashboard = () => {
           ${sidebarOpen ? "w-56 md:w-64" : "w-20 md:w-24"}
         `}
       >
-        {/* Centered Sidebar Content */}
-        <div className="flex-1 flex flex-col items-center justify-center w-full">
+        {/* Sidebar Content */}
+        <div className="flex-1 flex flex-col items-center w-full pt-6">
           <div className="flex flex-col items-center">
             <button
-              className="mb-4 mt-1 self-start text-white focus:outline-none"
-              style={{ marginLeft: sidebarOpen ? 8 : 4 }}
+              className="absolute top-3 left-3 text-white focus:outline-none"
               onClick={() => setSidebarOpen((prev) => !prev)}
               aria-label="Toggle sidebar"
             >
