@@ -77,6 +77,7 @@ const EncoderDashboard = () => {
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [selectedBarangay, setSelectedBarangay] = useState("All");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Compute unique barangays from customers
   const barangays = ["All", ...Array.from(new Set(customers.map(c => c.barangay).filter(Boolean)))];
@@ -457,17 +458,25 @@ const EncoderDashboard = () => {
   return (
     <div className="flex h-screen bg-gradient-to-br from-brand-50 via-blue-50 to-brand-100">
       {/* Sidebar */}
-      <aside className="bg-gradient-to-b from-brand-600 via-brand-500 to-brand-400 shadow-lg flex flex-col rounded-r-3xl relative z-10 w-56 md:w-64">
+      <aside
+        className={`transition-all duration-300 bg-gradient-to-b from-brand-600 via-brand-500 to-brand-400 shadow-lg flex flex-col rounded-r-3xl relative z-10
+          ${sidebarOpen ? "w-56 md:w-64" : "w-20 md:w-24"}
+        `}
+      >
         <div className="flex flex-col items-center w-full pt-6 relative">
           <button
             className="absolute top-3 left-3 text-white focus:outline-none"
-            onClick={() => {/* placeholder for future toggle if needed */}}
+            onClick={() => setSidebarOpen(prev => !prev)}
             aria-label="Toggle sidebar"
           >
             <FiMenu className="text-2xl" />
           </button>
           <div className="flex flex-col items-center">
-            <h1 className="text-2xl font-bold text-white tracking-wide mb-6">BillLink Encoder</h1>
+            {sidebarOpen && (
+              <h1 className="text-2xl font-bold text-white tracking-wide mb-6">
+                BillLink Encoder
+              </h1>
+            )}
           </div>
         </div>
         <nav className="flex-1 py-4">
@@ -481,16 +490,33 @@ const EncoderDashboard = () => {
                   : "text-white hover:bg-brand-300/30 hover:text-white"}
               `}
             >
-              <span className="mr-3 text-lg">{link.icon}</span>
-              {link.label}
+              <span className="mr-0 md:mr-0 text-lg">{link.icon}</span>
+              <span
+                className={`ml-3 text-sm font-semibold transition-all duration-200
+                  ${sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"}
+                  ${sidebarOpen ? "block" : "hidden md:block"}
+                `}
+              >
+                {link.label}
+              </span>
             </button>
           ))}
         </nav>
         <button
           onClick={handleLogout}
-          className="flex items-center px-6 py-3 text-red-100 hover:bg-red-600/30 border-t border-brand-300/30"
+          className={`flex items-center px-6 py-3 text-red-100 hover:bg-red-600/30 border-t border-brand-300/30
+            ${sidebarOpen ? "justify-start" : "justify-center"}
+          `}
         >
-          <FiLogOut className="mr-3" /> Logout
+          <FiLogOut className="text-2xl" />
+          <span
+            className={`ml-3 text-sm font-semibold transition-all duration-200
+              ${sidebarOpen ? "opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"}
+              ${sidebarOpen ? "block" : "hidden md:block"}
+            `}
+          >
+            Logout
+          </span>
         </button>
       </aside>
 
