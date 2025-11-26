@@ -545,10 +545,9 @@ const CashierDashboard = () => {
         `}
       >
         {/* Hamburger + Logo Section */}
-        <div className="flex flex-col items-center w-full mb-10">
+        <div className="flex flex-col items-center w-full mb-10 relative">
           <button
-            className="mb-4 mt-1 self-start text-white focus:outline-none"
-            style={{ marginLeft: sidebarOpen ? 8 : 4 }}
+            className="absolute top-3 left-3 text-white focus:outline-none"
             onClick={() => setSidebarOpen((prev) => !prev)}
             aria-label="Toggle sidebar"
           >
