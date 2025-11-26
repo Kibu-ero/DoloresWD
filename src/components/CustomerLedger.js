@@ -305,7 +305,14 @@ const CustomerLedger = ({
         return dateA - dateB;
       });
       
-      // Calculate running balance chronologically
+      // Helper: convert a peso value to integer centavos to avoid floating-point errors
+      const toCents = (value) => {
+        const num = parseFloat(value || 0);
+        if (isNaN(num)) return 0;
+        return Math.round(num * 100);
+      };
+      
+      // Calculate running balance chronologically using centavos
       // allEntriesWithDates is already sorted by date, so we can use it directly
       // Create a unique identifier for each entry to track balances
       let entryCounter = 0;
@@ -313,28 +320,27 @@ const CustomerLedger = ({
         entry._ledgerId = entryCounter++;
       });
       
-      // Calculate running balance chronologically
-      let runningBalance = 0;
-      const balanceMap = new Map(); // Map to store balance for each entry by _ledgerId
+      let runningBalanceCents = 0;
+      const balanceMap = new Map(); // Map to store balance (in pesos) for each entry by _ledgerId
       
       allEntriesWithDates.forEach(entry => {
         // Add DR (debit/billings) - increases balance
-        const drAmount = parseFloat(entry.drBillings || 0);
-        if (drAmount > 0) {
-          runningBalance += drAmount;
+        const drCents = toCents(entry.drBillings);
+        if (drCents > 0) {
+          runningBalanceCents += drCents;
         }
         // Subtract CR (credit/collections) - decreases balance
         // Note: entry.amount is penalty_paid, which is part of the total payment
         // So we subtract both crCollections (amount_paid) and amount (penalty_paid)
-        const crAmount = parseFloat(entry.crCollections || 0);
-        const penaltyAmount = parseFloat(entry.amount || 0);
-        const totalCredit = crAmount + penaltyAmount;
-        if (totalCredit > 0) {
-          runningBalance -= totalCredit;
+        const crCents = toCents(entry.crCollections);
+        const penaltyCents = toCents(entry.amount);
+        const totalCreditCents = crCents + penaltyCents;
+        if (totalCreditCents > 0) {
+          runningBalanceCents -= totalCreditCents;
         }
-        // Store balance using entry's unique ID
+        // Store balance using entry's unique ID, converted back to pesos
         if (entry._ledgerId !== undefined) {
-          balanceMap.set(entry._ledgerId, runningBalance);
+          balanceMap.set(entry._ledgerId, runningBalanceCents / 100);
         }
       });
       
@@ -345,7 +351,7 @@ const CustomerLedger = ({
           entry.balance = balanceMap.get(entry._ledgerId);
         } else if (!entry.isEmpty && entry.date && entry.date.trim() !== '') {
           // For entries with dates but not in balanceMap (shouldn't happen, but just in case)
-          entry.balance = runningBalance;
+          entry.balance = runningBalanceCents / 100;
         } else {
           // For empty placeholder entries (BILL, PENALTY, PAYMENT without data), set balance to null/empty
           entry.balance = null;
@@ -353,18 +359,23 @@ const CustomerLedger = ({
       });
 
       // Calculate totals from actual ledger entries (not orderedEntries which may have empty placeholders)
-      const totalBillings = ledgerEntries.reduce((sum, entry) => sum + (entry.drBillings || 0), 0);
-      const totalCollections = ledgerEntries.reduce((sum, entry) => {
-        // Total collections = amount_paid (crCollections) + penalty_paid (amount)
-        return sum + (entry.crCollections || 0) + (entry.amount || 0);
+      const totalBillingsCents = ledgerEntries.reduce((sum, entry) => {
+        return sum + toCents(entry.drBillings);
       }, 0);
+      const totalCollectionsCents = ledgerEntries.reduce((sum, entry) => {
+        // Total collections = amount_paid (crCollections) + penalty_paid (amount)
+        return sum + toCents(entry.crCollections) + toCents(entry.amount);
+      }, 0);
+      
+      const totalBillings = totalBillingsCents / 100;
+      const totalCollections = totalCollectionsCents / 100;
       
       const formattedData = {
         customer: customer,
         ledgerEntries: orderedEntries,
         totalBillings: totalBillings,
         totalCollections: totalCollections,
-        currentBalance: runningBalance,
+        currentBalance: runningBalanceCents / 100,
         preparedBy: getCurrentUser()
       };
 
@@ -387,71 +398,9 @@ const CustomerLedger = ({
   }, [customerId, fetchLedgerData]);
 
   const handlePrint = () => {
+    // Rely on global @media print styles in index.css to isolate the ledger
     try {
-      let ledgerNode = document.querySelector('.ledger-wrapper');
-      if (!ledgerNode) {
-        ledgerNode = document.querySelector('.ledger-container');
-      }
-      if (!ledgerNode) {
-        const modal = document.querySelector('.ledger-modal');
-        if (modal) {
-          ledgerNode = modal.querySelector('.ledger-wrapper') || modal.querySelector('.ledger-container');
-        }
-      }
-
-      if (!ledgerNode) {
-        console.error('Ledger node not found, using window.print()');
-        window.print();
-        return;
-      }
-
-      const printWindow = window.open('', '_blank', 'width=1200,height=800');
-      if (!printWindow) {
-        window.print();
-        return;
-      }
-
-      let stylesheets = '';
-      try {
-        Array.from(document.styleSheets).forEach((sheet) => {
-          try {
-            if (sheet.href) {
-              stylesheets += `<link rel="stylesheet" href="${sheet.href}">`;
-            } else if (sheet.cssRules) {
-              let cssText = '';
-              Array.from(sheet.cssRules).forEach((rule) => {
-                cssText += rule.cssText;
-              });
-              if (cssText) {
-                stylesheets += `<style>${cssText}</style>`;
-              }
-            }
-          } catch {
-            /* ignore cross-origin sheet */
-          }
-        });
-      } catch (err) {
-        console.warn('Error copying stylesheets:', err);
-      }
-
-      const extraStyles = '<style>@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;background:white !important;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;font-family: "Inter", Arial, sans-serif;} *{-webkit-print-color-adjust:exact;print-color-adjust:exact;} .ledger-wrapper{max-width:none !important;width:100% !important;margin:0 !important;padding:24px !important;background:white !important;display:block !important;visibility:visible !important;} .ledger-wrapper *{visibility:visible !important;color:#000 !important;} .ledger-container{width:100% !important;background:white !important;display:block !important;visibility:visible !important;} .ledger-table{width:100% !important;border-collapse:collapse !important;display:table !important;visibility:visible !important;font-size:10px !important;} .ledger-table th,.ledger-table td{border:1px solid #000 !important;padding:4px !important;visibility:visible !important;color:#000 !important;display:table-cell !important;} table{display:table !important;visibility:visible !important;width:100% !important;border-collapse:collapse !important;} tr{display:table-row !important;visibility:visible !important;} td,th{display:table-cell !important;visibility:visible !important;color:#000 !important;border:1px solid #000 !important;padding:4px !important;} div{visibility:visible !important;color:#000 !important;} .grid{display:grid !important;visibility:visible !important;} .flex{display:flex !important;visibility:visible !important;} span{visibility:visible !important;color:#000 !important;} p{visibility:visible !important;color:#000 !important;} h1,h2,h3,h4,h5,h6{visibility:visible !important;color:#000 !important;font-weight:700;} button{display:none !important;} .print\\:hidden{display:none !important;}</style>';
-
-      const clonedNode = ledgerNode.cloneNode(true);
-      const buttons = clonedNode.querySelectorAll('button');
-      buttons.forEach(btn => btn.remove());
-      const modalHeaders = clonedNode.querySelectorAll('.sticky, .receipt-modal-header');
-      modalHeaders.forEach(header => header.remove());
-
-      const ledgerHtml = clonedNode.outerHTML;
-
-      const doc = printWindow.document;
-      doc.open();
-      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${stylesheets}${extraStyles}</head><body>${ledgerHtml}</body></html>`);
-      doc.close();
-
-      printWindow.focus();
-      printWindow.print();
-      printWindow.close();
+      window.print();
     } catch (e) {
       console.error('Print error:', e);
       window.print();
