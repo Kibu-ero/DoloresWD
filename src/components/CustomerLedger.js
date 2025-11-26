@@ -436,24 +436,22 @@ const CustomerLedger = ({
 
       const extraStyles = '<style>@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;background:white !important;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;font-family: "Inter", Arial, sans-serif;} *{-webkit-print-color-adjust:exact;print-color-adjust:exact;} .ledger-wrapper{max-width:none !important;width:100% !important;margin:0 !important;padding:24px !important;background:white !important;display:block !important;visibility:visible !important;} .ledger-wrapper *{visibility:visible !important;color:#000 !important;} .ledger-container{width:100% !important;background:white !important;display:block !important;visibility:visible !important;} .ledger-table{width:100% !important;border-collapse:collapse !important;display:table !important;visibility:visible !important;font-size:10px !important;} .ledger-table th,.ledger-table td{border:1px solid #000 !important;padding:4px !important;visibility:visible !important;color:#000 !important;display:table-cell !important;} table{display:table !important;visibility:visible !important;width:100% !important;border-collapse:collapse !important;} tr{display:table-row !important;visibility:visible !important;} td,th{display:table-cell !important;visibility:visible !important;color:#000 !important;border:1px solid #000 !important;padding:4px !important;} div{visibility:visible !important;color:#000 !important;} .grid{display:grid !important;visibility:visible !important;} .flex{display:flex !important;visibility:visible !important;} span{visibility:visible !important;color:#000 !important;} p{visibility:visible !important;color:#000 !important;} h1,h2,h3,h4,h5,h6{visibility:visible !important;color:#000 !important;font-weight:700;} button{display:none !important;} .print\\:hidden{display:none !important;}</style>';
 
-      const doc = printWindow.document;
-      doc.open();
-      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${stylesheets}${extraStyles}</head><body></body></html>`);
-      doc.close();
-
       const clonedNode = ledgerNode.cloneNode(true);
       const buttons = clonedNode.querySelectorAll('button');
       buttons.forEach(btn => btn.remove());
       const modalHeaders = clonedNode.querySelectorAll('.sticky, .receipt-modal-header');
       modalHeaders.forEach(header => header.remove());
 
-      doc.body.appendChild(clonedNode);
+      const ledgerHtml = clonedNode.outerHTML;
 
-      setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-        printWindow.close();
-      }, 300);
+      const doc = printWindow.document;
+      doc.open();
+      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${stylesheets}${extraStyles}</head><body>${ledgerHtml}</body></html>`);
+      doc.close();
+
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
     } catch (e) {
       console.error('Print error:', e);
       window.print();
