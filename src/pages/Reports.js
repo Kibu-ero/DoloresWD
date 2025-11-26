@@ -475,6 +475,9 @@ const Reports = () => {
           if (value === null || value === undefined || value === '') return '';
           const str = typeof value === 'number' ? value.toString() : String(value);
           return str.replace(/,/g, '').trim();
+        } else if (col.includes('account') && col.includes('name')) {
+          if (value === null || value === undefined || value === '') return '';
+          return String(value).replace(/,/g, '').trim();
         }
         return value;
       })
@@ -732,6 +735,10 @@ const Reports = () => {
                                 const str = typeof val === 'number' ? val.toString() : String(val);
                                 return str.replace(/,/g, '').trim();
                               })()}
+                            </span>
+                          ) : (/accountname|account_name|customername/i.test(col) && typeof val === 'string') ? (
+                            <span className="text-gray-700 font-medium">
+                              {val.replace(/,/g, '').trim()}
                             </span>
                           ) : (/rate|collectionrate/i.test(col) && !isNaN(val)) ? (
                             <div className="flex items-center">
