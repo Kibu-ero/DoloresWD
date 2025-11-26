@@ -425,8 +425,6 @@ const CustomerLedger = ({
 
       // Clone only the ledger content and strip interactive elements
       const clonedNode = ledgerNode.cloneNode(true);
-      clonedNode.classList.add('print-ledger-root');
-
       const buttons = clonedNode.querySelectorAll('button');
       buttons.forEach(btn => btn.remove());
       const modalHeaders = clonedNode.querySelectorAll('.sticky, .receipt-modal-header');
@@ -434,73 +432,24 @@ const CustomerLedger = ({
 
       const ledgerHtml = clonedNode.outerHTML;
 
-      // Minimal standalone styles just for printing the ledger
-      const baseStyles = `
-        <style>
-          @page {
-            size: landscape;
-            margin: 10mm;
-          }
-          html, body {
-            margin: 0;
-            padding: 0;
-            background: #ffffff;
-            font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-          }
-          body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          .print-ledger-root {
-            max-width: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 12px;
-            background: #ffffff;
-          }
-          .print-ledger-root .ledger-container {
-            width: 100%;
-            border: 2px solid #1f2937;
-            box-shadow: none;
-          }
-          .print-ledger-root h1,
-          .print-ledger-root h2,
-          .print-ledger-root h3,
-          .print-ledger-root h4 {
-            color: #000000;
-            margin: 0;
-          }
-          .print-ledger-root table,
-          .print-ledger-root .ledger-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 9px;
-          }
-          .print-ledger-root th,
-          .print-ledger-root td {
-            border: 1px solid #000000;
-            padding: 2px 3px;
-          }
-          .print-ledger-root thead tr {
-            background-color: #f3f4f6;
-          }
-          .print-ledger-root .text-right {
-            text-align: right;
-          }
-          .print-ledger-root .text-center {
-            text-align: center;
-          }
-        </style>
-      `;
+      // Copy existing styles (Tailwind + index.css) so print matches on-screen design
+      let styles = '';
+      const styleTags = document.querySelectorAll('style, link[rel="stylesheet"]');
+      styleTags.forEach(tag => {
+        if (tag.tagName.toLowerCase() === 'link' && tag.href) {
+          styles += `<link rel="stylesheet" href="${tag.href}">`;
+        } else if (tag.tagName.toLowerCase() === 'style' && tag.innerHTML) {
+          styles += `<style>${tag.innerHTML}</style>`;
+        }
+      });
 
       const doc = printWindow.document;
       doc.open();
-      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${baseStyles}</head><body>${ledgerHtml}</body></html>`);
+      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${styles}</head><body>${ledgerHtml}</body></html>`);
       doc.close();
 
       printWindow.focus();
       printWindow.print();
-      // Give the browser a moment to start printing before closing
       setTimeout(() => {
         printWindow.close();
       }, 500);
