@@ -4,7 +4,7 @@ import apiClient from "../api/client";
 import { formatCurrency } from '../utils/currencyFormatter';
 import { formatUserName } from '../utils/nameFormatter';
 import Reports from "./Reports";
-import { FiHome, FiEdit, FiFileText, FiBarChart2, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiEdit, FiFileText, FiBarChart2, FiLogOut, FiMenu } from 'react-icons/fi';
 
 console.log("EncoderDashboard loaded, user:", JSON.parse(localStorage.getItem('user')));
 
@@ -457,9 +457,18 @@ const EncoderDashboard = () => {
   return (
     <div className="flex h-screen bg-gradient-to-br from-brand-50 via-blue-50 to-brand-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-gradient-to-b from-brand-600 via-brand-500 to-brand-400 shadow-lg flex flex-col rounded-r-3xl">
-        <div className="p-6 border-b border-blue-700">
-          <h1 className="text-2xl font-bold text-white tracking-wide">BillLink Encoder</h1>
+      <aside className="bg-gradient-to-b from-brand-600 via-brand-500 to-brand-400 shadow-lg flex flex-col rounded-r-3xl relative z-10 w-56 md:w-64">
+        <div className="flex flex-col items-center w-full pt-6 relative">
+          <button
+            className="absolute top-3 left-3 text-white focus:outline-none"
+            onClick={() => {/* placeholder for future toggle if needed */}}
+            aria-label="Toggle sidebar"
+          >
+            <FiMenu className="text-2xl" />
+          </button>
+          <div className="flex flex-col items-center">
+            <h1 className="text-2xl font-bold text-white tracking-wide mb-6">BillLink Encoder</h1>
+          </div>
         </div>
         <nav className="flex-1 py-4">
           {sidebarLinks.map(link => (
