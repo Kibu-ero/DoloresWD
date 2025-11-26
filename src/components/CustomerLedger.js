@@ -470,7 +470,7 @@ const CustomerLedger = ({
         console.log('First child:', doc.body.firstElementChild?.className);
 
         // Force a reflow to ensure content is rendered
-        doc.body.offsetHeight;
+        doc.body && doc.body.getBoundingClientRect();
         
         // Print and cleanup
         setTimeout(() => {
