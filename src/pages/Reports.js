@@ -716,14 +716,16 @@ const Reports = () => {
                               </span>
                             </div>
                           ) : (/accountnumber|account.*number/i.test(col)) ? (
-                            <span className="text-gray-700 font-medium">
-                              {(() => {
-                                if (val === null || val === undefined || val === '') return '';
-                                // Remove all commas and ensure it's a clean number string
-                                const str = typeof val === 'number' ? val.toString() : String(val);
-                                return str.replace(/,/g, '').trim();
-                              })()}
-                            </span>
+                            <div className="flex items-center">
+                              <span className="font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full">
+                                {(() => {
+                                  if (val === null || val === undefined || val === '') return '';
+                                  // Remove all commas and ensure it's a clean number string
+                                  const str = typeof val === 'number' ? val.toString() : String(val);
+                                  return str.replace(/,/g, '').trim();
+                                })()}
+                              </span>
+                            </div>
                           ) : (/accountname|account_name|customername/i.test(col) && typeof val === 'string') ? (
                             <span className="text-gray-700 font-medium">
                               {val.replace(/,/g, '').trim()}
