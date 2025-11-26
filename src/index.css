@@ -27,11 +27,6 @@
     size: landscape;
   }
   
-  /* Hide root children that aren't ledger or billing-sheet modals */
-  #root > *:not(.ledger-modal):not(.billing-sheet-modal) {
-    display: none !important;
-  }
-  
   /* Show ledger modal */
   .ledger-modal {
     position: fixed !important;
