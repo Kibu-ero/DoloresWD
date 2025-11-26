@@ -715,18 +715,6 @@ const Reports = () => {
                                 })()}
                               </span>
                             </div>
-                          ) : (/count|quantity/i.test(col) && !isNaN(val)) ? (
-                            <div className="flex items-center">
-                              <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                                {Math.round(Number(val)).toLocaleString()}
-                              </span>
-                            </div>
-                          ) : (/daysoverdue|days.*overdue/i.test(col) && !isNaN(val)) ? (
-                            <div className="flex items-center">
-                              <span className="font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full">
-                                {Math.round(Number(val))}
-                              </span>
-                            </div>
                           ) : (/accountnumber|account.*number/i.test(col)) ? (
                             <span className="text-gray-700 font-medium">
                               {(() => {
@@ -740,6 +728,18 @@ const Reports = () => {
                             <span className="text-gray-700 font-medium">
                               {val.replace(/,/g, '').trim()}
                             </span>
+                          ) : (/count|quantity/i.test(col) && !isNaN(val)) ? (
+                            <div className="flex items-center">
+                              <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                                {Math.round(Number(val)).toLocaleString()}
+                              </span>
+                            </div>
+                          ) : (/daysoverdue|days.*overdue/i.test(col) && !isNaN(val)) ? (
+                            <div className="flex items-center">
+                              <span className="font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full">
+                                {Math.round(Number(val))}
+                              </span>
+                            </div>
                           ) : (/rate|collectionrate/i.test(col) && !isNaN(val)) ? (
                             <div className="flex items-center">
                               <span className="font-bold text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
