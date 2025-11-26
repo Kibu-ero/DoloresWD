@@ -402,7 +402,7 @@ const CustomerLedger = ({
       }
       
       if (!ledgerNode) {
-        console.error('Ledger node not found');
+        console.error('Ledger node not found, using window.print()');
         window.print();
         return;
       }
@@ -415,32 +415,94 @@ const CustomerLedger = ({
       iframe.style.width = '0';
       iframe.style.height = '0';
       iframe.style.border = '0';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
       document.body.appendChild(iframe);
 
       const doc = iframe.contentDocument || iframe.contentWindow.document;
-      const headHtml = document.head.innerHTML || '';
-      const extraStyles = '<style>@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:white !important;} .ledger-wrapper{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;background:white !important;} .ledger-wrapper *{visibility:visible !important;color:#000 !important;} .ledger-container{width:100% !important;background:white !important;} .ledger-table{width:100% !important;border-collapse:collapse !important;} .ledger-table th,.ledger-table td{border:1px solid #000 !important;padding:4px !important;visibility:visible !important;color:#000 !important;} button{display:none !important;} .print\\:hidden{display:none !important;}</style>';
-      doc.open();
-      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${headHtml}${extraStyles}</head><body></body></html>`);
-      doc.close();
+      
+      // Wait for iframe to be ready
+      const printContent = () => {
+        // Get all stylesheets
+        let stylesheets = '';
+        try {
+          Array.from(document.styleSheets).forEach((sheet) => {
+            try {
+              if (sheet.href) {
+                stylesheets += `<link rel="stylesheet" href="${sheet.href}">`;
+              } else if (sheet.cssRules) {
+                let cssText = '';
+                Array.from(sheet.cssRules).forEach((rule) => {
+                  cssText += rule.cssText;
+                });
+                if (cssText) {
+                  stylesheets += `<style>${cssText}</style>`;
+                }
+              }
+            } catch (e) {
+              // Cross-origin stylesheets might fail, skip them
+            }
+          });
+        } catch (e) {
+          console.warn('Error copying stylesheets:', e);
+        }
+        
+        const headHtml = document.head.innerHTML || '';
+        const extraStyles = '<style>@page{size:landscape;margin:10mm;} html,body{margin:0;padding:0;background:white !important;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;} *{-webkit-print-color-adjust:exact;print-color-adjust:exact;} .ledger-wrapper{max-width:none !important;width:100% !important;margin:0 !important;padding:0 !important;background:white !important;display:block !important;visibility:visible !important;} .ledger-wrapper *{visibility:visible !important;color:#000 !important;display:inherit !important;} .ledger-container{width:100% !important;background:white !important;display:block !important;visibility:visible !important;} .ledger-table{width:100% !important;border-collapse:collapse !important;display:table !important;visibility:visible !important;} .ledger-table th,.ledger-table td{border:1px solid #000 !important;padding:4px !important;visibility:visible !important;color:#000 !important;display:table-cell !important;} table{display:table !important;visibility:visible !important;width:100% !important;border-collapse:collapse !important;} tr{display:table-row !important;visibility:visible !important;} td,th{display:table-cell !important;visibility:visible !important;color:#000 !important;border:1px solid #000 !important;padding:4px !important;} div{visibility:visible !important;color:#000 !important;} .grid{display:grid !important;visibility:visible !important;} .flex{display:flex !important;visibility:visible !important;} span{visibility:visible !important;color:#000 !important;} p{visibility:visible !important;color:#000 !important;} h1,h2,h3,h4,h5,h6{visibility:visible !important;color:#000 !important;} button{display:none !important;} .print\\:hidden{display:none !important;}</style>';
+        
+        doc.open();
+        doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${stylesheets}${headHtml}${extraStyles}</head><body></body></html>`);
+        doc.close();
 
-      // Clone the ledger content and remove any buttons before injecting
-      const clonedNode = ledgerNode.cloneNode(true);
-      // Remove all buttons and modal headers from the cloned content
-      const buttons = clonedNode.querySelectorAll('button');
-      buttons.forEach(btn => btn.remove());
-      const modalHeaders = clonedNode.querySelectorAll('.sticky, .receipt-modal-header');
-      modalHeaders.forEach(header => header.remove());
+        // Clone the ledger content and remove any buttons before injecting
+        const clonedNode = ledgerNode.cloneNode(true);
+        // Remove all buttons and modal headers from the cloned content
+        const buttons = clonedNode.querySelectorAll('button');
+        buttons.forEach(btn => btn.remove());
+        const modalHeaders = clonedNode.querySelectorAll('.sticky, .receipt-modal-header');
+        modalHeaders.forEach(header => header.remove());
 
-      // Inject cloned ledger content
-      doc.body.appendChild(clonedNode);
+        // Inject cloned ledger content
+        doc.body.appendChild(clonedNode);
+        
+        console.log('Content injected, body children:', doc.body.children.length);
+        console.log('Content HTML length:', doc.body.innerHTML.length);
+        console.log('First child:', doc.body.firstElementChild?.className);
 
-      // Print and cleanup
+        // Force a reflow to ensure content is rendered
+        doc.body.offsetHeight;
+        
+        // Print and cleanup
+        setTimeout(() => {
+          if (doc.body.children.length > 0 && doc.body.innerHTML.trim().length > 0) {
+            // Make iframe temporarily visible for debugging (optional)
+            // iframe.style.width = '800px';
+            // iframe.style.height = '600px';
+            // iframe.style.opacity = '1';
+            
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 1000);
+          } else {
+            console.error('No content in iframe body, HTML:', doc.body.innerHTML.substring(0, 200));
+            window.print();
+          }
+        }, 300);
+      };
+
+      // Wait for iframe to load
+      iframe.onload = printContent;
+      
+      // Fallback if onload doesn't fire
       setTimeout(() => {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-        setTimeout(() => document.body.removeChild(iframe), 100);
-      }, 50);
+        if (!doc.body || doc.body.children.length === 0) {
+          printContent();
+        }
+      }, 100);
     } catch (e) {
       console.error('Print error:', e);
       window.print();
