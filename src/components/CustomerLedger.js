@@ -398,61 +398,10 @@ const CustomerLedger = ({
   }, [customerId, fetchLedgerData]);
 
   const handlePrint = () => {
+    // Use the current page + @media print rules in index.css so the printout
+    // matches the on-screen ledger modal as closely as possible.
     try {
-      let ledgerNode = document.querySelector('.ledger-wrapper');
-      if (!ledgerNode) {
-        ledgerNode = document.querySelector('.ledger-container');
-      }
-      if (!ledgerNode) {
-        const modal = document.querySelector('.ledger-modal');
-        if (modal) {
-          ledgerNode = modal.querySelector('.ledger-wrapper') || modal.querySelector('.ledger-container');
-        }
-      }
-
-      if (!ledgerNode) {
-        console.error('Ledger node not found, falling back to window.print()');
-        window.print();
-        return;
-      }
-
-      const printWindow = window.open('', '_blank', 'width=1200,height=800');
-      if (!printWindow) {
-        console.error('Unable to open print window, falling back to window.print()');
-        window.print();
-        return;
-      }
-
-      // Clone only the ledger content and strip interactive elements
-      const clonedNode = ledgerNode.cloneNode(true);
-      const buttons = clonedNode.querySelectorAll('button');
-      buttons.forEach(btn => btn.remove());
-      const modalHeaders = clonedNode.querySelectorAll('.sticky, .receipt-modal-header');
-      modalHeaders.forEach(header => header.remove());
-
-      const ledgerHtml = clonedNode.outerHTML;
-
-      // Copy existing styles (Tailwind + index.css) so print matches on-screen design
-      let styles = '';
-      const styleTags = document.querySelectorAll('style, link[rel="stylesheet"]');
-      styleTags.forEach(tag => {
-        if (tag.tagName.toLowerCase() === 'link' && tag.href) {
-          styles += `<link rel="stylesheet" href="${tag.href}">`;
-        } else if (tag.tagName.toLowerCase() === 'style' && tag.innerHTML) {
-          styles += `<style>${tag.innerHTML}</style>`;
-        }
-      });
-
-      const doc = printWindow.document;
-      doc.open();
-      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${styles}</head><body>${ledgerHtml}</body></html>`);
-      doc.close();
-
-      printWindow.focus();
-      printWindow.print();
-      setTimeout(() => {
-        printWindow.close();
-      }, 500);
+      window.print();
     } catch (e) {
       console.error('Print error:', e);
       window.print();
