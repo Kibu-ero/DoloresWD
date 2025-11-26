@@ -398,9 +398,112 @@ const CustomerLedger = ({
   }, [customerId, fetchLedgerData]);
 
   const handlePrint = () => {
-    // Rely on global @media print styles in index.css to isolate the ledger
     try {
-      window.print();
+      let ledgerNode = document.querySelector('.ledger-wrapper');
+      if (!ledgerNode) {
+        ledgerNode = document.querySelector('.ledger-container');
+      }
+      if (!ledgerNode) {
+        const modal = document.querySelector('.ledger-modal');
+        if (modal) {
+          ledgerNode = modal.querySelector('.ledger-wrapper') || modal.querySelector('.ledger-container');
+        }
+      }
+
+      if (!ledgerNode) {
+        console.error('Ledger node not found, falling back to window.print()');
+        window.print();
+        return;
+      }
+
+      const printWindow = window.open('', '_blank', 'width=1200,height=800');
+      if (!printWindow) {
+        console.error('Unable to open print window, falling back to window.print()');
+        window.print();
+        return;
+      }
+
+      // Clone only the ledger content and strip interactive elements
+      const clonedNode = ledgerNode.cloneNode(true);
+      clonedNode.classList.add('print-ledger-root');
+
+      const buttons = clonedNode.querySelectorAll('button');
+      buttons.forEach(btn => btn.remove());
+      const modalHeaders = clonedNode.querySelectorAll('.sticky, .receipt-modal-header');
+      modalHeaders.forEach(header => header.remove());
+
+      const ledgerHtml = clonedNode.outerHTML;
+
+      // Minimal standalone styles just for printing the ledger
+      const baseStyles = `
+        <style>
+          @page {
+            size: landscape;
+            margin: 10mm;
+          }
+          html, body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+          }
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .print-ledger-root {
+            max-width: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 12px;
+            background: #ffffff;
+          }
+          .print-ledger-root .ledger-container {
+            width: 100%;
+            border: 2px solid #1f2937;
+            box-shadow: none;
+          }
+          .print-ledger-root h1,
+          .print-ledger-root h2,
+          .print-ledger-root h3,
+          .print-ledger-root h4 {
+            color: #000000;
+            margin: 0;
+          }
+          .print-ledger-root table,
+          .print-ledger-root .ledger-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+          }
+          .print-ledger-root th,
+          .print-ledger-root td {
+            border: 1px solid #000000;
+            padding: 2px 3px;
+          }
+          .print-ledger-root thead tr {
+            background-color: #f3f4f6;
+          }
+          .print-ledger-root .text-right {
+            text-align: right;
+          }
+          .print-ledger-root .text-center {
+            text-align: center;
+          }
+        </style>
+      `;
+
+      const doc = printWindow.document;
+      doc.open();
+      doc.write(`<!doctype html><html><head><meta charset="utf-8"/>${baseStyles}</head><body>${ledgerHtml}</body></html>`);
+      doc.close();
+
+      printWindow.focus();
+      printWindow.print();
+      // Give the browser a moment to start printing before closing
+      setTimeout(() => {
+        printWindow.close();
+      }, 500);
     } catch (e) {
       console.error('Print error:', e);
       window.print();
