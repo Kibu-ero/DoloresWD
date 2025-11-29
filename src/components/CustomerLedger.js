@@ -523,6 +523,9 @@ const CustomerLedger = ({
             print-color-adjust: exact;
             background: white !important;
           }
+          .ledger-current-balance {
+            color: #dc2626 !important;
+          }
           .ledger-wrapper {
             max-width: 100% !important;
             width: 100% !important;
