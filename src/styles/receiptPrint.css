@@ -6,10 +6,12 @@
     size: A4 portrait;
   }
   
-  /* Hide everything except receipt overlay and print area */
-  body > *:not(.receipt-overlay):not(.receipt-print-area) {
-    display: none !important;
-  }
+  /* NOTE:
+     The original rule here hid ALL body children except the receipt overlay/print area.
+     That caused other print views (like the customer ledger) to come out blank/white.
+     We intentionally disable that global hide rule now so other prints keep working.
+     Receipt printing via the "Print" button is still handled by the iframe logic in
+     `CustomerReceipt.handlePrint`, which injects its own print styles. */
   
   /* Show receipt overlay */
   .receipt-overlay {
