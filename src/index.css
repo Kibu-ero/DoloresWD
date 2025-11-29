@@ -27,6 +27,12 @@
     size: landscape;
   }
   
+  /* Hide everything except ledger-related content inside #root.
+     Keep #root itself visible so the app can render into the print page. */
+  #root > *:not(.ledger-modal):not(.ledger-wrapper) {
+    display: none !important;
+  }
+  
   /* Show ledger modal */
   .ledger-modal {
     position: fixed !important;
@@ -44,6 +50,29 @@
     overflow: visible !important;
     display: block !important;
     visibility: visible !important;
+  }
+  
+  /* Show the white card wrapper inside modal */
+  .ledger-modal > div {
+    display: block !important;
+    visibility: visible !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  
+  /* Show the content div inside the card */
+  .ledger-modal > div > div:last-child {
+    display: block !important;
+    visibility: visible !important;
+    padding: 0 !important;
   }
   
   /* When ledger is rendered directly */
