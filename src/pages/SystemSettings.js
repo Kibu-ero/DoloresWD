@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/client';
+import SettingsService from '../services/settings.service';
 import { FiSave, FiPlus, FiTrash2 } from 'react-icons/fi';
 
 const SystemSettings = () => {
@@ -35,8 +36,8 @@ const SystemSettings = () => {
 
   const fetchSettings = async () => {
     try {
-      const response = await apiClient.get('/settings');
-      setSettings(response.data);
+      const data = await SettingsService.getSettings();
+      setSettings(data);
       setLoading(false);
     } catch (error) {
       console.error('Failed to load settings:', error);
@@ -46,8 +47,8 @@ const SystemSettings = () => {
 
   const fetchWaterRates = async () => {
     try {
-      const response = await apiClient.get('/settings/water-rates');
-      setWaterRates(response.data);
+      const data = await SettingsService.getWaterRates();
+      setWaterRates(Array.isArray(data) ? data : data?.rates || []);
     } catch (error) {
       console.error('Failed to load water rates:', error);
     }
@@ -64,7 +65,14 @@ const SystemSettings = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiClient.put('/settings', settings);
+      const updated = await SettingsService.updateSettings(settings);
+      // Use updated settings from backend if returned; otherwise keep local state
+      if (updated) {
+        setSettings(updated);
+      } else {
+        // Fallback: refetch to ensure we stay in sync with server
+        fetchSettings();
+      }
       showNotification('Settings saved successfully!', 'success');
     } catch (error) {
       showNotification('Failed to save settings. Please try again.', 'error');
@@ -74,7 +82,10 @@ const SystemSettings = () => {
   const handleWaterRatesSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiClient.put('/settings/water-rates', { rates: waterRates });
+      // Send raw array so backend can consume it easily; also include "rates" wrapper
+      // for backwards compatibility with older controller shapes.
+      const payload = { rates: waterRates, data: waterRates };
+      await SettingsService.updateWaterRates(payload);
       showNotification('Water rates updated successfully!', 'success');
       fetchWaterRates();
     } catch (error) {
@@ -154,6 +165,19 @@ const SystemSettings = () => {
             <h3 className="text-xl font-semibold text-blue-900 mb-6">General Settings</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* System / Company identity */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">System Name</label>
+                <input
+                  type="text"
+                  name="system_name"
+                  value={settings.system_name || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                  placeholder="Enter system name (e.g. Dolores Water Billing)"
+                />
+              </div>
+
               <div>
                 <label className="block text-gray-700 font-medium mb-2">Company Name</label>
                 <input
@@ -175,6 +199,20 @@ const SystemSettings = () => {
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
                   placeholder="Enter contact email"
+                />
+              </div>
+
+              {/* Global base water rate (optional helper for backend) */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Base Water Rate (₱ per cu.m.)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="water_rate"
+                  value={settings.water_rate || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                  placeholder="Enter base water rate"
                 />
               </div>
               
@@ -211,6 +249,59 @@ const SystemSettings = () => {
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
                   placeholder="Enter discount percentage"
+                />
+              </div>
+
+              {/* Email + security toggles */}
+              <div className="flex items-center space-x-3">
+                <input
+                  id="email_notifications"
+                  type="checkbox"
+                  name="email_notifications"
+                  checked={!!settings.email_notifications}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="email_notifications" className="text-gray-700 font-medium">
+                  Enable Email Notifications
+                </label>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <input
+                  id="maintenance_mode"
+                  type="checkbox"
+                  name="maintenance_mode"
+                  checked={!!settings.maintenance_mode}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="maintenance_mode" className="text-gray-700 font-medium">
+                  Enable Maintenance Mode
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Max Login Attempts</label>
+                <input
+                  type="number"
+                  name="max_login_attempts"
+                  value={settings.max_login_attempts || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                  placeholder="e.g. 5"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Session Timeout (minutes)</label>
+                <input
+                  type="number"
+                  name="session_timeout"
+                  value={settings.session_timeout || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                  placeholder="e.g. 30"
                 />
               </div>
             </div>
