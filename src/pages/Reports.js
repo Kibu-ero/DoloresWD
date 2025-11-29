@@ -434,6 +434,15 @@ const Reports = () => {
       Object.keys(data[0]).map(col => {
         const value = row[col];
         // Format values appropriately
+        // Special handling for Audit Log descriptions: inject peso sign into "payment of 407.00" style text
+        if (activeTab === 'audit' && col.toLowerCase() === 'description' && typeof value === 'string') {
+          return value.replace(/(payment\s+of\s+)([+-]?\d+(?:\.\d+)?)/gi, (match, prefix, numStr) => {
+            const num = Number(numStr);
+            if (isNaN(num)) return match;
+            const formatted = num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return `${prefix}₱${formatted}`;
+          });
+        }
         if ((col.includes('date') || col.includes('created_at') || col.includes('updated_at') || col.includes('submitted_at') || col.includes('payment_date') || col.includes('due_date') || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value))) && value) {
           try {
             const date = new Date(value);
