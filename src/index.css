@@ -211,8 +211,6 @@
     margin: 0 !important;
     padding: 0 !important;
     box-shadow: none !important;
-    page-break-inside: avoid;
-    break-inside: avoid;
     background: white !important;
     display: block !important;
     visibility: visible !important;
