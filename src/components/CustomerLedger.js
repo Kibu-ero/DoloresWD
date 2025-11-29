@@ -114,6 +114,32 @@ const CustomerLedger = ({
 
       // Create ledger entries from bills and payments
       const ledgerEntries = [];
+
+      // De‑duplicate payments coming from different sources (e.g. GCash submission + cashier post)
+      // so the same payment is not counted twice in the ledger.
+      const seenPayments = new Set();
+      const uniquePayments = [];
+
+      const makePaymentKey = (p) => {
+        const datePart = p.payment_date || p.created_at || p.createdAt || p.approved_at || p.approvedAt || '';
+        const amountPart = p.amount_paid ?? p.amount ?? p.paidAmount ?? p.total_amount ?? '';
+        const receiptPart = p.receipt_number || p.or_number || '';
+        const refPart = p.reference_number || p.referenceNumber || '';
+        const idPart = p.id != null ? String(p.id) : '';
+        return [datePart, amountPart, receiptPart, refPart, idPart].join('|');
+      };
+
+      payments.forEach((p) => {
+        if (!p) return;
+        const key = makePaymentKey(p);
+        if (key && !seenPayments.has(key)) {
+          seenPayments.add(key);
+          uniquePayments.push(p);
+        }
+      });
+
+      // Use the de‑duplicated list for all further processing
+      payments = uniquePayments;
       
       // Add bill entries
       bills.forEach(bill => {
