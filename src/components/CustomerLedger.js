@@ -627,8 +627,12 @@ const CustomerLedger = ({
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.text(`Total Billings: ${formatCurrency(ledgerData.totalBillings)}`, 20, finalY);
       doc.text(`Total Collections: ${formatCurrency(ledgerData.totalCollections)}`, 20, finalY + 10);
+
+      // Highlight current balance in red in the generated PDF
       doc.setFont('helvetica', 'bold');
+      doc.setTextColor(220, 38, 38); // Tailwind red-600-ish
       doc.text(`Current Balance: ${formatCurrency(ledgerData.currentBalance)}`, 20, finalY + 20);
+      doc.setTextColor(0, 0, 0); // Reset back to black for any following text
       
       // Add signatories
       doc.setFont('helvetica', 'normal');
@@ -847,7 +851,9 @@ const CustomerLedger = ({
             </div>
           </div>
           <div className="mt-2 text-right">
-            <span className="font-bold text-lg">Current Balance: ₱ {formatCurrency(ledgerData.currentBalance)}</span>
+            <span className="font-bold text-lg text-red-600 ledger-current-balance">
+              Current Balance: ₱ {formatCurrency(ledgerData.currentBalance)}
+            </span>
           </div>
           
           {/* Signatories Section */}
