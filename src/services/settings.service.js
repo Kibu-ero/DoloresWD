@@ -16,8 +16,8 @@ const SettingsService = {
     return response.data;
   },
 
-  async updateWaterRates(rates) {
-    const response = await apiClient.put('/settings/water-rates', rates);
+  async updateWaterRates(body) {
+    const response = await apiClient.put('/settings/water-rates', body);
     return response.data;
   },
 
