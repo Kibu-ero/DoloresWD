@@ -74,11 +74,37 @@ const CustomerLedger = ({
         payments = [];
       }
 
-      // Fetch online payment submissions if any
+      // Fetch online payment submissions (e.g. GCash) if any
       try {
         const onlinePaymentsResponse = await apiClient.get(`/payment-submissions/customer/${customerId}`);
-        const onlinePayments = onlinePaymentsResponse.data || [];
-        console.log('Online payments data:', onlinePayments);
+        const rawOnline = onlinePaymentsResponse.data || [];
+        console.log('Online payments raw data:', rawOnline);
+
+        // Normalise possible response shapes:
+        // - [ {...}, {...} ]
+        // - { payments: [ ... ] }
+        // - { submissions: [ ... ] }
+        // - { data: [ ... ] }
+        let onlinePayments = [];
+        if (Array.isArray(rawOnline)) {
+          onlinePayments = rawOnline;
+        } else if (Array.isArray(rawOnline.payments)) {
+          onlinePayments = rawOnline.payments;
+        } else if (Array.isArray(rawOnline.submissions)) {
+          onlinePayments = rawOnline.submissions;
+        } else if (Array.isArray(rawOnline.data)) {
+          onlinePayments = rawOnline.data;
+        }
+
+        // Only include approved / successful online payments if status field exists
+        onlinePayments = onlinePayments.filter(p => {
+          if (!p) return false;
+          if (!p.status) return true;
+          const status = String(p.status).toLowerCase();
+          return status === 'approved' || status === 'success' || status === 'successful';
+        });
+
+        console.log('Online payments normalized:', onlinePayments);
         
         // Merge online payments with cashier payments
         payments = [...payments, ...onlinePayments];
@@ -129,17 +155,44 @@ const CustomerLedger = ({
         }
       });
 
-      // Add payment entries
+      // Add payment entries (cashier + normalized online payments)
       payments.forEach(payment => {
-        if (payment.payment_date || payment.created_at) {
-          const paymentDate = new Date(payment.payment_date || payment.created_at);
-          const amountPaid = parseFloat(payment.amount_paid || payment.amount || 0);
-          const penaltyPaid = parseFloat(payment.penalty_paid || 0);
+        // Support multiple field name variants from different sources
+        const paymentDateRaw =
+          payment.payment_date ||
+          payment.created_at ||
+          payment.createdAt ||
+          payment.approved_at ||
+          payment.approvedAt;
+
+        if (paymentDateRaw) {
+          const paymentDate = new Date(paymentDateRaw);
+
+          const amountPaid = parseFloat(
+            payment.amount_paid ??
+            payment.amount ??
+            payment.paidAmount ??
+            payment.total_amount ??
+            0
+          );
+
+          const penaltyPaid = parseFloat(
+            payment.penalty_paid ??
+            payment.penalty ??
+            0
+          );
           
           // Create reference string including GCash reference number if available
-          let referenceString = payment.receipt_number || payment.id?.toString() || '';
-          if (payment.reference_number) {
-            referenceString += referenceString ? ` / ${payment.reference_number}` : payment.reference_number;
+          let referenceString =
+            payment.receipt_number ||
+            payment.or_number ||
+            payment.reference ||
+            payment.id?.toString() ||
+            '';
+
+          const refNo = payment.reference_number || payment.referenceNumber;
+          if (refNo) {
+            referenceString += referenceString ? ` / ${refNo}` : refNo;
           }
           
           ledgerEntries.push({
@@ -148,7 +201,16 @@ const CustomerLedger = ({
               day: 'numeric', 
               year: '2-digit' 
             }),
-            particulars: payment.payment_method ? `PAYMENT (${payment.payment_method.toUpperCase()})` : 'PAYMENT',
+            particulars: (() => {
+              const method =
+                payment.payment_method ||
+                payment.paymentMethod ||
+                payment.method ||
+                '';
+              return method
+                ? `PAYMENT (${String(method).toUpperCase()})`
+                : 'PAYMENT';
+            })(),
             reference: referenceString,
             meterReading: '',
             consumption: '',
