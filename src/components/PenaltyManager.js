@@ -16,7 +16,16 @@ const PenaltyManager = () => {
       setLoading(true);
       const response = await apiClient.get('/penalties/overdue');
       if (response.data.success) {
-        setOverdueBills(response.data.data);
+        const rawBills = response.data.data || [];
+        // Frontend safety check:
+        // If a bill is already marked as paid/settled by the backend,
+        // do not show it here as "overdue" anymore, even if the endpoint
+        // still returns it.
+        const filtered = rawBills.filter((bill) => {
+          const status = String(bill.status || '').toLowerCase();
+          return status !== 'paid' && status !== 'settled' && status !== 'fully_paid' && status !== 'fully paid';
+        });
+        setOverdueBills(filtered);
       }
     } catch (error) {
       console.error('Error fetching overdue bills:', error);
