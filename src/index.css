@@ -151,6 +151,11 @@
     visibility: visible !important;
     color: #000000 !important;
   }
+
+  /* Explicitly keep current balance red in print */
+  .ledger-current-balance {
+    color: #dc2626 !important; /* red-600 */
+  }
   
   /* Borders */
   .ledger-wrapper .border,
