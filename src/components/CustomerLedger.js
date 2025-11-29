@@ -398,10 +398,90 @@ const CustomerLedger = ({
   }, [customerId, fetchLedgerData]);
 
   const handlePrint = () => {
-    // Use the current page + @media print rules in index.css so the printout
-    // matches the on-screen ledger modal as closely as possible.
     try {
-      window.print();
+      // Find the ledger wrapper (only the card we want to print)
+      const ledgerNode = document.querySelector('.ledger-wrapper');
+      if (!ledgerNode) {
+        window.print();
+        return;
+      }
+
+      // Create hidden iframe so we can print just the ledger content
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      const headHtml = document.head.innerHTML || '';
+
+      // Extra print styles specific to the ledger card
+      const extraStyles = `
+        <style>
+          @page {
+            margin: 10mm;
+            size: landscape;
+          }
+          html, body {
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            background: white !important;
+          }
+          .ledger-wrapper {
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+          }
+          .ledger-container {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
+          .ledger-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+          .ledger-table th,
+          .ledger-table td {
+            border: 1px solid #000 !important;
+            padding: 2px 3px !important;
+          }
+          button {
+            display: none !important;
+          }
+        </style>
+      `;
+
+      doc.open();
+      doc.write(`<!doctype html><html><head><meta charset="utf-8" />${headHtml}${extraStyles}</head><body></body></html>`);
+      doc.close();
+
+      // Clone the ledger content and strip out any buttons inside
+      const clonedNode = ledgerNode.cloneNode(true);
+      const buttons = clonedNode.querySelectorAll('button');
+      buttons.forEach(btn => btn.remove());
+
+      doc.body.appendChild(clonedNode);
+
+      // Trigger print and then clean up iframe
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => document.body.removeChild(iframe), 100);
+      }, 50);
     } catch (e) {
       console.error('Print error:', e);
       window.print();
