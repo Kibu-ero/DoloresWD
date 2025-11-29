@@ -445,25 +445,21 @@ const Reports = () => {
           } catch {
             return value;
           }
-        } else if ((col.includes('amount') || col.includes('collected') || col.includes('billed')) && !col.includes('average')) {
-          // Format for PDF compatibility - add commas, reduce zeros
-          if (typeof value === 'number') {
-            // If it's a whole number, don't show decimals
-            if (value % 1 === 0) {
-              return value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-            }
-            return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          }
-          return value;
-        } else if (col.includes('average') && col.includes('amount') && typeof value === 'number') {
-          // Format average amount - reduce zeros if whole number
-          if (value % 1 === 0) {
-            return value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-          }
-          return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        } else if ((col.includes('rate') || col.includes('collectionrate')) && typeof value === 'number') {
-          // Format rate with 2 decimal places max
-          return `${Number(value).toFixed(2)}%`;
+        } else if ((col.includes('amount') || col.includes('collected') || col.includes('billed') || col.includes('revenue')) && !col.includes('average')) {
+          // Monetary fields – format with commas and 2 decimals, avoid long floating tails
+          const num = Number(value);
+          if (isNaN(num)) return value;
+          return num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else if (col.includes('average') && (col.includes('amount') || col.includes('bill')) && value !== null && value !== undefined && value !== '') {
+          // Averages – still monetary, but keep 2 decimals consistent
+          const num = Number(value);
+          if (isNaN(num)) return value;
+          return num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else if ((col.includes('rate') || col.includes('collectionrate')) && value !== null && value !== undefined && value !== '') {
+          // Rates as percent, clamp to 2 decimals
+          const num = Number(value);
+          if (isNaN(num)) return value;
+          return `${num.toFixed(2)}%`;
         } else if ((col.includes('count') || col.includes('quantity')) && typeof value === 'number') {
           // Format count as integer (no decimals)
           return Math.round(value).toLocaleString('en-PH');
@@ -707,11 +703,9 @@ const Reports = () => {
                               <span className="font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full">
                                 {(() => {
                                   const num = Number(val);
-                                  // If it's a whole number, don't show decimals
-                                  if (num % 1 === 0) {
-                                    return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-                                  }
-                                  return formatNumber(num);
+                                  if (isNaN(num)) return val;
+                                  // Always show as peso currency in UI summaries
+                                  return `₱${num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                                 })()}
                               </span>
                             </div>
