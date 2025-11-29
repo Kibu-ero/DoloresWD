@@ -27,12 +27,6 @@
     size: landscape;
   }
   
-  /* Hide everything except ledger-related content inside #root.
-     Keep #root itself visible so the app can render into the print page. */
-  #root > *:not(.ledger-modal):not(.ledger-wrapper) {
-    display: none !important;
-  }
-  
   /* Show ledger modal */
   .ledger-modal {
     position: fixed !important;
