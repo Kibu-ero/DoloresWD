@@ -6,8 +6,9 @@
     size: A4 portrait;
   }
   
-  /* Hide everything except receipt overlay and print area */
-  body > *:not(.receipt-overlay):not(.receipt-print-area) {
+  /* Hide everything except receipt overlay and print area inside #root.
+     Keep #root itself visible so other print modes (e.g., ledger) are not affected. */
+  #root > *:not(.receipt-overlay):not(.receipt-print-area) {
     display: none !important;
   }
   
