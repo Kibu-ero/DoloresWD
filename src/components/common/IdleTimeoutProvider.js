@@ -1,13 +1,33 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useIdleTimer from '../../hooks/useIdleTimer';
 import IdleTimeoutWarning from './IdleTimeoutWarning';
 import { SESSION_CONFIG, isPublicRoute, log } from '../../config/sessionConfig';
+import SettingsService from '../../services/settings.service';
 
 const IdleTimeoutProvider = ({ children }) => {
   const [showWarning, setShowWarning] = useState(false);
+  const [sessionTimeout, setSessionTimeout] = useState(SESSION_CONFIG.IDLE_TIMEOUT); // Default 5 minutes
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Fetch session timeout from settings
+  useEffect(() => {
+    const fetchSessionTimeout = async () => {
+      try {
+        const settings = await SettingsService.getSettings();
+        const timeoutMinutes = settings.session_timeout ? parseInt(settings.session_timeout) : 30;
+        // Convert minutes to milliseconds
+        const timeoutMs = timeoutMinutes * 60 * 1000;
+        setSessionTimeout(timeoutMs);
+      } catch (error) {
+        console.error('Failed to fetch session timeout from settings:', error);
+        // Use default if fetch fails
+      }
+    };
+    
+    fetchSessionTimeout();
+  }, []);
 
   // Check if user is on a page that requires authentication
   const isProtectedRoute = useCallback(() => {
@@ -71,9 +91,9 @@ const IdleTimeoutProvider = ({ children }) => {
     // The useIdleTimer will automatically reset when user interacts
   }, []);
 
-  // Initialize idle timer
+  // Initialize idle timer with dynamic timeout from settings
   useIdleTimer({
-    timeout: SESSION_CONFIG.IDLE_TIMEOUT,
+    timeout: sessionTimeout,
     onIdle: handleIdle,
     onActivity: handleActivity,
     warningTime: SESSION_CONFIG.WARNING_TIME,
