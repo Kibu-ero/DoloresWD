@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import useIdleTimer from '../../hooks/useIdleTimer';
+import useIdleTimer from './useIdleTimer';
 import IdleTimeoutWarning from './IdleTimeoutWarning';
 import { SESSION_CONFIG, isPublicRoute, log } from '../../config/sessionConfig';
 import SettingsService from '../../services/settings.service';
