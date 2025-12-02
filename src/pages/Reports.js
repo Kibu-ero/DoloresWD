@@ -99,6 +99,9 @@ const Reports = () => {
   useEffect(() => {
     if (activeTab === 'ledger') {
       fetchCustomers();
+    } else {
+      // Clear customer selection when switching away from ledger tab
+      setSelectedCustomerForLedger('');
     }
   }, [activeTab]);
 
@@ -106,9 +109,12 @@ const Reports = () => {
   const fetchCustomers = async () => {
     try {
       const res = await apiClient.get('/customers');
-      setCustomers(res.data);
+      const data = res.data;
+      setCustomers(Array.isArray(data) ? data : []);
+      console.log('Fetched customers for ledger:', Array.isArray(data) ? data.length : 0);
     } catch (err) {
       console.error('Error fetching customers:', err);
+      setCustomers([]);
     }
   };
 
@@ -871,12 +877,19 @@ const Reports = () => {
             className="w-full border border-gray-300 rounded-xl px-4 py-2 bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
           >
             <option value="">Choose a customer...</option>
-            {customers.map(customer => (
-              <option key={customer.id} value={customer.id}>
-                {customer.first_name} {customer.last_name}
-              </option>
-            ))}
+            {customers.length === 0 ? (
+              <option value="" disabled>Loading customers...</option>
+            ) : (
+              customers.map(customer => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.first_name} {customer.last_name} {customer.meter_number ? `(Meter: ${customer.meter_number})` : ''}
+                </option>
+              ))
+            )}
           </select>
+          {customers.length === 0 && (
+            <p className="text-xs text-gray-500 mt-1">No customers available</p>
+          )}
         </div>
 
         {/* Customer Info Display */}
