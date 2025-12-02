@@ -641,7 +641,7 @@ const CustomerLedger = ({
       doc.setFont('helvetica', 'normal');
       const preparedBy = ledgerData.preparedBy || '';
       doc.text(`Prepared by: ${preparedBy || '_________________'}`, 20, finalY + 40);
-      doc.text('Approved by: Michael Topson', 20, finalY + 60);
+      doc.text('Approved by: Orlando Pacapac III', 20, finalY + 60);
       
       // Save the PDF
       doc.save(`customer-ledger-${ledgerData.customer.first_name}-${ledgerData.customer.last_name}.pdf`);
@@ -871,7 +871,7 @@ const CustomerLedger = ({
             </div>
             <div className="text-center">
               <div className="border-b border-gray-400 w-48 mx-auto mb-2 h-6">
-                <span className="text-gray-800 font-medium">Michael Topson</span>
+                <span className="text-gray-800 font-medium">Orlando Pacapac III</span>
               </div>
               <span className="font-semibold">Approved by:</span>
             </div>
