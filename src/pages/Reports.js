@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import apiClient from '../api/client';
-import { formatCurrency, formatNumber } from '../utils/currencyFormatter';
+import { formatNumber } from '../utils/currencyFormatter';
 import CustomerLedger from '../components/CustomerLedger';
 import BillingSheet from '../components/BillingSheet';
 
