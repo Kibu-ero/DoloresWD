@@ -1,3 +1,4 @@
-// Re-export hook from its current location to preserve older import paths
-export { default } from '../components/common/useIdleTimer';
+// Compatibility re-export to support imports from src/components/hooks
+export { default } from '../common/useIdleTimer';
+
 
