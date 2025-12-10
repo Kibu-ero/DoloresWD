@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiPlus, FiMinus, FiEdit, FiCheckCircle } from 'react-icons/fi';
 import apiClient from '../api/client';
-import { formatCurrency, formatNumber } from '../utils/currencyFormatter';
+import { formatNumber } from '../utils/currencyFormatter';
 
 const CreditManager = () => {
   const [customers, setCustomers] = useState([]);
