@@ -16,7 +16,6 @@ import AdminFileReview from "./pages/AdminFileReview";
 import EncoderDashboard from "./pages/EncoderDashboard";
 import FinanceManagerDashboard from "./pages/FinanceManagerDashboard";
 import BillingSheetDemo from "./pages/BillingSheetDemo";
-import IdleTimeoutProvider from "./components/common/IdleTimeoutProvider";
 // import PublicRoute from "./components/PublicRoute";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerifyResetOTP from "./pages/VerifyResetOTP";
@@ -26,8 +25,7 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
-        <IdleTimeoutProvider>
-          <Routes>
+        <Routes>
           <Route path="/" element={<UserDashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -71,8 +69,7 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={["admin", "cashier", "finance_officer"]} />}>
             <Route path="/reports" element={<Reports />} />
           </Route>
-          </Routes>
-        </IdleTimeoutProvider>
+        </Routes>
       </Router>
     </ErrorBoundary>
   );
