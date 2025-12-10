@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useIdleTimer from '../hooks/useIdleTimer';
 import IdleTimeoutWarning from './IdleTimeoutWarning';
 import { SESSION_CONFIG, isPublicRoute, log } from '../config/sessionConfig';
-import SettingsService from '../../services/settings.service';
+import SettingsService from '../services/settings.service';
 
 const IdleTimeoutProvider = ({ children }) => {
   const [showWarning, setShowWarning] = useState(false);
