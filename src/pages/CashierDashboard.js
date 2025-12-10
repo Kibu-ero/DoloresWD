@@ -9,7 +9,6 @@ import {
   FiBarChart2,
   FiCreditCard,
   FiMenu,
-  FiDownload,
   FiCheckCircle,
   FiXCircle,
 } from "react-icons/fi";
@@ -204,13 +203,6 @@ const CashierDashboard = () => {
     const baseAmount = getBillAmount(bill);
     return applySeniorDiscount ? baseAmount * 0.8 : baseAmount;
   };
-
-  const handlePrint = () => {
-    // Use window.print() directly - CSS will handle showing only the receipt
-    window.print();
-  };
-
-
 
   const handleCloseFileModal = () => {
     setFileModalOpen(false);
