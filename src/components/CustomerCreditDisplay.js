@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FiDollarSign, FiCreditCard, FiTrendingUp, FiAlertCircle } from 'react-icons/fi';
+import { FiCreditCard, FiTrendingUp, FiAlertCircle } from 'react-icons/fi';
 import apiClient from '../api';
 import { formatCurrency } from '../utils/currencyFormatter';
 
@@ -87,7 +87,7 @@ const CustomerCreditDisplay = ({ customerId }) => {
 
   const getCreditStatusIcon = () => {
     if (creditBalance > 0) return <FiCreditCard className="w-5 h-5" />;
-    return <FiDollarSign className="w-5 h-5" />;
+    return <span className="text-xl font-bold">₱</span>;
   };
 
   return (
@@ -201,7 +201,7 @@ const CustomerCreditDisplay = ({ customerId }) => {
           className="bg-gray-50 border border-gray-200 rounded-lg p-4"
         >
           <div className="flex items-start space-x-2">
-            <FiDollarSign className="w-4 h-4 text-gray-600 mt-0.5" />
+            <span className="text-lg font-bold text-gray-600 mt-0.5">₱</span>
             <div>
               <h5 className="font-medium text-gray-800 text-sm">No Credit Balance</h5>
               <p className="text-xs text-gray-600 mt-1">
