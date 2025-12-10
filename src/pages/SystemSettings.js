@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import apiClient from '../api/client';
 import SettingsService from '../services/settings.service';
 import { FiSave, FiPlus, FiTrash2 } from 'react-icons/fi';
 
