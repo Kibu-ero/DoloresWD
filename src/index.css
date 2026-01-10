@@ -21,14 +21,41 @@
 
 /* Print styles for ledger and billing sheet */
 @media print {
+  /* Hide everything by default when printing ledger or billing sheet */
+  body.printing-ledger > *:not(.ledger-modal),
+  body.printing-billing-sheet > *:not(.billing-sheet-modal) {
+    display: none !important;
+  }
+  
   /* Ledger-specific page settings (landscape) */
   @page {
     margin: 10mm;
     size: landscape;
   }
   
-  /* Show ledger modal */
+  /* Show ledger modal when printing */
+  body.printing-ledger .ledger-modal,
   .ledger-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: white !important;
+    background-color: white !important;
+    z-index: 9999 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Show billing sheet modal when printing */
+  body.printing-billing-sheet .billing-sheet-modal,
+  .billing-sheet-modal {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -81,9 +108,26 @@
     visibility: visible !important;
   }
   
-  /* Hide modal header */
-  .ledger-modal .sticky {
+  /* Hide modal header and close buttons when printing */
+  .ledger-modal .sticky,
+  .billing-sheet-modal .sticky,
+  .ledger-modal button,
+  .billing-sheet-modal button,
+  button.print\\:hidden {
     display: none !important;
+  }
+  
+  /* Show modal content wrappers */
+  .ledger-modal > div,
+  .billing-sheet-modal > div {
+    display: block !important;
+    visibility: visible !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
   }
   
   /* Show ledger container */
@@ -358,6 +402,7 @@
   }
   
   /* Billing Sheet print styles */
+  body.printing-billing-sheet .billing-sheet-modal,
   .billing-sheet-modal { 
     display: block !important; 
     position: static !important; 
@@ -379,6 +424,8 @@
     box-shadow: none !important;
     border: 1px solid #000 !important;
     page-break-inside: avoid;
+    display: block !important;
+    visibility: visible !important;
   }
   
   .billing-sheet-table {
