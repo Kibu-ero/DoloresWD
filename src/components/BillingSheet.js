@@ -139,83 +139,21 @@ const BillingSheet = ({
 
   const handlePrint = () => {
     try {
-      // Only print the billing sheet container (not the whole analytics dashboard)
-      const sheetNode = document.querySelector('.billing-sheet-container');
-      if (!sheetNode) {
-        window.print();
-        return;
-      }
-
-      // Create hidden iframe to isolate print content
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      document.body.appendChild(iframe);
-
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      const headHtml = document.head.innerHTML || '';
-
-      const extraStyles = `
-        <style>
-          @page {
-            margin: 8mm;
-            size: landscape;
-          }
-          html, body {
-            margin: 0;
-            padding: 0;
-          }
-          body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-            background: white !important;
-          }
-          .billing-sheet-container {
-            width: 100% !important;
-            max-width: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            border: 1px solid #000 !important;
-          }
-          .billing-sheet-table {
-            width: 100% !important;
-            border-collapse: collapse !important;
-          }
-          .billing-sheet-table th,
-          .billing-sheet-table td {
-            border: 1px solid #000 !important;
-            padding: 2px 3px !important;
-          }
-          button {
-            display: none !important;
-          }
-        </style>
-      `;
-
-      doc.open();
-      doc.write(`<!doctype html><html><head><meta charset="utf-8" />${headHtml}${extraStyles}</head><body></body></html>`);
-      doc.close();
-
-      // Clone the billing sheet content and remove any buttons inside
-      const clonedNode = sheetNode.cloneNode(true);
-      const buttons = clonedNode.querySelectorAll('button');
-      buttons.forEach(btn => btn.remove());
-
-      doc.body.appendChild(clonedNode);
-
+      // Add a class to indicate we're printing billing sheet
+      document.body.classList.add('printing-billing-sheet');
+      
+      // Small delay to ensure styles are applied
       setTimeout(() => {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-        setTimeout(() => document.body.removeChild(iframe), 100);
-      }, 50);
+        window.print();
+        
+        // Remove the class after printing
+        setTimeout(() => {
+          document.body.classList.remove('printing-billing-sheet');
+        }, 250);
+      }, 100);
     } catch (e) {
       console.error('Billing sheet print error:', e);
+      document.body.classList.remove('printing-billing-sheet');
       window.print();
     }
   };
