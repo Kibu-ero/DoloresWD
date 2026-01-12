@@ -51,6 +51,15 @@
     overflow: visible !important;
     display: block !important;
     visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Override any dark background classes on modal */
+  .ledger-modal.bg-gray-900,
+  .ledger-modal.bg-opacity-75 {
+    background: white !important;
+    background-color: white !important;
+    opacity: 1 !important;
   }
   
   /* Show billing sheet modal when printing */
@@ -83,17 +92,29 @@
     height: auto !important;
     overflow: visible !important;
     background: white !important;
+    background-color: white !important;
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none !important;
     border-radius: 0 !important;
+    opacity: 1 !important;
+  }
+  
+  /* Override any background classes on inner divs */
+  .ledger-modal > div.bg-white,
+  .ledger-modal > div.bg-gray-900 {
+    background: white !important;
+    background-color: white !important;
   }
   
   /* Show the content div inside the card */
-  .ledger-modal > div > div:last-child {
+  .ledger-modal > div > div:last-child,
+  .ledger-modal > div > div.p-6 {
     display: block !important;
     visibility: visible !important;
     padding: 0 !important;
+    background: white !important;
+    background-color: white !important;
   }
   
   /* When ledger is rendered directly */
@@ -148,6 +169,20 @@
     overflow: visible !important;
   }
   
+  /* Ensure all elements inside ledger container are visible with black text */
+  .ledger-container * {
+    color: #000000 !important;
+    visibility: visible !important;
+  }
+  
+  /* Override any gray text classes in ledger container */
+  .ledger-container .text-gray-600,
+  .ledger-container .text-gray-800,
+  .ledger-container .text-gray-400,
+  .ledger-container .text-gray-700 {
+    color: #000000 !important;
+  }
+  
   /* Show ledger wrapper content */
   .ledger-wrapper {
     display: block !important;
@@ -164,6 +199,31 @@
   .ledger-wrapper * {
     visibility: visible !important;
     color: #000000 !important;
+    background-color: transparent !important;
+  }
+  
+  /* Override any text color classes that might make text invisible */
+  .ledger-modal .text-gray-600,
+  .ledger-modal .text-gray-800,
+  .ledger-modal .text-gray-400,
+  .ledger-wrapper .text-gray-600,
+  .ledger-wrapper .text-gray-800,
+  .ledger-wrapper .text-gray-400 {
+    color: #000000 !important;
+  }
+  
+  /* Ensure all divs and containers have white background */
+  .ledger-modal div,
+  .ledger-wrapper div {
+    background-color: white !important;
+    background: white !important;
+  }
+  
+  /* Exception for current balance - keep it red */
+  .ledger-modal .ledger-current-balance,
+  .ledger-wrapper .ledger-current-balance {
+    color: #dc2626 !important;
+    background-color: transparent !important;
   }
   
   /* Ensure proper display types */
@@ -191,9 +251,19 @@
   .ledger-wrapper h3,
   .ledger-wrapper h4,
   .ledger-wrapper h5,
-  .ledger-wrapper h6 {
+  .ledger-wrapper h6,
+  .ledger-modal p,
+  .ledger-modal div,
+  .ledger-modal span,
+  .ledger-modal h1,
+  .ledger-modal h2,
+  .ledger-modal h3,
+  .ledger-modal h4,
+  .ledger-modal h5,
+  .ledger-modal h6 {
     visibility: visible !important;
     color: #000000 !important;
+    background-color: transparent !important;
   }
 
   /* Explicitly keep current balance red in print */
@@ -222,12 +292,32 @@
   .ledger-wrapper table td,
   .ledger-wrapper table th,
   .ledger-table td,
-  .ledger-table th {
+  .ledger-table th,
+  .ledger-modal table td,
+  .ledger-modal table th {
     visibility: visible !important;
     border: 1px solid #000 !important;
     padding: 4px !important;
     display: table-cell !important;
     color: #000000 !important;
+    background-color: white !important;
+    background: white !important;
+  }
+  
+  /* Table header background */
+  .ledger-table th,
+  .ledger-wrapper table th,
+  .ledger-modal table th {
+    background-color: #f3f4f6 !important;
+    background: #f3f4f6 !important;
+  }
+  
+  /* Table body cells */
+  .ledger-table td,
+  .ledger-wrapper table td,
+  .ledger-modal table td {
+    background-color: white !important;
+    background: white !important;
   }
   
   /* Hide buttons */
