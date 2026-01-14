@@ -563,6 +563,14 @@ const CustomerLedger = ({
                 border-collapse: collapse;
                 table-layout: fixed;
               }
+              colgroup col:nth-child(1) { width: 6.5%; }
+              colgroup col:nth-child(2) { width: 22%; }
+              colgroup col:nth-child(3) { width: 10.5%; }
+              colgroup col:nth-child(4) { width: 9%; }
+              colgroup col:nth-child(5) { width: 7.5%; }
+              colgroup col:nth-child(6) { width: 9%; }
+              colgroup col:nth-child(7) { width: 8%; }
+              colgroup col:nth-child(8) { width: 9%; }
               th, td {
                 border: 1px solid #000;
                 padding: 3px 4px;
@@ -572,10 +580,10 @@ const CustomerLedger = ({
               th {
                 background: #f3f4f6;
                 font-weight: bold;
-                font-size: 9px;
+                font-size: 8px;
               }
               td {
-                font-size: 9px;
+                font-size: 8px;
               }
               .summary {
                 margin-top: 8px;
@@ -627,10 +635,18 @@ const CustomerLedger = ({
                   <th>Particulars</th>
                   <th>Ref.</th>
                   <th>Meter Reading</th>
-                  <th>Consumption (Cu.M.)</th>
-                  <th>DR Billings</th>
-                  <th>CR Collections</th>
+                  <th>Consumption (Cubic Meters)</th>
+                  <th rowspan="2">DR Billings</th>
+                  <th rowspan="2">CR Collections</th>
                   <th>Balance</th>
+                </tr>
+                <tr>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
