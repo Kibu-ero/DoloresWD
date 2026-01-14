@@ -487,6 +487,29 @@ const CustomerLedger = ({
 
   const handlePrint = () => {
     try {
+      // Find the ledger modal
+      const ledgerModal = document.querySelector('.ledger-modal');
+      let allElements = [];
+      
+      if (ledgerModal) {
+        // Ensure modal is visible
+        ledgerModal.style.display = 'block';
+        ledgerModal.style.visibility = 'visible';
+        ledgerModal.style.opacity = '1';
+        ledgerModal.style.background = 'white';
+        ledgerModal.style.backgroundColor = 'white';
+        
+        // Ensure all children are visible
+        allElements = Array.from(ledgerModal.querySelectorAll('*'));
+        allElements.forEach(el => {
+          el.style.visibility = 'visible';
+          el.style.color = '#000000';
+          if (el.tagName === 'DIV' || el.tagName === 'TD' || el.tagName === 'TH') {
+            el.style.backgroundColor = 'white';
+          }
+        });
+      }
+      
       // Add a class to indicate we're printing ledger
       document.body.classList.add('printing-ledger');
       
@@ -497,6 +520,20 @@ const CustomerLedger = ({
         // Remove the class after printing
         setTimeout(() => {
           document.body.classList.remove('printing-ledger');
+          if (ledgerModal && allElements.length > 0) {
+            ledgerModal.style.display = '';
+            ledgerModal.style.visibility = '';
+            ledgerModal.style.opacity = '';
+            ledgerModal.style.background = '';
+            ledgerModal.style.backgroundColor = '';
+            allElements.forEach(el => {
+              el.style.visibility = '';
+              el.style.color = '';
+              if (el.tagName === 'DIV' || el.tagName === 'TD' || el.tagName === 'TH') {
+                el.style.backgroundColor = '';
+              }
+            });
+          }
         }, 250);
       }, 100);
     } catch (e) {
