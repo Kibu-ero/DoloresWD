@@ -487,58 +487,197 @@ const CustomerLedger = ({
 
   const handlePrint = () => {
     try {
-      // Find the ledger modal
-      const ledgerModal = document.querySelector('.ledger-modal');
-      let allElements = [];
-      
-      if (ledgerModal) {
-        // Ensure modal is visible
-        ledgerModal.style.display = 'block';
-        ledgerModal.style.visibility = 'visible';
-        ledgerModal.style.opacity = '1';
-        ledgerModal.style.background = 'white';
-        ledgerModal.style.backgroundColor = 'white';
-        
-        // Ensure all children are visible
-        allElements = Array.from(ledgerModal.querySelectorAll('*'));
-        allElements.forEach(el => {
-          el.style.visibility = 'visible';
-          el.style.color = '#000000';
-          if (el.tagName === 'DIV' || el.tagName === 'TD' || el.tagName === 'TH') {
-            el.style.backgroundColor = 'white';
-          }
-        });
+      if (!ledgerData) return;
+
+      // Instead of relying on complex modal/print CSS (which can result in a blank page),
+      // open a clean print window and render a simple HTML version of the ledger there.
+      const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+      if (!printWindow) {
+        console.error('Unable to open print window');
+        return;
       }
-      
-      // Add a class to indicate we're printing ledger
-      document.body.classList.add('printing-ledger');
-      
-      // Small delay to ensure styles are applied
-      setTimeout(() => {
-        window.print();
-        
-        // Remove the class after printing
-        setTimeout(() => {
-          document.body.classList.remove('printing-ledger');
-          if (ledgerModal && allElements.length > 0) {
-            ledgerModal.style.display = '';
-            ledgerModal.style.visibility = '';
-            ledgerModal.style.opacity = '';
-            ledgerModal.style.background = '';
-            ledgerModal.style.backgroundColor = '';
-            allElements.forEach(el => {
-              el.style.visibility = '';
-              el.style.color = '';
-              if (el.tagName === 'DIV' || el.tagName === 'TD' || el.tagName === 'TH') {
-                el.style.backgroundColor = '';
+
+      const customer = ledgerData.customer;
+
+      const rowsHtml = ledgerData.ledgerEntries
+        .map(entry => {
+          const dr = entry.drBillings > 0 ? formatCurrency(entry.drBillings) : '';
+          const crTotal =
+            (entry.crCollections || 0) + (entry.amount || 0);
+          const cr = crTotal > 0 ? formatCurrency(crTotal) : '';
+          const bal =
+            entry.balance !== null && entry.balance !== undefined
+              ? formatCurrency(entry.balance)
+              : '';
+
+          return `
+            <tr>
+              <td>${entry.date || ''}</td>
+              <td>${entry.particulars || ''}</td>
+              <td>${entry.reference || ''}</td>
+              <td style="text-align:center">${entry.meterReading || ''}</td>
+              <td style="text-align:center">${entry.consumption || ''}</td>
+              <td style="text-align:right">${dr}</td>
+              <td style="text-align:right">${cr}</td>
+              <td style="text-align:right">${bal}</td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charSet="utf-8" />
+            <title>Customer Ledger - ${customer.first_name || ''} ${customer.last_name || ''}</title>
+            <style>
+              @page {
+                margin: 10mm;
+                size: landscape;
               }
-            });
-          }
-        }, 250);
-      }, 100);
+              body {
+                font-family: Arial, sans-serif;
+                font-size: 10px;
+                color: #000;
+                margin: 0;
+                padding: 10px;
+                background: #ffffff;
+              }
+              h1 {
+                font-size: 16px;
+                text-align: center;
+                margin: 0 0 4px 0;
+              }
+              h2 {
+                font-size: 13px;
+                text-align: center;
+                margin: 0 0 12px 0;
+              }
+              .header {
+                margin-bottom: 8px;
+              }
+              .header-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 2px;
+              }
+              .header-label {
+                font-weight: bold;
+                width: 120px;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: fixed;
+              }
+              th, td {
+                border: 1px solid #000;
+                padding: 3px 4px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+              }
+              th {
+                background: #f3f4f6;
+                font-weight: bold;
+                font-size: 9px;
+              }
+              td {
+                font-size: 9px;
+              }
+              .summary {
+                margin-top: 8px;
+                display: flex;
+                justify-content: space-between;
+              }
+              .current-balance {
+                font-size: 12px;
+                font-weight: bold;
+                color: #dc2626;
+              }
+              .signatories {
+                margin-top: 24px;
+                display: flex;
+                justify-content: space-between;
+              }
+              .sig-block {
+                text-align: center;
+                width: 45%;
+              }
+              .sig-line {
+                border-bottom: 1px solid #000;
+                margin-bottom: 4px;
+                height: 18px;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>DOLORES WATER DISTRICT</h1>
+            <h2>CUSTOMER LEDGER CARD</h2>
+
+            <div class="header">
+              <div class="header-row">
+                <div>
+                  <div><span class="header-label">Account of:</span> ${customer.first_name || ''} ${customer.last_name || ''}</div>
+                  <div><span class="header-label">Office/Address:</span> ${(customer.street || '')}, ${(customer.barangay || '')}, ${(customer.city || '')}, ${(customer.province || '')}</div>
+                  <div><span class="header-label">Contact Number:</span> ${customer.phone_number || 'N/A'}</div>
+                </div>
+                <div>
+                  <div><span class="header-label">Meter Serial No.:</span> ${customer.meter_number || ''}</div>
+                </div>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Particulars</th>
+                  <th>Ref.</th>
+                  <th>Meter Reading</th>
+                  <th>Consumption (Cu.M.)</th>
+                  <th>DR Billings</th>
+                  <th>CR Collections</th>
+                  <th>Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+
+            <div class="summary">
+              <div><strong>Total Billings:</strong> ₱ ${formatCurrency(ledgerData.totalBillings)}</div>
+              <div><strong>Total Collections:</strong> ₱ ${formatCurrency(ledgerData.totalCollections)}</div>
+              <div class="current-balance">Current Balance: ₱ ${formatCurrency(ledgerData.currentBalance)}</div>
+            </div>
+
+            <div class="signatories">
+              <div class="sig-block">
+                <div class="sig-line">${ledgerData.preparedBy || ''}</div>
+                <div>Prepared by:</div>
+              </div>
+              <div class="sig-block">
+                <div class="sig-line">Orlando Pacapac III</div>
+                <div>Approved by:</div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+
+      // Wait for the new window to finish rendering before printing
+      printWindow.focus();
+      printWindow.onload = () => {
+        printWindow.print();
+        printWindow.close();
+      };
     } catch (e) {
       console.error('Print error:', e);
-      document.body.classList.remove('printing-ledger');
       window.print();
     }
   };
