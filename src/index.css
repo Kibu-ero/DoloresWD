@@ -27,6 +27,37 @@
     display: none !important;
   }
   
+  /* CRITICAL: Ensure ledger-modal and ALL its children are visible when printing */
+  body.printing-ledger .ledger-modal,
+  body.printing-ledger .ledger-modal * {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Override any display:none that might be applied */
+  body.printing-ledger .ledger-modal,
+  body.printing-ledger .ledger-modal * {
+    display: block !important;
+  }
+  
+  body.printing-ledger .ledger-modal table,
+  body.printing-ledger .ledger-modal tr,
+  body.printing-ledger .ledger-modal td,
+  body.printing-ledger .ledger-modal th {
+    display: table !important;
+    display: table-row !important;
+    display: table-cell !important;
+  }
+  
+  body.printing-ledger .ledger-modal .flex {
+    display: flex !important;
+  }
+  
+  body.printing-ledger .ledger-modal .grid {
+    display: grid !important;
+  }
+  
   /* Ledger-specific page settings (landscape) */
   @page {
     margin: 10mm;
@@ -54,12 +85,23 @@
     opacity: 1 !important;
   }
   
-  /* Override any dark background classes on modal */
+  /* Override any dark background classes on modal - be very specific */
   .ledger-modal.bg-gray-900,
-  .ledger-modal.bg-opacity-75 {
+  .ledger-modal.bg-opacity-75,
+  body.printing-ledger .ledger-modal.bg-gray-900,
+  body.printing-ledger .ledger-modal.bg-opacity-75 {
     background: white !important;
     background-color: white !important;
     opacity: 1 !important;
+  }
+  
+  /* Override flex and centering classes that might hide content */
+  .ledger-modal.flex,
+  .ledger-modal.justify-center,
+  .ledger-modal.items-center {
+    display: block !important;
+    justify-content: normal !important;
+    align-items: normal !important;
   }
   
   /* Show billing sheet modal when printing */
@@ -98,21 +140,39 @@
     box-shadow: none !important;
     border-radius: 0 !important;
     opacity: 1 !important;
+    position: static !important;
   }
   
   /* Override any background classes on inner divs */
   .ledger-modal > div.bg-white,
-  .ledger-modal > div.bg-gray-900 {
+  .ledger-modal > div.bg-gray-900,
+  .ledger-modal > div.rounded-lg,
+  .ledger-modal > div.shadow-lg {
     background: white !important;
     background-color: white !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
   
-  /* Show the content div inside the card */
+  /* Show the content div inside the card - target all nested divs */
   .ledger-modal > div > div:last-child,
-  .ledger-modal > div > div.p-6 {
+  .ledger-modal > div > div.p-6,
+  .ledger-modal div div {
     display: block !important;
     visibility: visible !important;
     padding: 0 !important;
+    background: white !important;
+    background-color: white !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
+  /* Ensure the CustomerLedger wrapper is visible */
+  .ledger-modal .ledger-wrapper {
+    display: block !important;
+    visibility: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
     background: white !important;
     background-color: white !important;
   }
@@ -194,27 +254,33 @@
     background-color: white !important;
   }
   
-  /* Make sure everything inside ledger is visible */
+  /* Make sure everything inside ledger is visible - be very aggressive */
   .ledger-modal *,
-  .ledger-wrapper * {
+  .ledger-wrapper *,
+  body.printing-ledger .ledger-modal * {
     visibility: visible !important;
     color: #000000 !important;
-    background-color: transparent !important;
   }
   
   /* Override any text color classes that might make text invisible */
   .ledger-modal .text-gray-600,
   .ledger-modal .text-gray-800,
   .ledger-modal .text-gray-400,
+  .ledger-modal .text-gray-700,
   .ledger-wrapper .text-gray-600,
   .ledger-wrapper .text-gray-800,
-  .ledger-wrapper .text-gray-400 {
+  .ledger-wrapper .text-gray-400,
+  .ledger-wrapper .text-gray-700,
+  body.printing-ledger .ledger-modal .text-gray-600,
+  body.printing-ledger .ledger-modal .text-gray-800,
+  body.printing-ledger .ledger-modal .text-gray-400 {
     color: #000000 !important;
   }
   
   /* Ensure all divs and containers have white background */
   .ledger-modal div,
-  .ledger-wrapper div {
+  .ledger-wrapper div,
+  body.printing-ledger .ledger-modal div {
     background-color: white !important;
     background: white !important;
   }
@@ -224,6 +290,31 @@
   .ledger-wrapper .ledger-current-balance {
     color: #dc2626 !important;
     background-color: transparent !important;
+  }
+  
+  /* Force all text elements to be black */
+  .ledger-modal p,
+  .ledger-modal span,
+  .ledger-modal td,
+  .ledger-modal th,
+  .ledger-modal h1,
+  .ledger-modal h2,
+  .ledger-modal h3,
+  .ledger-modal h4,
+  .ledger-modal h5,
+  .ledger-modal h6,
+  .ledger-wrapper p,
+  .ledger-wrapper span,
+  .ledger-wrapper td,
+  .ledger-wrapper th,
+  .ledger-wrapper h1,
+  .ledger-wrapper h2,
+  .ledger-wrapper h3,
+  .ledger-wrapper h4,
+  .ledger-wrapper h5,
+  .ledger-wrapper h6 {
+    color: #000000 !important;
+    visibility: visible !important;
   }
   
   /* Ensure proper display types */
