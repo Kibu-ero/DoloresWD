@@ -489,14 +489,6 @@ const CustomerLedger = ({
     try {
       if (!ledgerData) return;
 
-      // Instead of relying on complex modal/print CSS (which can result in a blank page),
-      // open a clean print window and render a simple HTML version of the ledger there.
-      const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-      if (!printWindow) {
-        console.error('Unable to open print window');
-        return;
-      }
-
       const customer = ledgerData.customer;
 
       const rowsHtml = ledgerData.ledgerEntries
@@ -666,15 +658,41 @@ const CustomerLedger = ({
         </html>
       `;
 
-      printWindow.document.open();
-      printWindow.document.write(html);
-      printWindow.document.close();
+      // Use a hidden iframe inside the same window for reliable printing
+      let iframe = document.getElementById('ledger-print-iframe');
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'ledger-print-iframe';
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        iframe.style.visibility = 'hidden';
+        document.body.appendChild(iframe);
+      }
 
-      // Wait for the new window to finish rendering before printing
-      printWindow.focus();
-      printWindow.onload = () => {
-        printWindow.print();
-        printWindow.close();
+      const iframeDoc =
+        iframe.contentWindow || iframe.contentDocument;
+
+      if (!iframeDoc) {
+        console.error('Unable to access print iframe document');
+        return;
+      }
+
+      const doc = iframeDoc.document || iframeDoc;
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        } catch (err) {
+          console.error('Iframe print error:', err);
+        }
       };
     } catch (e) {
       console.error('Print error:', e);
