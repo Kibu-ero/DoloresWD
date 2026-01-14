@@ -81,9 +81,24 @@ const SystemSettings = () => {
   const handleWaterRatesSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Normalize values before sending
+      const normalized = waterRates
+        .filter(r => r && r.consumption_min !== '' && r.consumption_min !== null && r.consumption_min !== undefined)
+        .map(r => ({
+          consumption_min: Number(r.consumption_min),
+          consumption_max: r.consumption_max === '' ? null : (r.consumption_max === undefined ? null : Number(r.consumption_max)),
+          rate_per_cubic_meter: r.rate_per_cubic_meter === '' ? null : (r.rate_per_cubic_meter === undefined ? null : Number(r.rate_per_cubic_meter)),
+          fixed_amount: r.fixed_amount === '' ? null : (r.fixed_amount === undefined ? null : Number(r.fixed_amount))
+        }));
+
+      if (!normalized.length) {
+        showNotification('Add at least one rate before saving.', 'error');
+        return;
+      }
+
       // Send raw array so backend can consume it easily; also include "rates" wrapper
       // for backwards compatibility with older controller shapes.
-      const payload = { rates: waterRates, data: waterRates };
+      const payload = { rates: normalized, data: normalized };
       await SettingsService.updateWaterRates(payload);
       showNotification('Water rates updated successfully!', 'success');
       fetchWaterRates();
@@ -103,6 +118,10 @@ const SystemSettings = () => {
       setWaterRates([...waterRates, rate]);
       setNewRate({ consumption_min: '', consumption_max: '', rate_per_cubic_meter: '', fixed_amount: '' });
     }
+  };
+
+  const updateRateField = (index, field, value) => {
+    setWaterRates(prev => prev.map((rate, i) => i === index ? { ...rate, [field]: value } : rate));
   };
 
   const removeRate = (index) => {
@@ -333,10 +352,41 @@ const SystemSettings = () => {
                   <tbody className="divide-y divide-gray-200">
                     {waterRates.map((rate, index) => (
                       <tr key={index}>
-                        <td className="px-4 py-3 text-sm text-gray-900">{rate.consumption_min}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{rate.consumption_max || '∞'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{rate.rate_per_cubic_meter || '-'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{rate.fixed_amount || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <input
+                            type="number"
+                            value={rate.consumption_min ?? ''}
+                            onChange={(e) => updateRateField(index, 'consumption_min', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-200 rounded"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <input
+                            type="number"
+                            value={rate.consumption_max ?? ''}
+                            onChange={(e) => updateRateField(index, 'consumption_max', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-200 rounded"
+                            placeholder="∞"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={rate.rate_per_cubic_meter ?? ''}
+                            onChange={(e) => updateRateField(index, 'rate_per_cubic_meter', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-200 rounded"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={rate.fixed_amount ?? ''}
+                            onChange={(e) => updateRateField(index, 'fixed_amount', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-200 rounded"
+                          />
+                        </td>
                         <td className="px-4 py-3 text-sm">
                           <button
                             onClick={() => removeRate(index)}
