@@ -139,22 +139,244 @@ const BillingSheet = ({
 
   const handlePrint = () => {
     try {
-      // Add a class to indicate we're printing billing sheet
-      document.body.classList.add('printing-billing-sheet');
-      
-      // Small delay to ensure styles are applied
+      if (!billingData || billingData.length === 0) {
+        alert('No billing data to print');
+        return;
+      }
+
+      const collectorText = collector && collector.trim() !== '' ? collector : 'ALL ZONES';
+
+      // Build table rows HTML
+      const rowsHtml = billingData
+        .map((row, index) => {
+          return `
+            <tr>
+              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px; font-weight: bold;">${index + 1}</td>
+              <td style="border: 1px solid #000; padding: 2px; font-size: 8px; font-weight: bold;">${row.name || ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.status1 || ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.status2 || ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.presentReading || ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.previousReading || ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px; font-weight: bold;">${row.used || ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: right; font-size: 8px; font-weight: bold;">${row.billAmount ? `₱ ${row.billAmount.toFixed(2)}` : ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: right; font-size: 8px; font-weight: bold;">${row.scd > 0 ? `₱ ${row.scd.toFixed(2)}` : ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: right; font-size: 8px; font-weight: bold;">${row.totalAmount ? `₱ ${row.totalAmount.toFixed(2)}` : ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.orNumber || ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.date || ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: right; font-size: 8px; font-weight: bold;">${row.penalty > 0 ? `₱ ${row.penalty.toFixed(2)}` : ''}</td>
+              <td style="border: 1px solid #000; padding: 2px; text-align: right; font-size: 8px; font-weight: bold;">${row.afterDue ? `₱ ${row.afterDue.toFixed(2)}` : ''}</td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      // Add empty rows to fill up to 42 rows
+      let emptyRowsHtml = '';
+      for (let i = billingData.length; i < 42; i++) {
+        emptyRowsHtml += `
+          <tr>
+            <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${i + 1}</td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+          </tr>
+        `;
+      }
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charSet="utf-8" />
+            <title>Daily Collector Billing Sheet - ${month} ${year}</title>
+            <style>
+              @page {
+                margin: 10mm;
+                size: landscape;
+              }
+              body {
+                font-family: Arial, sans-serif;
+                font-size: 10px;
+                color: #000;
+                margin: 0;
+                padding: 10px;
+                background: #ffffff;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 8px;
+              }
+              h1 {
+                font-size: 18px;
+                font-weight: bold;
+                margin: 4px 0;
+                color: #000;
+              }
+              h2 {
+                font-size: 16px;
+                font-weight: bold;
+                margin: 4px 0;
+                color: #000;
+              }
+              h3 {
+                font-size: 14px;
+                font-weight: bold;
+                margin: 4px 0;
+                background: #f3f4f6;
+                padding: 4px;
+                color: #000;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 8px;
+              }
+              th {
+                background-color: #f3f4f6;
+                font-weight: bold;
+                border: 1px solid #000;
+                padding: 3px;
+                text-align: center;
+                font-size: 8px;
+                color: #000;
+              }
+              td {
+                border: 1px solid #000;
+                padding: 2px;
+                font-size: 8px;
+                color: #000;
+              }
+              .summary {
+                margin-top: 8px;
+                border-top: 2px solid #000;
+                padding-top: 4px;
+              }
+              .summary table {
+                border: none;
+              }
+              .summary td {
+                border: none;
+                border-right: 1px solid #d1d5db;
+                padding: 3px;
+                text-align: center;
+                font-weight: bold;
+                font-size: 10px;
+              }
+              .summary td:last-child {
+                border-right: none;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>DAILY COLLECTOR</h1>
+              <h2>${collectorText}</h2>
+              <h3>BILLING SHEET - ${month} ${year}</h3>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th rowspan="2">BILL NO.</th>
+                  <th rowspan="2">CONSUMER ZONE</th>
+                  <th rowspan="2">STATUS</th>
+                  <th rowspan="2">STATUS</th>
+                  <th colspan="3">METER READING</th>
+                  <th rowspan="2">AMOUNT OF BILL</th>
+                  <th rowspan="2">SCD</th>
+                  <th rowspan="2">TOTAL AMOUNT</th>
+                  <th rowspan="2">OR NO.</th>
+                  <th rowspan="2">DATE</th>
+                  <th rowspan="2">PENALTY</th>
+                  <th rowspan="2">AMOUNT AFTER DUE SURCHARGE</th>
+                </tr>
+                <tr>
+                  <th>PRESENT</th>
+                  <th>PREVIOUS</th>
+                  <th>USED (CU3m)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+                ${emptyRowsHtml}
+              </tbody>
+            </table>
+            <div class="summary">
+              <table>
+                <tr>
+                  <td>SUB TOTAL</td>
+                  <td>USED: ${summary.totalUsed.toFixed(2)}</td>
+                  <td>AMOUNT OF BILL: ₱ ${summary.totalBill.toFixed(2)}</td>
+                  <td>SCD: ₱ ${summary.totalSCD.toFixed(2)}</td>
+                  <td>TOTAL AMOUNT: ₱ ${summary.totalAmount.toFixed(2)}</td>
+                  <td>PENALTY: ₱ ${summary.totalPenalty.toFixed(2)}</td>
+                  <td>AMOUNT AFTER DUE SURCHARGE: ₱ ${summary.totalAfterDue.toFixed(2)}</td>
+                </tr>
+              </table>
+            </div>
+          </body>
+        </html>
+      `;
+
+      // Use a hidden iframe inside the same window for reliable printing
+      let iframe = document.getElementById('billing-sheet-print-iframe');
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'billing-sheet-print-iframe';
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        iframe.style.visibility = 'hidden';
+        document.body.appendChild(iframe);
+      }
+
+      const iframeDoc = iframe.contentWindow || iframe.contentDocument;
+
+      if (!iframeDoc) {
+        console.error('Unable to access print iframe document');
+        return;
+      }
+
+      const doc = iframeDoc.document || iframeDoc;
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        } catch (err) {
+          console.error('Print error:', err);
+        }
+      };
+
+      // Fallback if onload doesn't fire
       setTimeout(() => {
-        window.print();
-        
-        // Remove the class after printing
-        setTimeout(() => {
-          document.body.classList.remove('printing-billing-sheet');
-        }, 250);
-      }, 100);
+        try {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          }
+        } catch (err) {
+          console.error('Print error:', err);
+        }
+      }, 500);
     } catch (e) {
       console.error('Billing sheet print error:', e);
-      document.body.classList.remove('printing-billing-sheet');
-      window.print();
+      alert('Failed to print billing sheet. Please try again.');
     }
   };
 
