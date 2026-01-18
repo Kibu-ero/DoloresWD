@@ -151,20 +151,20 @@ const BillingSheet = ({
         .map((row, index) => {
           return `
             <tr>
-              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px; font-weight: bold;">${index + 1}</td>
-              <td style="border: 1px solid #000; padding: 2px; font-size: 8px; font-weight: bold;">${row.name || ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.status1 || ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.status2 || ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.presentReading || ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.previousReading || ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px; font-weight: bold;">${row.used || ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: right; font-size: 8px; font-weight: bold;">${row.billAmount ? `₱ ${row.billAmount.toFixed(2)}` : ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: right; font-size: 8px; font-weight: bold;">${row.scd > 0 ? `₱ ${row.scd.toFixed(2)}` : ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: right; font-size: 8px; font-weight: bold;">${row.totalAmount ? `₱ ${row.totalAmount.toFixed(2)}` : ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.orNumber || ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${row.date || ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: right; font-size: 8px; font-weight: bold;">${row.penalty > 0 ? `₱ ${row.penalty.toFixed(2)}` : ''}</td>
-              <td style="border: 1px solid #000; padding: 2px; text-align: right; font-size: 8px; font-weight: bold;">${row.afterDue ? `₱ ${row.afterDue.toFixed(2)}` : ''}</td>
+              <td style="text-align: center; font-size: 12px; font-weight: 600;">${index + 1}</td>
+              <td style="font-size: 12px; font-weight: 600;">${row.name || ''}</td>
+              <td style="text-align: center; font-size: 12px;">${row.status1 || ''}</td>
+              <td style="text-align: center; font-size: 12px;">${row.status2 || ''}</td>
+              <td style="text-align: center; font-size: 12px;">${row.presentReading || ''}</td>
+              <td style="text-align: center; font-size: 12px;">${row.previousReading || ''}</td>
+              <td style="text-align: center; font-size: 12px; font-weight: 600;">${row.used || ''}</td>
+              <td style="text-align: right; font-size: 12px; font-weight: 600;">${row.billAmount ? `₱ ${row.billAmount.toFixed(2)}` : ''}</td>
+              <td style="text-align: right; font-size: 12px; font-weight: 600;">${row.scd > 0 ? `₱ ${row.scd.toFixed(2)}` : ''}</td>
+              <td style="text-align: right; font-size: 12px; font-weight: bold;">${row.totalAmount ? `₱ ${row.totalAmount.toFixed(2)}` : ''}</td>
+              <td style="text-align: center; font-size: 12px;">${row.orNumber || ''}</td>
+              <td style="text-align: center; font-size: 12px;">${row.date || ''}</td>
+              <td style="text-align: right; font-size: 12px; font-weight: 600;">${row.penalty > 0 ? `₱ ${row.penalty.toFixed(2)}` : ''}</td>
+              <td style="text-align: right; font-size: 12px; font-weight: bold;">${row.afterDue ? `₱ ${row.afterDue.toFixed(2)}` : ''}</td>
             </tr>
           `;
         })
@@ -175,20 +175,20 @@ const BillingSheet = ({
       for (let i = billingData.length; i < 42; i++) {
         emptyRowsHtml += `
           <tr>
-            <td style="border: 1px solid #000; padding: 2px; text-align: center; font-size: 8px;">${i + 1}</td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
-            <td style="border: 1px solid #000; padding: 2px; font-size: 8px;"></td>
+            <td style="text-align: center; font-size: 12px;">${i + 1}</td>
+            <td style="font-size: 12px;"></td>
+            <td style="text-align: center; font-size: 12px;"></td>
+            <td style="text-align: center; font-size: 12px;"></td>
+            <td style="text-align: center; font-size: 12px;"></td>
+            <td style="text-align: center; font-size: 12px;"></td>
+            <td style="text-align: center; font-size: 12px;"></td>
+            <td style="text-align: right; font-size: 12px;"></td>
+            <td style="text-align: right; font-size: 12px;"></td>
+            <td style="text-align: right; font-size: 12px;"></td>
+            <td style="text-align: center; font-size: 12px;"></td>
+            <td style="text-align: center; font-size: 12px;"></td>
+            <td style="text-align: right; font-size: 12px;"></td>
+            <td style="text-align: right; font-size: 12px;"></td>
           </tr>
         `;
       }
@@ -204,124 +204,165 @@ const BillingSheet = ({
                 margin: 10mm;
                 size: landscape;
               }
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
               body {
                 font-family: Arial, sans-serif;
-                font-size: 10px;
+                font-size: 12px;
                 color: #000;
                 margin: 0;
-                padding: 10px;
+                padding: 0;
                 background: #ffffff;
               }
-              .header {
-                text-align: center;
-                margin-bottom: 8px;
+              .billing-sheet-container {
+                border: 2px solid #000;
+                background: white;
+                width: 100%;
               }
-              h1 {
+              .header-section {
+                text-align: center;
+                padding: 16px;
+                border-bottom: 2px solid #000;
+              }
+              .header-section h1 {
+                font-size: 24px;
+                font-weight: bold;
+                margin: 0 0 4px 0;
+                color: #1f2937;
+              }
+              .header-section h2 {
+                font-size: 20px;
+                font-weight: 600;
+                margin: 0 0 8px 0;
+                color: #374151;
+              }
+              .title-section {
+                text-align: center;
+                padding: 8px;
+                background: #f3f4f6;
+                border-bottom: 1px solid #d1d5d6;
+              }
+              .title-section h3 {
                 font-size: 18px;
                 font-weight: bold;
-                margin: 4px 0;
-                color: #000;
-              }
-              h2 {
-                font-size: 16px;
-                font-weight: bold;
-                margin: 4px 0;
-                color: #000;
-              }
-              h3 {
-                font-size: 14px;
-                font-weight: bold;
-                margin: 4px 0;
-                background: #f3f4f6;
-                padding: 4px;
-                color: #000;
+                margin: 0;
+                color: #1f2937;
               }
               table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-bottom: 8px;
+                border: 1px solid #000;
               }
               th {
                 background-color: #f3f4f6;
                 font-weight: bold;
                 border: 1px solid #000;
-                padding: 3px;
+                padding: 4px 8px;
                 text-align: center;
-                font-size: 8px;
+                font-size: 12px;
                 color: #000;
               }
               td {
                 border: 1px solid #000;
-                padding: 2px;
-                font-size: 8px;
+                padding: 4px 8px;
+                font-size: 12px;
                 color: #000;
               }
-              .summary {
-                margin-top: 8px;
+              td.text-center {
+                text-align: center;
+              }
+              td.text-right {
+                text-align: right;
+              }
+              td.font-semibold {
+                font-weight: 600;
+              }
+              td.font-bold {
+                font-weight: bold;
+              }
+              .footer-section {
+                padding: 16px;
                 border-top: 2px solid #000;
-                padding-top: 4px;
               }
-              .summary table {
-                border: none;
+              .summary-table {
+                width: 100%;
+                border-collapse: collapse;
               }
-              .summary td {
+              .summary-table td {
                 border: none;
-                border-right: 1px solid #d1d5db;
-                padding: 3px;
+                border-right: 1px solid #d1d5d6;
+                padding: 8px;
                 text-align: center;
                 font-weight: bold;
-                font-size: 10px;
+                font-size: 14px;
               }
-              .summary td:last-child {
+              .summary-table td:first-child {
+                text-align: center;
+              }
+              .summary-table td:last-child {
                 border-right: none;
               }
             </style>
           </head>
           <body>
-            <div class="header">
-              <h1>DAILY COLLECTOR</h1>
-              <h2>${collectorText}</h2>
-              <h3>BILLING SHEET - ${month} ${year}</h3>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th rowspan="2">BILL NO.</th>
-                  <th rowspan="2">CONSUMER ZONE</th>
-                  <th rowspan="2">STATUS</th>
-                  <th rowspan="2">STATUS</th>
-                  <th colspan="3">METER READING</th>
-                  <th rowspan="2">AMOUNT OF BILL</th>
-                  <th rowspan="2">SCD</th>
-                  <th rowspan="2">TOTAL AMOUNT</th>
-                  <th rowspan="2">OR NO.</th>
-                  <th rowspan="2">DATE</th>
-                  <th rowspan="2">PENALTY</th>
-                  <th rowspan="2">AMOUNT AFTER DUE SURCHARGE</th>
-                </tr>
-                <tr>
-                  <th>PRESENT</th>
-                  <th>PREVIOUS</th>
-                  <th>USED (CU3m)</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rowsHtml}
-                ${emptyRowsHtml}
-              </tbody>
-            </table>
-            <div class="summary">
+            <div class="billing-sheet-container">
+              <!-- Header -->
+              <div class="header-section">
+                <h1>DAILY COLLECTOR</h1>
+                <h2>${collectorText}</h2>
+              </div>
+
+              <!-- Title -->
+              <div class="title-section">
+                <h3>BILLING SHEET - ${month} ${year}</h3>
+              </div>
+
+              <!-- Main Table -->
               <table>
-                <tr>
-                  <td>SUB TOTAL</td>
-                  <td>USED: ${summary.totalUsed.toFixed(2)}</td>
-                  <td>AMOUNT OF BILL: ₱ ${summary.totalBill.toFixed(2)}</td>
-                  <td>SCD: ₱ ${summary.totalSCD.toFixed(2)}</td>
-                  <td>TOTAL AMOUNT: ₱ ${summary.totalAmount.toFixed(2)}</td>
-                  <td>PENALTY: ₱ ${summary.totalPenalty.toFixed(2)}</td>
-                  <td>AMOUNT AFTER DUE SURCHARGE: ₱ ${summary.totalAfterDue.toFixed(2)}</td>
-                </tr>
+                <thead>
+                  <tr>
+                    <th rowspan="2">BILL NO.</th>
+                    <th rowspan="2">CONSUMER ZONE</th>
+                    <th rowspan="2">STATUS</th>
+                    <th rowspan="2">STATUS</th>
+                    <th colspan="3">METER READING</th>
+                    <th rowspan="2">AMOUNT OF BILL</th>
+                    <th rowspan="2">SCD</th>
+                    <th rowspan="2">TOTAL AMOUNT</th>
+                    <th rowspan="2">OR NO.</th>
+                    <th rowspan="2">DATE</th>
+                    <th rowspan="2">PENALTY</th>
+                    <th rowspan="2">AMOUNT AFTER DUE SURCHARGE</th>
+                  </tr>
+                  <tr>
+                    <th>PRESENT</th>
+                    <th>PREVIOUS</th>
+                    <th>USED (CU3m)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                  ${emptyRowsHtml}
+                </tbody>
               </table>
+
+              <!-- Footer Summary -->
+              <div class="footer-section">
+                <table class="summary-table">
+                  <tr>
+                    <td>SUB TOTAL</td>
+                    <td>USED: ${summary.totalUsed.toFixed(2)}</td>
+                    <td>AMOUNT OF BILL: ₱ ${summary.totalBill.toFixed(2)}</td>
+                    <td>SCD: ₱ ${summary.totalSCD.toFixed(2)}</td>
+                    <td>TOTAL AMOUNT: ₱ ${summary.totalAmount.toFixed(2)}</td>
+                    <td>PENALTY: ₱ ${summary.totalPenalty.toFixed(2)}</td>
+                    <td>AMOUNT AFTER DUE SURCHARGE: ₱ ${summary.totalAfterDue.toFixed(2)}</td>
+                  </tr>
+                </table>
+              </div>
             </div>
           </body>
         </html>
