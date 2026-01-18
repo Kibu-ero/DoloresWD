@@ -504,14 +504,14 @@ const CustomerLedger = ({
 
           return `
             <tr>
-              <td>${entry.date || ''}</td>
-              <td>${entry.particulars || ''}</td>
-              <td>${entry.reference || ''}</td>
-              <td style="text-align:center">${entry.meterReading || ''}</td>
-              <td style="text-align:center">${entry.consumption || ''}</td>
-              <td style="text-align:right">${dr}</td>
-              <td style="text-align:right">${cr}</td>
-              <td style="text-align:right">${bal}</td>
+              <td style="font-size: 12px;">${entry.date || ''}</td>
+              <td style="font-size: 12px; font-weight: 600;">${entry.particulars || ''}</td>
+              <td style="font-size: 12px;">${entry.reference || ''}</td>
+              <td style="text-align: center; font-size: 12px;">${entry.meterReading || ''}</td>
+              <td style="text-align: center; font-size: 12px;">${entry.consumption || ''}</td>
+              <td style="text-align: right; font-size: 12px; font-weight: 600;">${dr}</td>
+              <td style="text-align: right; font-size: 12px; font-weight: 600;">${cr}</td>
+              <td style="text-align: right; font-size: 12px; font-weight: bold;">${bal}</td>
             </tr>
           `;
         })
@@ -528,146 +528,239 @@ const CustomerLedger = ({
                 margin: 10mm;
                 size: landscape;
               }
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
               body {
                 font-family: Arial, sans-serif;
-                font-size: 10px;
+                font-size: 12px;
                 color: #000;
                 margin: 0;
-                padding: 10px;
+                padding: 0;
                 background: #ffffff;
               }
-              h1 {
-                font-size: 16px;
-                text-align: center;
-                margin: 0 0 4px 0;
+              .ledger-container {
+                border: 2px solid #000;
+                background: white;
+                width: 100%;
               }
-              h2 {
-                font-size: 13px;
-                text-align: center;
-                margin: 0 0 12px 0;
+              .header-section {
+                padding: 16px;
+                border-bottom: 2px solid #000;
               }
-              .header {
-                margin-bottom: 8px;
+              .header-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
               }
-              .header-row {
+              .header-item {
                 display: flex;
-                justify-content: space-between;
-                margin-bottom: 2px;
+                margin-bottom: 12px;
               }
               .header-label {
                 font-weight: bold;
-                width: 120px;
+                width: 128px;
+                min-width: 128px;
+              }
+              .title-section {
+                text-align: center;
+                padding: 8px;
+                background: #f3f4f6;
+                border-bottom: 1px solid #d1d5d6;
+              }
+              .title-section h1 {
+                font-size: 20px;
+                font-weight: bold;
+                color: #1f2937;
+                margin: 0;
+                padding: 0;
               }
               table {
                 width: 100%;
                 border-collapse: collapse;
-                table-layout: fixed;
+                border: 1px solid #000;
               }
-              colgroup col:nth-child(1) { width: 6.5%; }
-              colgroup col:nth-child(2) { width: 22%; }
-              colgroup col:nth-child(3) { width: 10.5%; }
-              colgroup col:nth-child(4) { width: 9%; }
-              colgroup col:nth-child(5) { width: 7.5%; }
-              colgroup col:nth-child(6) { width: 9%; }
-              colgroup col:nth-child(7) { width: 8%; }
-              colgroup col:nth-child(8) { width: 9%; }
               th, td {
                 border: 1px solid #000;
-                padding: 3px 4px;
+                padding: 4px 8px;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
+                font-size: 12px;
               }
               th {
                 background: #f3f4f6;
                 font-weight: bold;
-                font-size: 8px;
+                text-align: left;
               }
-              td {
-                font-size: 8px;
+              th.text-center {
+                text-align: center;
               }
-              .summary {
-                margin-top: 8px;
-                display: flex;
-                justify-content: space-between;
+              th.text-right {
+                text-align: right;
+              }
+              td.text-center {
+                text-align: center;
+              }
+              td.text-right {
+                text-align: right;
+              }
+              td.font-semibold {
+                font-weight: 600;
+              }
+              td.font-bold {
+                font-weight: bold;
+              }
+              .footer-section {
+                padding: 16px;
+                border-top: 2px solid #000;
+              }
+              .summary-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 32px;
+                margin-bottom: 8px;
+                font-size: 14px;
+              }
+              .summary-totals {
+                text-align: right;
               }
               .current-balance {
-                font-size: 12px;
+                margin-top: 8px;
+                text-align: right;
+                font-size: 18px;
                 font-weight: bold;
                 color: #dc2626;
               }
-              .signatories {
-                margin-top: 24px;
-                display: flex;
-                justify-content: space-between;
+              .signatories-section {
+                margin-top: 32px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
               }
               .sig-block {
                 text-align: center;
-                width: 45%;
               }
               .sig-line {
-                border-bottom: 1px solid #000;
-                margin-bottom: 4px;
-                height: 18px;
+                border-bottom: 1px solid #9ca3af;
+                width: 192px;
+                height: 24px;
+                margin: 0 auto 8px auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .sig-label {
+                font-weight: 600;
+                font-size: 14px;
               }
             </style>
           </head>
           <body>
-            <h1>DOLORES WATER DISTRICT</h1>
-            <h2>CUSTOMER LEDGER CARD</h2>
-
-            <div class="header">
-              <div class="header-row">
-                <div>
-                  <div><span class="header-label">Account of:</span> ${customer.first_name || ''} ${customer.last_name || ''}</div>
-                  <div><span class="header-label">Office/Address:</span> ${(customer.street || '')}, ${(customer.barangay || '')}, ${(customer.city || '')}, ${(customer.province || '')}</div>
-                  <div><span class="header-label">Contact Number:</span> ${customer.phone_number || 'N/A'}</div>
-                </div>
-                <div>
-                  <div><span class="header-label">Meter Serial No.:</span> ${customer.meter_number || ''}</div>
+            <div class="ledger-container">
+              <!-- Header Section -->
+              <div class="header-section">
+                <div class="header-grid">
+                  <div>
+                    <div class="header-item">
+                      <span class="header-label">Account of:</span>
+                      <span style="font-weight: 600;">${customer.first_name || ''} ${customer.last_name || ''}</span>
+                    </div>
+                    <div class="header-item">
+                      <span class="header-label">Office/Address:</span>
+                      <span>${(customer.street || '')}, ${(customer.barangay || '')}, ${(customer.city || '')}, ${(customer.province || '')}</span>
+                    </div>
+                    <div class="header-item">
+                      <span class="header-label">Contact Person:</span>
+                      <span style="border-bottom: 1px solid #9ca3af; width: 128px; display: inline-block;"></span>
+                    </div>
+                    <div class="header-item">
+                      <span class="header-label">Contact Number:</span>
+                      <span style="font-weight: 600;">${customer.phone_number || 'N/A'}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="header-item">
+                      <span class="header-label">Meter Brand & Size:</span>
+                      <span style="border-bottom: 1px solid #9ca3af; width: 128px; display: inline-block;"></span>
+                    </div>
+                    <div class="header-item">
+                      <span class="header-label">Meter Serial No.:</span>
+                      <span style="font-weight: 600;">${customer.meter_number || ''}</span>
+                    </div>
+                    <div class="header-item">
+                      <span class="header-label">Classification:</span>
+                      <span style="border-bottom: 1px solid #9ca3af; width: 128px; display: inline-block;"></span>
+                    </div>
+                    <div class="header-item">
+                      <span class="header-label">No. of Persons using water:</span>
+                      <span style="border-bottom: 1px solid #9ca3af; width: 128px; display: inline-block;"></span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Particulars</th>
-                  <th>Ref.</th>
-                  <th>Meter Reading</th>
-                  <th>Consumption (Cubic Meters)</th>
-                  <th rowspan="2">DR Billings</th>
-                  <th rowspan="2">CR Collections</th>
-                  <th>Balance</th>
-                </tr>
-                <tr>
-                  <th></th>
-                  <th></th>
-                  <th></th>
-                  <th></th>
-                  <th></th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rowsHtml}
-              </tbody>
-            </table>
-
-            <div class="summary">
-              <div><strong>Total Billings:</strong> ₱ ${formatCurrency(ledgerData.totalBillings)}</div>
-              <div><strong>Total Collections:</strong> ₱ ${formatCurrency(ledgerData.totalCollections)}</div>
-              <div class="current-balance">Current Balance: ₱ ${formatCurrency(ledgerData.currentBalance)}</div>
-            </div>
-
-            <div class="signatories">
-              <div class="sig-block">
-                <div class="sig-line">${ledgerData.preparedBy || ''}</div>
-                <div>Prepared by:</div>
+              <!-- Title -->
+              <div class="title-section">
+                <h1>DOLORES WATER DISTRICT CUSTOMER LEDGER CARD</h1>
               </div>
-              <div class="sig-block">
-                <div class="sig-line">Orlando Pacapac III</div>
-                <div>Approved by:</div>
+
+              <!-- Main Table -->
+              <table>
+                <thead>
+                  <tr>
+                    <th class="text-center">Date</th>
+                    <th>Particulars</th>
+                    <th>Ref.</th>
+                    <th class="text-center">Meter Reading</th>
+                    <th class="text-center">Consumption (Cubic Meters)</th>
+                    <th class="text-right" rowspan="2">DR Billings</th>
+                    <th class="text-right" rowspan="2">CR Collections</th>
+                    <th class="text-right">Balance</th>
+                  </tr>
+                  <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                </tbody>
+              </table>
+
+              <!-- Footer Summary -->
+              <div class="footer-section">
+                <div class="summary-grid">
+                  <div>
+                    <span style="font-weight: bold;">TOTAL:</span>
+                  </div>
+                  <div class="summary-totals">
+                    <span style="font-weight: bold;">Total Billings: ₱ ${formatCurrency(ledgerData.totalBillings)}</span>
+                  </div>
+                  <div class="summary-totals">
+                    <span style="font-weight: bold;">Total Collections: ₱ ${formatCurrency(ledgerData.totalCollections)}</span>
+                  </div>
+                </div>
+                <div class="current-balance">
+                  Current Balance: ₱ ${formatCurrency(ledgerData.currentBalance)}
+                </div>
+
+                <!-- Signatories Section -->
+                <div class="signatories-section">
+                  <div class="sig-block">
+                    <div class="sig-line">${ledgerData.preparedBy || ''}</div>
+                    <div class="sig-label">Prepared by:</div>
+                  </div>
+                  <div class="sig-block">
+                    <div class="sig-line">Orlando Pacapac III</div>
+                    <div class="sig-label">Approved by:</div>
+                  </div>
+                </div>
               </div>
             </div>
           </body>
