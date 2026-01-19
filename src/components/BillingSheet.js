@@ -425,20 +425,27 @@ const BillingSheet = ({
     try {
       // Create a new PDF document in landscape orientation
       const doc = new jsPDF('l', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
       
-      // Set font
-      doc.setFontSize(16);
+      // Header section - match preview
+      doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
-      doc.text('DAILY COLLECTOR', 148, 15, { align: 'center' });
+      doc.text('DAILY COLLECTOR', pageWidth / 2, 15, { align: 'center' });
       
-      doc.setFontSize(14);
+      doc.setFontSize(20);
       doc.setFont('helvetica', 'normal');
       const collectorText = collector && collector.trim() !== '' ? collector : 'ALL ZONES';
-      doc.text(collectorText, 148, 22, { align: 'center' });
+      doc.text(collectorText, pageWidth / 2, 22, { align: 'center' });
       
-      doc.setFontSize(12);
+      // Title section with background
+      let titleY = 29;
+      doc.setFillColor(243, 244, 246); // Gray background
+      doc.rect(0, titleY - 5, pageWidth, 8, 'F');
+      doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text(`BILLING SHEET - ${month} ${year}`, 148, 29, { align: 'center' });
+      doc.setTextColor(31, 41, 55); // Gray-800
+      doc.text(`BILLING SHEET - ${month} ${year}`, pageWidth / 2, titleY, { align: 'center' });
+      doc.setTextColor(0, 0, 0); // Reset to black
       
       // Prepare table data
       const tableData = billingData.map((row, index) => [
@@ -466,7 +473,7 @@ const BillingSheet = ({
         ]);
       }
       
-      // Generate table
+      // Generate table - match preview styling
       doc.autoTable({
         head: [[
           'BILL NO.',
@@ -485,33 +492,46 @@ const BillingSheet = ({
           'AMOUNT AFTER DUE SURCHARGE'
         ]],
         body: tableData,
-        startY: 35,
-        styles: { fontSize: 7, cellPadding: 1 },
-        headStyles: { fillColor: [220, 220, 220], fontStyle: 'bold', fontSize: 7 },
-        columnStyles: {
-          0: { cellWidth: 15 },
-          1: { cellWidth: 40 },
-          2: { cellWidth: 20 },
-          3: { cellWidth: 20 },
-          4: { cellWidth: 20 },
-          5: { cellWidth: 20 },
-          6: { cellWidth: 25 },
-          7: { cellWidth: 30 },
-          8: { cellWidth: 20 },
-          9: { cellWidth: 30 },
-          10: { cellWidth: 30 },
-          11: { cellWidth: 20 },
-          12: { cellWidth: 25 },
-          13: { cellWidth: 40 }
+        startY: titleY + 10,
+        styles: { 
+          fontSize: 12,
+          cellPadding: 2,
+          lineColor: [0, 0, 0],
+          lineWidth: 0.5
         },
-        margin: { top: 35, left: 5, right: 5 }
+        headStyles: { 
+          fillColor: [243, 244, 246],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          fontSize: 12
+        },
+        columnStyles: {
+          0: { halign: 'center', fontStyle: 'bold' },
+          1: { halign: 'left', fontStyle: 'bold' },
+          2: { halign: 'center' },
+          3: { halign: 'center' },
+          4: { halign: 'center' },
+          5: { halign: 'center' },
+          6: { halign: 'center', fontStyle: 'bold' },
+          7: { halign: 'right', fontStyle: 'bold' },
+          8: { halign: 'right', fontStyle: 'bold' },
+          9: { halign: 'right', fontStyle: 'bold' },
+          10: { halign: 'center' },
+          11: { halign: 'center' },
+          12: { halign: 'right', fontStyle: 'bold' },
+          13: { halign: 'right', fontStyle: 'bold' }
+        },
+        margin: { top: titleY + 10, left: 20, right: 20 }
       });
       
-      // Add summary at the bottom
-      const finalY = doc.lastAutoTable.finalY + 5;
-      doc.setFontSize(10);
+      // Add summary at the bottom - match preview format
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`SUB TOTAL | USED: ${summary.totalUsed.toFixed(2)} | AMOUNT OF BILL: ₱ ${summary.totalBill.toFixed(2)} | SCD: ₱ ${summary.totalSCD.toFixed(2)} | TOTAL AMOUNT: ₱ ${summary.totalAmount.toFixed(2)} | PENALTY: ₱ ${summary.totalPenalty.toFixed(2)} | AMOUNT AFTER DUE SURCHARGE: ₱ ${summary.totalAfterDue.toFixed(2)}`, 5, finalY);
+      
+      // Summary table format
+      const summaryText = `SUB TOTAL | USED: ${summary.totalUsed.toFixed(2)} | AMOUNT OF BILL: ₱ ${summary.totalBill.toFixed(2)} | SCD: ₱ ${summary.totalSCD.toFixed(2)} | TOTAL AMOUNT: ₱ ${summary.totalAmount.toFixed(2)} | PENALTY: ₱ ${summary.totalPenalty.toFixed(2)} | AMOUNT AFTER DUE SURCHARGE: ₱ ${summary.totalAfterDue.toFixed(2)}`;
+      doc.text(summaryText, 20, finalY);
       
       // Save the PDF
       const fileName = `Billing_Sheet_${month}_${year}_${collector && collector.trim() !== '' ? collector.replace(/\s+/g, '_') : 'ALL_ZONES'}.pdf`;
