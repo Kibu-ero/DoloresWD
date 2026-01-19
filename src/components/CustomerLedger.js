@@ -16,26 +16,6 @@ const CustomerLedger = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Get current user for "Prepared by"
-  const getCurrentUser = () => {
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        if (user.firstName && user.lastName) {
-          return `${user.firstName} ${user.lastName}`;
-        } else if (user.name) {
-          return user.name;
-        } else if (user.username) {
-          return user.username;
-        }
-      }
-    } catch (e) {
-      console.error('Error getting current user:', e);
-    }
-    return '';
-  };
-
   // Get current user info (name and role)
   const getCurrentUserInfo = () => {
     try {
@@ -857,7 +837,6 @@ const CustomerLedger = ({
     try {
       const doc = new jsPDF('l', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
       
       // Add header - match preview
       doc.setFontSize(20);
