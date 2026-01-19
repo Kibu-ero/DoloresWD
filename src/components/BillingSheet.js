@@ -179,11 +179,6 @@ const BillingSheet = ({
       }
 
       const collectorText = collector && collector.trim() !== '' ? collector : 'ALL ZONES';
-      
-      // Get user info for signatories
-      const userInfo = getCurrentUserInfo();
-      const preparedByName = (userInfo.name || '').toUpperCase();
-      const preparedByJobTitle = formatJobTitle(userInfo.role || '');
 
       // Build table rows HTML
       const rowsHtml = billingData
@@ -406,13 +401,13 @@ const BillingSheet = ({
                 <div class="signatories-section" style="margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
                   <div class="sig-block" style="text-align: center;">
                     <div class="sig-label" style="margin-bottom: 4px; font-weight: 600; font-size: 12px;">Prepared by:</div>
-                    <div class="sig-line" style="border-bottom: 1px solid #000; width: 192px; height: 24px; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; text-decoration: underline; font-weight: bold; text-transform: uppercase;">${preparedByName}</div>
-                    <div style="font-weight: bold; text-transform: uppercase; font-size: 11px;">${preparedByJobTitle}</div>
+                    <div class="sig-line" style="border-bottom: 1px solid #000; width: 192px; height: 24px; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; text-decoration: underline; font-weight: bold; text-transform: uppercase;">ANTONINA C. PURISIMA</div>
+                    <div style="font-weight: bold; text-transform: uppercase; font-size: 11px;">CASHIERING ASSISTANT</div>
                   </div>
                   <div class="sig-block" style="text-align: center;">
                     <div class="sig-label" style="margin-bottom: 4px; font-weight: 600; font-size: 12px;">Noted by:</div>
-                    <div class="sig-line" style="border-bottom: 1px solid #000; width: 192px; height: 24px; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; text-decoration: underline; font-weight: bold; text-transform: uppercase;">ORLANDO PACAPAC III</div>
-                    <div style="font-weight: bold; text-transform: uppercase; font-size: 11px;">MANAGER</div>
+                    <div class="sig-line" style="border-bottom: 1px solid #000; width: 192px; height: 24px; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; text-decoration: underline; font-weight: bold; text-transform: uppercase;">MARITES E. VILLAREAL</div>
+                    <div style="font-weight: bold; text-transform: uppercase; font-size: 11px;">ACCOUNTING PROCESSOR A</div>
                   </div>
                 </div>
               </div>
@@ -586,11 +581,7 @@ const BillingSheet = ({
       const summaryText = `SUB TOTAL | USED: ${summary.totalUsed.toFixed(2)} | AMOUNT OF BILL: ₱ ${summary.totalBill.toFixed(2)} | SCD: ₱ ${summary.totalSCD.toFixed(2)} | TOTAL AMOUNT: ₱ ${summary.totalAmount.toFixed(2)} | PENALTY: ₱ ${summary.totalPenalty.toFixed(2)} | AMOUNT AFTER DUE SURCHARGE: ₱ ${summary.totalAfterDue.toFixed(2)}`;
       doc.text(summaryText, 20, finalY);
       
-      // Add signatories - match preview format
-      const userInfo = getCurrentUserInfo();
-      const preparedByName = (userInfo.name || '').toUpperCase();
-      const preparedByRole = formatJobTitle(userInfo.role || '');
-      
+      // Add signatories - match preview format (hardcoded)
       const sigY = finalY + 20;
       const sigLeftX = pageWidth / 4;
       const sigRightX = 3 * pageWidth / 4;
@@ -604,16 +595,17 @@ const BillingSheet = ({
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       const nameY = sigY + 8;
-      const nameWidth = doc.getTextWidth(preparedByName || '_________________');
-      doc.text(preparedByName || '_________________', sigLeftX, nameY, { align: 'center' });
+      const preparedByName = 'ANTONINA C. PURISIMA';
+      const preparedByNameWidth = doc.getTextWidth(preparedByName);
+      doc.text(preparedByName, sigLeftX, nameY, { align: 'center' });
       // Draw underline
       doc.setLineWidth(0.5);
-      doc.line(sigLeftX - nameWidth / 2, nameY + 2, sigLeftX + nameWidth / 2, nameY + 2);
+      doc.line(sigLeftX - preparedByNameWidth / 2, nameY + 2, sigLeftX + preparedByNameWidth / 2, nameY + 2);
       
       // Job title
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.text(preparedByRole || '', sigLeftX, nameY + 10, { align: 'center' });
+      doc.text('CASHIERING ASSISTANT', sigLeftX, nameY + 10, { align: 'center' });
       
       // Noted by section
       doc.setFont('helvetica', 'normal');
@@ -623,7 +615,7 @@ const BillingSheet = ({
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       const notedNameY = sigY + 8;
-      const notedName = 'ORLANDO PACAPAC III';
+      const notedName = 'MARITES E. VILLAREAL';
       const notedNameWidth = doc.getTextWidth(notedName);
       doc.text(notedName, sigRightX, notedNameY, { align: 'center' });
       // Draw underline
@@ -631,7 +623,7 @@ const BillingSheet = ({
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.text('MANAGER', sigRightX, notedNameY + 10, { align: 'center' });
+      doc.text('ACCOUNTING PROCESSOR A', sigRightX, notedNameY + 10, { align: 'center' });
       
       // Save the PDF
       const fileName = `Billing_Sheet_${month}_${year}_${collector && collector.trim() !== '' ? collector.replace(/\s+/g, '_') : 'ALL_ZONES'}.pdf`;
@@ -832,26 +824,16 @@ const BillingSheet = ({
             <div className="text-center">
               <div className="font-semibold mb-2">Prepared by:</div>
               <div className="border-b-2 border-gray-800 w-48 mx-auto mb-2 h-6 flex items-center justify-center">
-                {(() => {
-                  const userInfo = getCurrentUserInfo();
-                  return userInfo.name && (
-                    <span className="text-gray-800 font-bold underline uppercase">{userInfo.name.toUpperCase()}</span>
-                  );
-                })()}
+                <span className="text-gray-800 font-bold underline uppercase">ANTONINA C. PURISIMA</span>
               </div>
-              <div className="font-bold uppercase text-xs mt-1">
-                {(() => {
-                  const userInfo = getCurrentUserInfo();
-                  return formatJobTitle(userInfo.role || '');
-                })()}
-              </div>
+              <div className="font-bold uppercase text-xs mt-1">CASHIERING ASSISTANT</div>
             </div>
             <div className="text-center">
               <div className="font-semibold mb-2">Noted by:</div>
               <div className="border-b-2 border-gray-800 w-48 mx-auto mb-2 h-6 flex items-center justify-center">
-                <span className="text-gray-800 font-bold underline uppercase">ORLANDO PACAPAC III</span>
+                <span className="text-gray-800 font-bold underline uppercase">MARITES E. VILLAREAL</span>
               </div>
-              <div className="font-bold uppercase text-xs mt-1">MANAGER</div>
+              <div className="font-bold uppercase text-xs mt-1">ACCOUNTING PROCESSOR A</div>
             </div>
           </div>
         </div>
