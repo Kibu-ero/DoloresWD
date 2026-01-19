@@ -36,6 +36,40 @@ const CustomerLedger = ({
     return '';
   };
 
+  // Get current user info (name and role)
+  const getCurrentUserInfo = () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        const name = (user.firstName && user.lastName) 
+          ? `${user.firstName} ${user.lastName}` 
+          : (user.name || user.username || '');
+        const role = user.role || '';
+        return { name, role };
+      }
+    } catch (e) {
+      console.error('Error getting current user info:', e);
+    }
+    return { name: '', role: '' };
+  };
+
+  // Format role to job title (convert role to proper job title format)
+  const formatJobTitle = (role) => {
+    if (!role) return '';
+    // Convert role to job title format (e.g., "cashier" -> "CASHIERING ASSISTANT")
+    const roleMap = {
+      'admin': 'ADMINISTRATOR',
+      'cashier': 'CASHIERING ASSISTANT',
+      'encoder': 'ENCODING ASSISTANT',
+      'finance_manager': 'ACCOUNTING PROCESSOR A',
+      'finance': 'ACCOUNTING PROCESSOR A',
+      'manager': 'MANAGER'
+    };
+    const normalizedRole = (role || '').toString().toLowerCase().trim();
+    return roleMap[normalizedRole] || role.toUpperCase().replace(/_/g, ' ');
+  };
+
   // Currency formatting function with commas
   const formatCurrency = (amount) => {
     if (!amount || amount === '' || amount === '0.00') return '';
@@ -459,13 +493,15 @@ const CustomerLedger = ({
       const totalBillings = totalBillingsCents / 100;
       const totalCollections = totalCollectionsCents / 100;
       
+      const userInfo = getCurrentUserInfo();
       const formattedData = {
         customer: customer,
         ledgerEntries: orderedEntries,
         totalBillings: totalBillings,
         totalCollections: totalCollections,
         currentBalance: runningBalanceCents / 100,
-        preparedBy: getCurrentUser()
+        preparedBy: userInfo.name,
+        preparedByRole: userInfo.role
       };
 
       console.log('Formatted ledger data:', formattedData);
@@ -492,6 +528,8 @@ const CustomerLedger = ({
 
       const customer = ledgerData.customer;
       const formattedCustomerName = formatName(customer.first_name || '', customer.last_name || '');
+      const preparedByName = (ledgerData.preparedBy || '').toUpperCase();
+      const preparedByJobTitle = formatJobTitle(ledgerData.preparedByRole || '');
 
       const rowsHtml = ledgerData.ledgerEntries
         .map(entry => {
@@ -755,12 +793,14 @@ const CustomerLedger = ({
                 <!-- Signatories Section -->
                 <div class="signatories-section">
                   <div class="sig-block">
-                    <div class="sig-line">${ledgerData.preparedBy || ''}</div>
-                    <div class="sig-label">Prepared by:</div>
+                    <div class="sig-label" style="margin-bottom: 4px;">Prepared by:</div>
+                    <div class="sig-line" style="text-decoration: underline; font-weight: bold; text-transform: uppercase;">${preparedByName}</div>
+                    <div style="font-weight: bold; text-transform: uppercase; margin-top: 4px; font-size: 11px;">${preparedByJobTitle}</div>
                   </div>
                   <div class="sig-block">
-                    <div class="sig-line">Orlando Pacapac III</div>
-                    <div class="sig-label">Approved by:</div>
+                    <div class="sig-label" style="margin-bottom: 4px;">Approved by:</div>
+                    <div class="sig-line" style="text-decoration: underline; font-weight: bold; text-transform: uppercase;">ORLANDO PACAPAC III</div>
+                    <div style="font-weight: bold; text-transform: uppercase; margin-top: 4px; font-size: 11px;">MANAGER</div>
                   </div>
                 </div>
               </div>
@@ -817,63 +857,147 @@ const CustomerLedger = ({
     try {
       const doc = new jsPDF('l', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
       
-      // Add header
-      doc.setFontSize(16);
+      // Add header - match preview
+      doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
       doc.text('DOLORES WATER DISTRICT', pageWidth / 2, 15, { align: 'center' });
+      doc.setFontSize(18);
       doc.text('CUSTOMER LEDGER CARD', pageWidth / 2, 25, { align: 'center' });
       
-      // Customer information
-      doc.setFontSize(10);
+      // Customer information section - match preview layout
+      let currentY = 40;
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Account of: ${formatName(ledgerData.customer.first_name || '', ledgerData.customer.last_name || '')}`, 20, 40);
-      doc.text(`Address: ${ledgerData.customer.street || ''}, ${ledgerData.customer.barangay || ''}, ${ledgerData.customer.city || ''}, ${ledgerData.customer.province || ''}`, 20, 50);
-      doc.text(`Contact Number: ${ledgerData.customer.phone_number || 'N/A'}`, 20, 60);
-      doc.text(`Meter Serial No.: ${ledgerData.customer.meter_number || ''}`, 20, 70);
+      
+      // Left column
+      doc.text(`Account of: ${formatName(ledgerData.customer.first_name || '', ledgerData.customer.last_name || '')}`, 20, currentY);
+      doc.text(`Office/Address: ${ledgerData.customer.street || ''}, ${ledgerData.customer.barangay || ''}, ${ledgerData.customer.city || ''}, ${ledgerData.customer.province || ''}`, 20, currentY + 10);
+      doc.text(`Contact Number: ${ledgerData.customer.phone_number || 'N/A'}`, 20, currentY + 20);
+      
+      // Right column
+      doc.text(`Meter Serial No.: ${ledgerData.customer.meter_number || ''}`, pageWidth / 2 + 20, currentY);
+      
+      // Title section
+      currentY = currentY + 35;
+      doc.setFillColor(243, 244, 246); // Gray background
+      doc.rect(0, currentY - 5, pageWidth, 8, 'F');
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(31, 41, 55); // Gray-800
+      doc.text('DOLORES WATER DISTRICT CUSTOMER LEDGER CARD', pageWidth / 2, currentY, { align: 'center' });
+      doc.setTextColor(0, 0, 0); // Reset to black
       
       // Prepare table data
       const tableData = ledgerData.ledgerEntries.map(entry => [
-        entry.date,
-        entry.particulars,
+        entry.date || '',
+        entry.particulars || '',
         entry.reference || '',
         entry.meterReading || '',
         entry.consumption || '',
-        formatCurrency(entry.drBillings),
-        formatCurrency(entry.crCollections + entry.amount),
-        formatCurrency(entry.balance)
+        entry.drBillings > 0 ? formatCurrency(entry.drBillings) : '',
+        (entry.crCollections || 0) + (entry.amount || 0) > 0 ? formatCurrency((entry.crCollections || 0) + (entry.amount || 0)) : '',
+        entry.balance !== null && entry.balance !== undefined ? formatCurrency(entry.balance) : ''
       ]);
       
-      // Add table
+      // Add table - match preview styling
       doc.autoTable({
-        head: [['Date', 'Particulars', 'Ref.', 'Meter Reading', 'Consumption', 'DR Billings', 'CR Collections', 'Balance']],
+        head: [['Date', 'Particulars', 'Ref.', 'Meter Reading', 'Consumption (Cubic Meters)', 'DR Billings', 'CR Collections', 'Balance']],
         body: tableData,
-        startY: 80,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [200, 200, 200] },
+        startY: currentY + 10,
+        styles: { 
+          fontSize: 12,
+          cellPadding: 2,
+          lineColor: [0, 0, 0],
+          lineWidth: 0.5
+        },
+        headStyles: { 
+          fillColor: [243, 244, 246],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          fontSize: 12
+        },
         columnStyles: {
-          5: { halign: 'right' },
-          6: { halign: 'right' },
-          7: { halign: 'right' }
-        }
+          0: { halign: 'center' },
+          1: { halign: 'left', fontStyle: 'bold' },
+          2: { halign: 'left' },
+          3: { halign: 'center' },
+          4: { halign: 'center' },
+          5: { halign: 'right', fontStyle: 'bold' },
+          6: { halign: 'right', fontStyle: 'bold' },
+          7: { halign: 'right', fontStyle: 'bold' }
+        },
+        margin: { left: 20, right: 20 }
       });
       
-      // Add summary
+      // Add summary - match preview format
       const finalY = doc.lastAutoTable.finalY + 10;
-      doc.text(`Total Billings: ${formatCurrency(ledgerData.totalBillings)}`, 20, finalY);
-      doc.text(`Total Collections: ${formatCurrency(ledgerData.totalCollections)}`, 20, finalY + 10);
-
-      // Highlight current balance in red in the generated PDF
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(220, 38, 38); // Tailwind red-600-ish
-      doc.text(`Current Balance: ${formatCurrency(ledgerData.currentBalance)}`, 20, finalY + 20);
-      doc.setTextColor(0, 0, 0); // Reset back to black for any following text
-      
-      // Add signatories
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'normal');
-      const preparedBy = ledgerData.preparedBy || '';
-      doc.text(`Prepared by: ${preparedBy || '_________________'}`, 20, finalY + 40);
-      doc.text('Approved by: Orlando Pacapac III', 20, finalY + 60);
+      
+      // Summary grid layout
+      const leftX = 20;
+      const middleX = pageWidth / 2 - 40;
+      const rightX = pageWidth / 2 + 40;
+      
+      doc.text('TOTAL:', leftX, finalY);
+      doc.text(`Total Billings: ₱ ${formatCurrency(ledgerData.totalBillings)}`, middleX, finalY, { align: 'right' });
+      doc.text(`Total Collections: ₱ ${formatCurrency(ledgerData.totalCollections)}`, rightX, finalY, { align: 'right' });
+      
+      // Current balance in red
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(220, 38, 38); // Red
+      doc.text(`Current Balance: ₱ ${formatCurrency(ledgerData.currentBalance)}`, rightX, finalY + 10, { align: 'right' });
+      doc.setTextColor(0, 0, 0); // Reset to black
+      
+      // Add signatories - match preview format
+      const userInfo = getCurrentUserInfo();
+      const preparedByName = (ledgerData.preparedBy || userInfo.name || '').toUpperCase();
+      const preparedByRole = formatJobTitle(ledgerData.preparedByRole || userInfo.role || '');
+      
+      const sigY = finalY + 30;
+      const sigLeftX = pageWidth / 4;
+      const sigRightX = 3 * pageWidth / 4;
+      
+      // Prepared by section
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      doc.text('Prepared by:', sigLeftX, sigY, { align: 'center' });
+      
+      // Name with underline (bold, uppercase)
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      const nameY = sigY + 8;
+      const nameWidth = doc.getTextWidth(preparedByName || '_________________');
+      doc.text(preparedByName || '_________________', sigLeftX, nameY, { align: 'center' });
+      // Draw underline
+      doc.setLineWidth(0.5);
+      doc.line(sigLeftX - nameWidth / 2, nameY + 2, sigLeftX + nameWidth / 2, nameY + 2);
+      
+      // Job title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text(preparedByRole || '', sigLeftX, nameY + 10, { align: 'center' });
+      
+      // Approved by section
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      doc.text('Approved by:', sigRightX, sigY, { align: 'center' });
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      const approvedNameY = sigY + 8;
+      const approvedName = 'ORLANDO PACAPAC III';
+      const approvedNameWidth = doc.getTextWidth(approvedName);
+      doc.text(approvedName, sigRightX, approvedNameY, { align: 'center' });
+      // Draw underline
+      doc.line(sigRightX - approvedNameWidth / 2, approvedNameY + 2, sigRightX + approvedNameWidth / 2, approvedNameY + 2);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('MANAGER', sigRightX, approvedNameY + 10, { align: 'center' });
       
       // Save the PDF
       const formattedFirstName = (ledgerData.customer.first_name || '').toLowerCase().replace(/\s+/g, '-');
@@ -1096,18 +1220,20 @@ const CustomerLedger = ({
           {/* Signatories Section */}
           <div className="mt-8 grid grid-cols-2 gap-8 text-sm">
             <div className="text-center">
-              <div className="border-b border-gray-400 w-48 mx-auto mb-2 h-6">
+              <div className="font-semibold mb-2">Prepared by:</div>
+              <div className="border-b-2 border-gray-800 w-48 mx-auto mb-2 h-6 flex items-center justify-center">
                 {ledgerData.preparedBy && (
-                  <span className="text-gray-800 font-medium">{ledgerData.preparedBy}</span>
+                  <span className="text-gray-800 font-bold underline uppercase">{ledgerData.preparedBy.toUpperCase()}</span>
                 )}
               </div>
-              <span className="font-semibold">Prepared by:</span>
+              <div className="font-bold uppercase text-xs mt-1">{formatJobTitle(ledgerData.preparedByRole || '')}</div>
             </div>
             <div className="text-center">
-              <div className="border-b border-gray-400 w-48 mx-auto mb-2 h-6">
-                <span className="text-gray-800 font-medium">Orlando Pacapac III</span>
+              <div className="font-semibold mb-2">Approved by:</div>
+              <div className="border-b-2 border-gray-800 w-48 mx-auto mb-2 h-6 flex items-center justify-center">
+                <span className="text-gray-800 font-bold underline uppercase">ORLANDO PACAPAC III</span>
               </div>
-              <span className="font-semibold">Approved by:</span>
+              <div className="font-bold uppercase text-xs mt-1">MANAGER</div>
             </div>
           </div>
         </div>
