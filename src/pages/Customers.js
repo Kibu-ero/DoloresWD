@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FiSearch, FiUser, FiUserCheck, FiUserX, FiPlus, FiLoader, FiX, FiEdit2, FiPhone, FiMail, FiHome, FiCalendar, FiClock } from "react-icons/fi";
 import apiClient from '../api/client';
+import { formatName, formatNameToTitleCase } from '../utils/nameFormatter';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -603,7 +604,7 @@ const Customers = () => {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl p-4 sm:p-8">
             <div className="flex justify-between items-center border-b border-gray-200 p-4">
               <h3 className="text-xl font-semibold text-gray-900">
-                Payment History for {historyCustomer ? `${historyCustomer.first_name} ${historyCustomer.last_name}` : ""}
+                Payment History for {historyCustomer ? formatName(historyCustomer.first_name, historyCustomer.last_name) : ""}
               </h3>
               <button onClick={() => setShowHistoryModal(false)} className="text-gray-400 hover:text-gray-600">
                 <FiX size={24} />
@@ -727,7 +728,7 @@ const Customers = () => {
                       className="hover:bg-gray-50 transition-all"
                     >
                       <td className="p-4 font-medium text-gray-900">
-                        {customer.last_name && customer.first_name ? `${customer.last_name}, ${customer.first_name}` : customer.name}
+                        {formatName(customer.first_name, customer.last_name) || formatNameToTitleCase(customer.name)}
                         <div className="text-sm text-gray-500 flex items-center mt-1">
                           <FiCalendar className="mr-1" />
                           {new Date(customer.birthdate).toLocaleDateString()}
@@ -883,7 +884,7 @@ const Customers = () => {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-blue-900 mb-2">Customer Information</h4>
                 <div className="space-y-2 text-sm">
-                  <div><span className="font-medium">Name:</span> {pendingCustomerData.data.firstName} {pendingCustomerData.data.lastName}</div>
+                  <div><span className="font-medium">Name:</span> {formatName(pendingCustomerData.data.firstName, pendingCustomerData.data.lastName)}</div>
                   <div><span className="font-medium">Email:</span> {pendingCustomerData.data.email}</div>
                   <div><span className="font-medium">Phone:</span> {pendingCustomerData.data.phoneNumber}</div>
                   <div><span className="font-medium">Meter Number:</span> {pendingCustomerData.data.meterNumber}</div>
@@ -945,7 +946,7 @@ const Customers = () => {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-blue-900 mb-2">Updated Information</h4>
                 <div className="space-y-2 text-sm">
-                  <div><span className="font-medium">Name:</span> {pendingCustomerData.data.firstName} {pendingCustomerData.data.lastName}</div>
+                  <div><span className="font-medium">Name:</span> {formatName(pendingCustomerData.data.firstName, pendingCustomerData.data.lastName)}</div>
                   <div><span className="font-medium">Email:</span> {pendingCustomerData.data.email}</div>
                   <div><span className="font-medium">Phone:</span> {pendingCustomerData.data.phoneNumber}</div>
                   <div><span className="font-medium">Meter Number:</span> {pendingCustomerData.data.meterNumber}</div>
