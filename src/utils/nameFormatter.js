@@ -1,19 +1,28 @@
 /**
+ * Formats a single name string to Title Case (capitalizes first letter of each word)
+ * @param {string} name - Name string to format
+ * @returns {string} Formatted name in Title Case
+ */
+export const formatNameToTitleCase = (name) => {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+/**
  * Formats a name to show surname first with proper capitalization
  * @param {string} firstName - First name
  * @param {string} lastName - Last name (surname)
- * @returns {string} Formatted name as "LastName, FirstName" with capitalized first letters
+ * @returns {string} Formatted name as "LastName, FirstName" with proper Title Case
  */
 export const formatName = (firstName, lastName) => {
   if (!firstName && !lastName) return 'User';
   
-  const capitalize = (str) => {
-    if (!str) return '';
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  };
-  
-  const formattedFirstName = capitalize(firstName || '');
-  const formattedLastName = capitalize(lastName || '');
+  const formattedFirstName = formatNameToTitleCase(firstName || '');
+  const formattedLastName = formatNameToTitleCase(lastName || '');
   
   if (formattedLastName && formattedFirstName) {
     return `${formattedLastName}, ${formattedFirstName}`;
