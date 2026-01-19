@@ -5,6 +5,7 @@ import BillingService from '../services/billing.service';
 import apiClient from '../api/client';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { formatName } from '../utils/nameFormatter';
 
 const CustomerLedger = ({ 
   customerId,
@@ -490,6 +491,7 @@ const CustomerLedger = ({
       if (!ledgerData) return;
 
       const customer = ledgerData.customer;
+      const formattedCustomerName = formatName(customer.first_name || '', customer.last_name || '');
 
       const rowsHtml = ledgerData.ledgerEntries
         .map(entry => {
@@ -522,7 +524,7 @@ const CustomerLedger = ({
         <html>
           <head>
             <meta charSet="utf-8" />
-            <title>Customer Ledger - ${customer.first_name || ''} ${customer.last_name || ''}</title>
+            <title>Customer Ledger - ${formattedCustomerName}</title>
             <style>
               @page {
                 margin: 10mm;
@@ -665,7 +667,7 @@ const CustomerLedger = ({
                   <div>
                     <div class="header-item">
                       <span class="header-label">Account of:</span>
-                      <span style="font-weight: 600;">${customer.first_name || ''} ${customer.last_name || ''}</span>
+                      <span style="font-weight: 600;">${formattedCustomerName}</span>
                     </div>
                     <div class="header-item">
                       <span class="header-label">Office/Address:</span>
@@ -825,7 +827,7 @@ const CustomerLedger = ({
       // Customer information
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Account of: ${ledgerData.customer.first_name} ${ledgerData.customer.last_name}`, 20, 40);
+      doc.text(`Account of: ${formatName(ledgerData.customer.first_name || '', ledgerData.customer.last_name || '')}`, 20, 40);
       doc.text(`Address: ${ledgerData.customer.street || ''}, ${ledgerData.customer.barangay || ''}, ${ledgerData.customer.city || ''}, ${ledgerData.customer.province || ''}`, 20, 50);
       doc.text(`Contact Number: ${ledgerData.customer.phone_number || 'N/A'}`, 20, 60);
       doc.text(`Meter Serial No.: ${ledgerData.customer.meter_number || ''}`, 20, 70);
@@ -874,7 +876,9 @@ const CustomerLedger = ({
       doc.text('Approved by: Orlando Pacapac III', 20, finalY + 60);
       
       // Save the PDF
-      doc.save(`customer-ledger-${ledgerData.customer.first_name}-${ledgerData.customer.last_name}.pdf`);
+      const formattedFirstName = (ledgerData.customer.first_name || '').toLowerCase().replace(/\s+/g, '-');
+      const formattedLastName = (ledgerData.customer.last_name || '').toLowerCase().replace(/\s+/g, '-');
+      doc.save(`customer-ledger-${formattedFirstName}-${formattedLastName}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Error generating PDF. Please try again.');
@@ -981,7 +985,7 @@ const CustomerLedger = ({
             <div className="space-y-3">
               <div className="flex">
                 <span className="font-bold w-32">Account of:</span>
-                <span className="font-semibold">{ledgerData.customer.first_name} {ledgerData.customer.last_name}</span>
+                <span className="font-semibold">{formatName(ledgerData.customer.first_name || '', ledgerData.customer.last_name || '')}</span>
               </div>
               <div className="flex">
                 <span className="font-bold w-32">Office/Address:</span>
