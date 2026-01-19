@@ -508,8 +508,6 @@ const CustomerLedger = ({
 
       const customer = ledgerData.customer;
       const formattedCustomerName = formatName(customer.first_name || '', customer.last_name || '');
-      const preparedByName = (ledgerData.preparedBy || '').toUpperCase();
-      const preparedByJobTitle = formatJobTitle(ledgerData.preparedByRole || '');
 
       const rowsHtml = ledgerData.ledgerEntries
         .map(entry => {
@@ -774,13 +772,13 @@ const CustomerLedger = ({
                 <div class="signatories-section">
                   <div class="sig-block">
                     <div class="sig-label" style="margin-bottom: 4px;">Prepared by:</div>
-                    <div class="sig-line" style="text-decoration: underline; font-weight: bold; text-transform: uppercase;">${preparedByName}</div>
-                    <div style="font-weight: bold; text-transform: uppercase; margin-top: 4px; font-size: 11px;">${preparedByJobTitle}</div>
+                    <div class="sig-line" style="text-decoration: underline; font-weight: bold; text-transform: uppercase;">ANTONINA C. PURISIMA</div>
+                    <div style="font-weight: bold; text-transform: uppercase; margin-top: 4px; font-size: 11px;">CASHIERING ASSISTANT</div>
                   </div>
                   <div class="sig-block">
-                    <div class="sig-label" style="margin-bottom: 4px;">Approved by:</div>
-                    <div class="sig-line" style="text-decoration: underline; font-weight: bold; text-transform: uppercase;">ORLANDO PACAPAC III</div>
-                    <div style="font-weight: bold; text-transform: uppercase; margin-top: 4px; font-size: 11px;">MANAGER</div>
+                    <div class="sig-label" style="margin-bottom: 4px;">Noted by:</div>
+                    <div class="sig-line" style="text-decoration: underline; font-weight: bold; text-transform: uppercase;">MARITES E. VILLAREAL</div>
+                    <div style="font-weight: bold; text-transform: uppercase; margin-top: 4px; font-size: 11px;">ACCOUNTING PROCESSOR A</div>
                   </div>
                 </div>
               </div>
@@ -1201,18 +1199,16 @@ const CustomerLedger = ({
             <div className="text-center">
               <div className="font-semibold mb-2">Prepared by:</div>
               <div className="border-b-2 border-gray-800 w-48 mx-auto mb-2 h-6 flex items-center justify-center">
-                {ledgerData.preparedBy && (
-                  <span className="text-gray-800 font-bold underline uppercase">{ledgerData.preparedBy.toUpperCase()}</span>
-                )}
+                <span className="text-gray-800 font-bold underline uppercase">ANTONINA C. PURISIMA</span>
               </div>
-              <div className="font-bold uppercase text-xs mt-1">{formatJobTitle(ledgerData.preparedByRole || '')}</div>
+              <div className="font-bold uppercase text-xs mt-1">CASHIERING ASSISTANT</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold mb-2">Approved by:</div>
+              <div className="font-semibold mb-2">Noted by:</div>
               <div className="border-b-2 border-gray-800 w-48 mx-auto mb-2 h-6 flex items-center justify-center">
-                <span className="text-gray-800 font-bold underline uppercase">ORLANDO PACAPAC III</span>
+                <span className="text-gray-800 font-bold underline uppercase">MARITES E. VILLAREAL</span>
               </div>
-              <div className="font-bold uppercase text-xs mt-1">MANAGER</div>
+              <div className="font-bold uppercase text-xs mt-1">ACCOUNTING PROCESSOR A</div>
             </div>
           </div>
         </div>
