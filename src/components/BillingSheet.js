@@ -4,40 +4,6 @@ import apiClient from '../api/client';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-// Get current user info (name and role)
-const getCurrentUserInfo = () => {
-  try {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      const name = (user.firstName && user.lastName) 
-        ? `${user.firstName} ${user.lastName}` 
-        : (user.name || user.username || '');
-      const role = user.role || '';
-      return { name, role };
-    }
-  } catch (e) {
-    console.error('Error getting current user info:', e);
-  }
-  return { name: '', role: '' };
-};
-
-// Format role to job title (convert role to proper job title format)
-const formatJobTitle = (role) => {
-  if (!role) return '';
-  // Convert role to job title format (e.g., "cashier" -> "CASHIERING ASSISTANT")
-  const roleMap = {
-    'admin': 'ADMINISTRATOR',
-    'cashier': 'CASHIERING ASSISTANT',
-    'encoder': 'ENCODING ASSISTANT',
-    'finance_manager': 'ACCOUNTING PROCESSOR A',
-    'finance': 'ACCOUNTING PROCESSOR A',
-    'manager': 'MANAGER'
-  };
-  const normalizedRole = (role || '').toString().toLowerCase().trim();
-  return roleMap[normalizedRole] || role.toUpperCase().replace(/_/g, ' ');
-};
-
 const BillingSheet = ({ 
   month = 'DECEMBER',
   year = '2024',
