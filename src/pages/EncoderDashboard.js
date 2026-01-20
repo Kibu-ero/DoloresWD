@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../api/client";
 import { formatCurrency } from '../utils/currencyFormatter';
 import { formatUserName } from '../utils/nameFormatter';
-import Reports from "./Reports";
-import { FiHome, FiEdit, FiFileText, FiBarChart2, FiLogOut, FiMenu } from 'react-icons/fi';
+import { FiHome, FiEdit, FiFileText, FiLogOut, FiMenu } from 'react-icons/fi';
 
 console.log("EncoderDashboard loaded, user:", JSON.parse(localStorage.getItem('user')));
 
@@ -12,8 +11,7 @@ console.log("EncoderDashboard loaded, user:", JSON.parse(localStorage.getItem('u
 const sidebarLinks = [
   { label: "Dashboard", icon: <FiHome />, tab: "dashboard" },
   { label: "Input Readings", icon: <FiEdit />, tab: "input" },
-  { label: "Generate Bills", icon: <FiFileText />, tab: "bills" },
-  { label: "Reports", icon: <FiBarChart2 />, tab: "reports" },
+  { label: "Generate Bills", icon: <FiFileText />, tab: "bills" }
 ];
 
 const EncoderDashboard = () => {
@@ -259,7 +257,7 @@ const EncoderDashboard = () => {
                 <span className="text-brand-700 font-semibold">{displayName}</span>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6 mb-8">
               <div className="bg-white/80 p-6 rounded-xl shadow flex items-center">
                 <FiEdit className="text-brand-600 text-3xl mr-4" />
                 <div>
@@ -274,18 +272,11 @@ const EncoderDashboard = () => {
                   <p className="text-2xl font-bold">8</p>
                 </div>
               </div>
-              <div className="bg-white/80 p-6 rounded-xl shadow flex items-center">
-                <FiBarChart2 className="text-purple-600 text-3xl mr-4" />
-                <div>
-                  <p className="text-gray-500">Reports</p>
-                  <p className="text-2xl font-bold">3</p>
-                </div>
-              </div>
             </div>
             <div className="bg-white/80 rounded-xl shadow p-4 sm:p-8 overflow-x-auto">
               <h3 className="text-xl font-semibold text-brand-700 mb-4">Encoder Overview</h3>
               <p className="text-gray-700">
-                Welcome to BillLink Encoder. Use the sidebar to input readings, generate bills, and view reports.
+                Welcome to BillLink Encoder. Use the sidebar to input readings and generate bills.
               </p>
             </div>
           </>
@@ -448,8 +439,6 @@ const EncoderDashboard = () => {
             </div>
           </div>
         );
-      case 'reports':
-        return <Reports />;
       default:
         return null;
     }
