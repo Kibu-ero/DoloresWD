@@ -919,21 +919,18 @@ const CustomerLedger = ({
       const rightX = pageWidth / 2 + 40;
       
       doc.text('TOTAL:', leftX, finalY);
-      doc.text(`Total Billings: ₱ ${formatCurrency(ledgerData.totalBillings)}`, middleX, finalY, { align: 'right' });
-      doc.text(`Total Collections: ₱ ${formatCurrency(ledgerData.totalCollections)}`, rightX, finalY, { align: 'right' });
+      // Use 'PHP' instead of the peso symbol because the standard PDF font sometimes renders ₱ as ±
+      doc.text(`Total Billings: PHP ${formatCurrency(ledgerData.totalBillings)}`, middleX, finalY, { align: 'right' });
+      doc.text(`Total Collections: PHP ${formatCurrency(ledgerData.totalCollections)}`, rightX, finalY, { align: 'right' });
       
       // Current balance in red
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(18);
       doc.setTextColor(220, 38, 38); // Red
-      doc.text(`Current Balance: ₱ ${formatCurrency(ledgerData.currentBalance)}`, rightX, finalY + 10, { align: 'right' });
+      doc.text(`Current Balance: PHP ${formatCurrency(ledgerData.currentBalance)}`, rightX, finalY + 10, { align: 'right' });
       doc.setTextColor(0, 0, 0); // Reset to black
       
-      // Add signatories - match preview format
-      const userInfo = getCurrentUserInfo();
-      const preparedByName = (ledgerData.preparedBy || userInfo.name || '').toUpperCase();
-      const preparedByRole = formatJobTitle(ledgerData.preparedByRole || userInfo.role || '');
-      
+      // Add signatories - match preview format (hardcoded names/titles)
       const sigY = finalY + 30;
       const sigLeftX = pageWidth / 4;
       const sigRightX = 3 * pageWidth / 4;
@@ -947,26 +944,27 @@ const CustomerLedger = ({
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       const nameY = sigY + 8;
-      const nameWidth = doc.getTextWidth(preparedByName || '_________________');
-      doc.text(preparedByName || '_________________', sigLeftX, nameY, { align: 'center' });
+      const preparedByName = 'ANTONINA C. PURISIMA';
+      const preparedByNameWidth = doc.getTextWidth(preparedByName);
+      doc.text(preparedByName, sigLeftX, nameY, { align: 'center' });
       // Draw underline
       doc.setLineWidth(0.5);
-      doc.line(sigLeftX - nameWidth / 2, nameY + 2, sigLeftX + nameWidth / 2, nameY + 2);
+      doc.line(sigLeftX - preparedByNameWidth / 2, nameY + 2, sigLeftX + preparedByNameWidth / 2, nameY + 2);
       
       // Job title
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.text(preparedByRole || '', sigLeftX, nameY + 10, { align: 'center' });
+      doc.text('CASHIERING ASSISTANT', sigLeftX, nameY + 10, { align: 'center' });
       
-      // Approved by section
+      // Noted by section
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(12);
-      doc.text('Approved by:', sigRightX, sigY, { align: 'center' });
+      doc.text('Noted by:', sigRightX, sigY, { align: 'center' });
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       const approvedNameY = sigY + 8;
-      const approvedName = 'ORLANDO PACAPAC III';
+      const approvedName = 'MARITES E. VILLAREAL';
       const approvedNameWidth = doc.getTextWidth(approvedName);
       doc.text(approvedName, sigRightX, approvedNameY, { align: 'center' });
       // Draw underline
@@ -974,7 +972,7 @@ const CustomerLedger = ({
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.text('MANAGER', sigRightX, approvedNameY + 10, { align: 'center' });
+      doc.text('ACCOUNTING PROCESSOR A', sigRightX, approvedNameY + 10, { align: 'center' });
       
       // Save the PDF
       const formattedFirstName = (ledgerData.customer.first_name || '').toLowerCase().replace(/\s+/g, '-');
