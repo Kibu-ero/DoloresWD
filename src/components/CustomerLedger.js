@@ -34,22 +34,6 @@ const CustomerLedger = ({
     return { name: '', role: '' };
   };
 
-  // Format role to job title (convert role to proper job title format)
-  const formatJobTitle = (role) => {
-    if (!role) return '';
-    // Convert role to job title format (e.g., "cashier" -> "CASHIERING ASSISTANT")
-    const roleMap = {
-      'admin': 'ADMINISTRATOR',
-      'cashier': 'CASHIERING ASSISTANT',
-      'encoder': 'ENCODING ASSISTANT',
-      'finance_manager': 'ACCOUNTING PROCESSOR A',
-      'finance': 'ACCOUNTING PROCESSOR A',
-      'manager': 'MANAGER'
-    };
-    const normalizedRole = (role || '').toString().toLowerCase().trim();
-    return roleMap[normalizedRole] || role.toUpperCase().replace(/_/g, ' ');
-  };
-
   // Currency formatting function with commas
   const formatCurrency = (amount) => {
     if (!amount || amount === '' || amount === '0.00') return '';
