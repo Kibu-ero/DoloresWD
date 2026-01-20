@@ -470,13 +470,14 @@ const BillingSheet = ({
         row.presentReading || 0,
         row.previousReading || 0,
         row.used || 0,
-        row.billAmount ? `₱ ${row.billAmount.toFixed(2)}` : '',
-        row.scd > 0 ? `₱ ${row.scd.toFixed(2)}` : '',
-        row.totalAmount ? `₱ ${row.totalAmount.toFixed(2)}` : '',
+        // Use 'PHP' instead of the peso symbol because the standard PDF font sometimes renders ₱ as ±
+        row.billAmount ? `PHP ${row.billAmount.toFixed(2)}` : '',
+        row.scd > 0 ? `PHP ${row.scd.toFixed(2)}` : '',
+        row.totalAmount ? `PHP ${row.totalAmount.toFixed(2)}` : '',
         row.orNumber || '',
         row.date || '',
-        row.penalty > 0 ? `₱ ${row.penalty.toFixed(2)}` : '',
-        row.afterDue ? `₱ ${row.afterDue.toFixed(2)}` : ''
+        row.penalty > 0 ? `PHP ${row.penalty.toFixed(2)}` : '',
+        row.afterDue ? `PHP ${row.afterDue.toFixed(2)}` : ''
       ]);
       
       // Add empty rows if needed
@@ -544,7 +545,7 @@ const BillingSheet = ({
       doc.setFont('helvetica', 'bold');
       
       // Summary table format
-      const summaryText = `SUB TOTAL | USED: ${summary.totalUsed.toFixed(2)} | AMOUNT OF BILL: ₱ ${summary.totalBill.toFixed(2)} | SCD: ₱ ${summary.totalSCD.toFixed(2)} | TOTAL AMOUNT: ₱ ${summary.totalAmount.toFixed(2)} | PENALTY: ₱ ${summary.totalPenalty.toFixed(2)} | AMOUNT AFTER DUE SURCHARGE: ₱ ${summary.totalAfterDue.toFixed(2)}`;
+      const summaryText = `SUB TOTAL | USED: ${summary.totalUsed.toFixed(2)} | AMOUNT OF BILL: PHP ${summary.totalBill.toFixed(2)} | SCD: PHP ${summary.totalSCD.toFixed(2)} | TOTAL AMOUNT: PHP ${summary.totalAmount.toFixed(2)} | PENALTY: PHP ${summary.totalPenalty.toFixed(2)} | AMOUNT AFTER DUE SURCHARGE: PHP ${summary.totalAfterDue.toFixed(2)}`;
       doc.text(summaryText, 20, finalY);
       
       // Add signatories - match preview format (hardcoded)
