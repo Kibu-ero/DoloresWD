@@ -915,7 +915,16 @@ const CustomerLedger = ({
       doc.setTextColor(0, 0, 0); // Reset to black
       
       // Add signatories - match preview format (hardcoded names/titles)
-      const sigY = finalY + 30;
+      // Check if we need a new page for signatories (they need about 40mm of space)
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let sigY = finalY + 30;
+      
+      // If signatories would be off the page, add a new page
+      if (sigY + 40 > pageHeight) {
+        doc.addPage();
+        sigY = 30; // Start from top of new page
+      }
+      
       const sigLeftX = pageWidth / 4;
       const sigRightX = 3 * pageWidth / 4;
       
