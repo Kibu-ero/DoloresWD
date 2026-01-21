@@ -16,11 +16,11 @@ const UserDashboard = () => {
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/dwd5.mp4" type="video/mp4" />
+          <source src="/dlrs.mp4" type="video/mp4" />
         </video>
         
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-700/80 to-brand-400/20"></div>
+        {/* Overlay for better text readability - lighter overlay for clearer video */}
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-700/50 to-brand-400/10"></div>
         
         {/* Left Side Content */}
         <div className="relative z-10 max-w-6xl mx-auto px-6 w-full">
@@ -160,5 +160,4 @@ const UserDashboard = () => {
 };
 
 export default UserDashboard;
-
 
