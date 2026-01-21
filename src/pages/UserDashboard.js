@@ -16,7 +16,7 @@ const UserDashboard = () => {
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/dlrs.mp4" type="video/mp4" />
+          <source src="/dwd5.mp4" type="video/mp4" />
         </video>
         
         {/* Overlay for better text readability - lighter overlay for clearer video */}
@@ -160,4 +160,5 @@ const UserDashboard = () => {
 };
 
 export default UserDashboard;
+
 
