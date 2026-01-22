@@ -708,11 +708,6 @@ const CustomerLedger = ({
                 </div>
               </div>
 
-              <!-- Title -->
-              <div class="title-section">
-                <h1>DOLORES WATER DISTRICT CUSTOMER LEDGER CARD</h1>
-              </div>
-
               <!-- Main Table -->
               <table>
                 <thead>
@@ -871,17 +866,8 @@ const CustomerLedger = ({
       // Right column
       doc.text(`Meter Serial No.: ${ledgerData.customer.meter_number || ''}`, pageWidth / 2 + 20, currentY);
       
-      // Title section
-      currentY = currentY + 35;
-      doc.setFillColor(243, 244, 246); // Gray background
-      doc.rect(0, currentY - 5, pageWidth, 8, 'F');
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(31, 41, 55); // Gray-800
-      doc.text('DOLORES WATER DISTRICT CUSTOMER LEDGER CARD', pageWidth / 2, currentY, { align: 'center' });
-      doc.setTextColor(0, 0, 0); // Reset to black
-      
       // Prepare table data
+      currentY = currentY + 15;
       const tableData = ledgerData.ledgerEntries.map(entry => [
         entry.date || '',
         entry.particulars || '',
@@ -1153,11 +1139,6 @@ const CustomerLedger = ({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Title */}
-        <div className="text-center py-2 bg-gray-100 border-b border-gray-300">
-          <h1 className="text-2xl font-bold text-gray-800">DOLORES WATER DISTRICT CUSTOMER LEDGER CARD</h1>
         </div>
 
         {/* Main Table */}
