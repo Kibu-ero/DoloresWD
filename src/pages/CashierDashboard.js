@@ -768,11 +768,12 @@ const CashierDashboard = () => {
               
               <div className="mb-4 flex flex-col items-center">
                 <img
-                  src={`/api/uploads/payment-proofs/${selectedFile.file_path}`}
+                  src={`/api/uploads/${selectedFile.file_path}?token=${localStorage.getItem('token')}`}
                   alt="Payment Proof"
                   className="rounded-lg shadow border-2 border-brand-200 max-h-80 object-contain"
                   style={{ background: '#f8fafc', maxWidth: '100%' }}
                   onError={(e) => {
+                    console.error('Error loading image:', e);
                     e.target.style.display = 'none';
                     e.target.nextSibling.style.display = 'block';
                   }}
@@ -781,7 +782,7 @@ const CashierDashboard = () => {
                   <FiFileText className="w-16 h-16 mx-auto mb-2" />
                   <p>File preview not available</p>
                   <a
-                    href={`/api/uploads/payment-proofs/${selectedFile.file_path}`}
+                    href={`/api/uploads/${selectedFile.file_path}?token=${localStorage.getItem('token')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-brand-600 hover:text-brand-500 underline mt-2 inline-block"
