@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../api/client";
 import { formatCurrency } from '../utils/currencyFormatter';
 import { formatUserName } from '../utils/nameFormatter';
-import { FiHome, FiEdit, FiFileText, FiLogOut, FiMenu } from 'react-icons/fi';
+import { FiHome, FiEdit, FiFileText, FiLogOut, FiMenu, FiAlertCircle, FiX } from 'react-icons/fi';
 
 console.log("EncoderDashboard loaded, user:", JSON.parse(localStorage.getItem('user')));
 
@@ -76,6 +76,7 @@ const EncoderDashboard = () => {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [selectedBarangay, setSelectedBarangay] = useState("All");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [duplicateBillWarning, setDuplicateBillWarning] = useState(null);
 
   // Compute unique barangays from customers
   const barangays = ["All", ...Array.from(new Set(customers.map(c => c.barangay).filter(Boolean)))];
@@ -192,7 +193,17 @@ const EncoderDashboard = () => {
     // Check if a bill already exists for this customer this month
     const existingBill = await checkExistingBill(customer.id);
     if (existingBill) {
-      alert(`A bill for this customer already exists for the current month. Only one bill per customer is allowed per month.\n\nExisting Bill ID: ${existingBill.bill_id || existingBill.id}\nCreated: ${new Date(existingBill.created_at).toLocaleDateString()}`);
+      setDuplicateBillWarning({
+        billId: existingBill.bill_id || existingBill.id,
+        createdDate: new Date(existingBill.created_at).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        customerName: customer.last_name && customer.first_name 
+          ? `${customer.last_name}, ${customer.first_name}` 
+          : customer.name
+      });
       return;
     }
     
@@ -512,6 +523,75 @@ const EncoderDashboard = () => {
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-auto">
         {renderContent()}
+        {/* Duplicate Bill Warning Modal */}
+        {duplicateBillWarning && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full relative overflow-hidden transform transition-all duration-300 scale-100">
+              {/* Header with gradient background */}
+              <div className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white bg-opacity-20 rounded-full p-2">
+                      <FiAlertCircle className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-xl font-bold">Duplicate Bill Warning</h3>
+                  </div>
+                  <button
+                    onClick={() => setDuplicateBillWarning(null)}
+                    className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-colors"
+                    aria-label="Close"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Content */}
+              <div className="p-6">
+                <div className="mb-4">
+                  <p className="text-gray-700 text-base leading-relaxed mb-4">
+                    A bill for <span className="font-semibold text-gray-900">{duplicateBillWarning.customerName}</span> already exists for the current month.
+                  </p>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Only one bill per customer is allowed per month.
+                  </p>
+                </div>
+                
+                {/* Bill Details Card */}
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200 mb-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600">Existing Bill ID:</span>
+                      <span className="text-sm font-bold text-gray-900">#{duplicateBillWarning.billId}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600">Created:</span>
+                      <span className="text-sm font-semibold text-gray-800">{duplicateBillWarning.createdDate}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Info Box */}
+                <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded mb-4">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-semibold">Note:</span> Please review the existing bill or wait until next month to generate a new bill for this customer.
+                  </p>
+                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className="bg-gray-50 px-6 py-4 flex justify-end">
+                <button
+                  onClick={() => setDuplicateBillWarning(null)}
+                  className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold shadow-md hover:from-orange-600 hover:to-red-600 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                >
+                  Understood
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Premium Confirmation Modal */}
         {showConfirmModal && pendingBill && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-2 sm:p-0">
