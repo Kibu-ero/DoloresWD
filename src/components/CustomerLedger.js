@@ -661,6 +661,11 @@ const CustomerLedger = ({
           </head>
           <body>
             <div class="ledger-container">
+              <!-- Main Header -->
+              <div class="title-section" style="border-bottom: 2px solid #000; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px;">
+                <img src="${window.location.protocol}//${window.location.host}/logodolores.png" alt="Dolores Water District Logo" style="height: 48px; width: auto; object-fit: contain;" />
+                <h1 style="font-size: 24px; font-weight: bold; color: #1f2937; margin: 0;">DOLORES WATER DISTRICT CUSTOMER LEDGER</h1>
+              </div>
               <!-- Header Section -->
               <div class="header-section">
                 <div class="header-grid">
@@ -820,15 +825,41 @@ const CustomerLedger = ({
       const doc = new jsPDF('l', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
       
-      // Add header - match preview
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text('DOLORES WATER DISTRICT', pageWidth / 2, 15, { align: 'center' });
-      doc.setFontSize(18);
-      doc.text('CUSTOMER LEDGER CARD', pageWidth / 2, 25, { align: 'center' });
+      // Add main header with logo - match preview
+      doc.setFillColor(243, 244, 246); // Gray background
+      doc.rect(0, 0, pageWidth, 15, 'F');
+      
+      // Load and add logo
+      try {
+        const logoUrl = `${window.location.origin}/logodolores.png`;
+        const logoResponse = await fetch(logoUrl);
+        const logoBlob = await logoResponse.blob();
+        const logoDataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(logoBlob);
+        });
+        
+        // Add logo (12mm height, positioned on the left)
+        doc.addImage(logoDataUrl, 'PNG', 20, 1.5, 0, 12);
+        
+        // Add text centered (accounting for logo width)
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(31, 41, 55); // Gray-800
+        doc.text('DOLORES WATER DISTRICT CUSTOMER LEDGER', pageWidth / 2, 9, { align: 'center' });
+      } catch (logoError) {
+        // If logo fails to load, just show text
+        console.warn('Logo could not be loaded:', logoError);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(31, 41, 55); // Gray-800
+        doc.text('DOLORES WATER DISTRICT CUSTOMER LEDGER', pageWidth / 2, 8, { align: 'center' });
+      }
+      doc.setTextColor(0, 0, 0); // Reset to black
       
       // Customer information section - match preview layout
-      let currentY = 40;
+      let currentY = 23;
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
       
@@ -1070,6 +1101,15 @@ const CustomerLedger = ({
 
               {/* Ledger Container */}
         <div className="border-2 border-gray-800 bg-white shadow-lg ledger-container">
+        {/* Main Header */}
+        <div className="flex items-center justify-center gap-4 py-3 bg-gray-100 border-b-2 border-gray-800">
+          <img 
+            src="/logodolores.png" 
+            alt="Dolores Water District Logo" 
+            className="h-12 w-auto object-contain"
+          />
+          <h1 className="text-2xl font-bold text-gray-800">DOLORES WATER DISTRICT CUSTOMER LEDGER</h1>
+        </div>
         {/* Header Section */}
         <div className="p-4 border-b-2 border-gray-800">
           <div className="grid grid-cols-2 gap-8">
