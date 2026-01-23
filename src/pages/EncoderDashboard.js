@@ -190,22 +190,22 @@ const EncoderDashboard = () => {
       return;
     }
     
-    // Check if a bill already exists for this customer this month
-    const existingBill = await checkExistingBill(customer.id);
-    if (existingBill) {
-      setDuplicateBillWarning({
-        billId: existingBill.bill_id || existingBill.id,
-        createdDate: new Date(existingBill.created_at).toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        }),
-        customerName: customer.last_name && customer.first_name 
-          ? `${customer.last_name}, ${customer.first_name}` 
-          : customer.name
-      });
-      return;
-    }
+    // TEMPORARILY DISABLED: Check if a bill already exists for this customer this month
+    // const existingBill = await checkExistingBill(customer.id);
+    // if (existingBill) {
+    //   setDuplicateBillWarning({
+    //     billId: existingBill.bill_id || existingBill.id,
+    //     createdDate: new Date(existingBill.created_at).toLocaleDateString('en-US', { 
+    //       year: 'numeric', 
+    //       month: 'long', 
+    //       day: 'numeric' 
+    //     }),
+    //     customerName: customer.last_name && customer.first_name 
+    //       ? `${customer.last_name}, ${customer.first_name}` 
+    //       : customer.name
+    //   });
+    //   return;
+    // }
     
     setPendingBill({
       customer,
