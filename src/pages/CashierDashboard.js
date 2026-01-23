@@ -655,6 +655,7 @@ const CashierDashboard = () => {
                       customerId={receiptDetails.bill.customer_id}
                       billId={receiptDetails.bill.bill_id || receiptDetails.bill.id}
                       paymentId={receiptDetails.payment?.id}
+                      change={receiptDetails.change}
                       onClose={() => setShowReceipt(false)}
                     />
                   </div>
