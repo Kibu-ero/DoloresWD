@@ -11,7 +11,8 @@ const CustomerReceipt = ({
   billId,
   paymentId = null,
   isPrintable = false,
-  onClose
+  onClose,
+  change: propChange = null // Accept change as prop
 }) => {
   const [receiptData, setReceiptData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -182,7 +183,8 @@ const CustomerReceipt = ({
   const billAmount = parseFloat(bill.amount_due || bill.total_amount || 0);
   const penalty = parseFloat(bill.penalty || 0);
   const totalDue = billAmount + penalty;
-  const change = amountPaid > totalDue ? amountPaid - totalDue : 0;
+  // Use prop change if provided, otherwise calculate it
+  const change = propChange !== null ? parseFloat(propChange) : (amountPaid > totalDue ? amountPaid - totalDue : 0);
 
   return (
     <div className={`bg-white receipt-wrapper ${isPrintable ? 'p-0' : 'p-6'} max-w-4xl mx-auto print:p-0 print:max-w-none`}>
@@ -364,8 +366,8 @@ const CustomerReceipt = ({
                       <div className="text-2xl font-bold text-green-700">{formatCurrency(amountPaid)}</div>
                     </div>
                     
-                    {/* Change Box */}
-                    {change > 0 && (
+                    {/* Change Box - Always show if payment exists */}
+                    {payment && (
                       <div className="mt-2 p-3 bg-yellow-100 border-2 border-yellow-500 rounded">
                         <div className="font-semibold text-yellow-800 mb-1">Change:</div>
                         <div className="text-2xl font-bold text-orange-600">{formatCurrency(change)}</div>
