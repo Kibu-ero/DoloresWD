@@ -104,6 +104,41 @@ const CustomerReceipt = ({
     window.print();
   };
 
+  // Convert number to words (English)
+  const numberToWords = (num) => {
+    const ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+    const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+    
+    if (num === 0) return 'zero';
+    if (num < 20) return ones[num];
+    if (num < 100) {
+      const ten = Math.floor(num / 10);
+      const one = num % 10;
+      return tens[ten] + (one > 0 ? ' ' + ones[one] : '');
+    }
+    if (num < 1000) {
+      const hundred = Math.floor(num / 100);
+      const remainder = num % 100;
+      return ones[hundred] + ' hundred' + (remainder > 0 ? ' ' + numberToWords(remainder) : '');
+    }
+    if (num < 1000000) {
+      const thousand = Math.floor(num / 1000);
+      const remainder = num % 1000;
+      return numberToWords(thousand) + ' thousand' + (remainder > 0 ? ' ' + numberToWords(remainder) : '');
+    }
+    return num.toString();
+  };
+
+  const amountInWords = (amount) => {
+    const wholePart = Math.floor(amount);
+    const decimalPart = Math.round((amount - wholePart) * 100);
+    let words = numberToWords(wholePart);
+    if (decimalPart > 0) {
+      words += ' and ' + numberToWords(decimalPart) + ' centavos';
+    }
+    return words + ' pesos';
+  };
+
 
   if (loading) {
     return (
@@ -181,76 +216,136 @@ const CustomerReceipt = ({
       )}
 
       {/* Receipt Container */}
-      <div className="border-2 border-gray-800 bg-white shadow-lg receipt-container print:shadow-none">
+      <div className="border-2 border-gray-800 bg-white shadow-lg receipt-container print:shadow-none max-w-3xl mx-auto">
         {/* Header Section */}
-        <div className="text-center py-4 border-b-2 border-gray-800">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">DOLORES WATER DISTRICT</h1>
-          <p className="text-lg font-semibold text-gray-700">OFFICIAL RECEIPT</p>
+        <div className="text-center py-3 border-b-2 border-gray-800">
+          <h1 className="text-xl font-bold text-gray-800 uppercase">ACKNOWLEDGEMENT RECEIPT</h1>
         </div>
 
-        {/* Receipt Details */}
-        <div className="p-4 border-b border-gray-300">
-          <div className="grid grid-cols-2 gap-4 text-sm">
+        {/* Receipt Number and Date */}
+        <div className="p-3 border-b border-gray-300">
+          <div className="flex justify-between text-sm">
             <div>
-              <span className="font-semibold">Receipt No.:</span> {receiptNumber}
+              <span className="font-semibold">Receipt No.:</span> <span className="font-bold text-red-600">{receiptNumber}</span>
             </div>
-            <div className="text-right">
+            <div>
               <span className="font-semibold">Date:</span> {new Date(paymentDate).toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
+                year: '2-digit', 
+                month: 'numeric', 
                 day: 'numeric' 
               })}
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Two Column Layout */}
         <div className="p-4">
-          {/* Left Column - Settlement Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+          <div className="grid grid-cols-2 gap-6">
+            {/* Left Column - Settlement */}
             <div>
-              <h3 className="font-bold text-gray-800 mb-2 border-b border-gray-300 pb-1">SETTLEMENT</h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>Bill Amount:</span>
-                  <span className="font-semibold">{formatCurrency(billAmount)}</span>
+              <h3 className="font-semibold text-gray-800 mb-3">In settlement of the following:</h3>
+              
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="font-semibold">Meter No.:</span> {customer.meter_number || 'N/A'}
                 </div>
-                {penalty > 0 && (
-                  <div className="flex justify-between">
-                    <span>Penalty:</span>
-                    <span className="font-semibold">{formatCurrency(penalty)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-bold border-t border-gray-300 pt-1 mt-1">
-                  <span>Total Due:</span>
-                  <span>{formatCurrency(totalDue)}</span>
+                <div>
+                  <span className="font-semibold">Billing Date:</span> {bill.created_at ? new Date(bill.created_at).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'numeric', 
+                    day: 'numeric' 
+                  }) : 'N/A'}
                 </div>
-                {payment && (
-                  <>
-                    <div className="flex justify-between mt-2">
-                      <span>Amount Paid:</span>
-                      <span className="font-semibold text-green-600">{formatCurrency(amountPaid)}</span>
+                <div>
+                  <span className="font-semibold">Due Date:</span> {bill.due_date ? new Date(bill.due_date).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'numeric', 
+                    day: 'numeric' 
+                  }) : 'N/A'}
+                </div>
+                
+                <div className="border-t border-gray-300 pt-2 mt-2">
+                  {bill.previous_reading && (
+                    <div>
+                      <span className="font-semibold">Previous Reading:</span> {parseFloat(bill.previous_reading).toFixed(2)}
                     </div>
-                    {change > 0 && (
-                      <div className="flex justify-between">
-                        <span>Change:</span>
-                        <span className="font-semibold">{formatCurrency(change)}</span>
-                      </div>
-                    )}
-                  </>
-                )}
+                  )}
+                  {bill.current_reading && (
+                    <div>
+                      <span className="font-semibold">Current Reading:</span> {parseFloat(bill.current_reading).toFixed(2)}
+                    </div>
+                  )}
+                  {bill.current_reading && bill.previous_reading && (
+                    <div>
+                      <span className="font-semibold">Consumption (cu.m.):</span> {(bill.current_reading - bill.previous_reading).toFixed(2)}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="border-t border-gray-300 pt-2 mt-2">
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Total Sales:</span>
+                    <span>{formatCurrency(billAmount)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">AD Due:</span>
+                    <span>{formatCurrency(totalDue)}</span>
+                  </div>
+                </div>
+                
+                <div className="border-t-2 border-gray-800 pt-2 mt-2">
+                  <div className="flex justify-between">
+                    <span className="font-bold underline">TOTAL AMOUNT DUE:</span>
+                    <span className="font-bold underline">{formatCurrency(totalDue)}</span>
+                  </div>
+                </div>
+                
+                {/* Payment Method */}
+                <div className="mt-4">
+                  <div className="font-semibold mb-2">Payment Method:</div>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-1">
+                      <input 
+                        type="checkbox" 
+                        checked={payment?.payment_method?.toLowerCase() === 'cash' || !payment?.payment_method}
+                        readOnly
+                        className="w-4 h-4"
+                      />
+                      <span>Cash</span>
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <input 
+                        type="checkbox" 
+                        checked={payment?.payment_method?.toLowerCase() === 'check'}
+                        readOnly
+                        className="w-4 h-4"
+                      />
+                      <span>Check</span>
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <input 
+                        type="checkbox" 
+                        checked={payment?.payment_method?.toLowerCase() === 'card'}
+                        readOnly
+                        className="w-4 h-4"
+                      />
+                      <span>Card</span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Right Column - Customer & Payment Info */}
+            {/* Right Column - Customer Information */}
             <div>
-              <h3 className="font-bold text-gray-800 mb-2 border-b border-gray-300 pb-1">BILLING DETAILS</h3>
-              <div className="space-y-1 text-sm">
+              <h3 className="font-semibold text-gray-800 mb-3">Customer Information:</h3>
+              
+              <div className="space-y-2 text-sm">
                 <div>
-                  <span className="font-semibold">Customer:</span> {formattedCustomerName}
+                  <span className="font-semibold">Received from:</span> {formattedCustomerName}
                 </div>
                 <div>
-                  <span className="font-semibold">Address:</span> {[
+                  <span className="font-semibold">and address at:</span> {[
                     customer.street,
                     customer.barangay,
                     customer.city,
@@ -258,34 +353,33 @@ const CustomerReceipt = ({
                   ].filter(Boolean).join(', ')}
                 </div>
                 <div>
-                  <span className="font-semibold">Meter No.:</span> {customer.meter_number || 'N/A'}
+                  <span className="font-semibold">the business style of:</span> Individual
                 </div>
-                {bill.current_reading && (
-                  <div>
-                    <span className="font-semibold">Current Reading:</span> {bill.current_reading}
-                  </div>
-                )}
-                {bill.previous_reading && (
-                  <div>
-                    <span className="font-semibold">Previous Reading:</span> {bill.previous_reading}
-                  </div>
-                )}
-                {bill.current_reading && bill.previous_reading && (
-                  <div>
-                    <span className="font-semibold">Consumption:</span> {bill.current_reading - bill.previous_reading} cu.m.
-                  </div>
-                )}
+                
+                {/* Amount Paid Box */}
                 {payment && (
-                  <div className="mt-2 pt-2 border-t border-gray-300">
-                    <div>
-                      <span className="font-semibold">Payment Method:</span> {payment.payment_method || 'Cash'}
+                  <>
+                    <div className="mt-4 p-3 bg-green-100 border-2 border-green-500 rounded">
+                      <div className="font-semibold text-green-800 mb-1">Amount Paid:</div>
+                      <div className="text-2xl font-bold text-green-700">{formatCurrency(amountPaid)}</div>
                     </div>
-                    {payment.reference_number && (
-                      <div>
-                        <span className="font-semibold">Reference:</span> {payment.reference_number}
+                    
+                    {/* Change Box */}
+                    {change > 0 && (
+                      <div className="mt-2 p-3 bg-yellow-100 border-2 border-yellow-500 rounded">
+                        <div className="font-semibold text-yellow-800 mb-1">Change:</div>
+                        <div className="text-2xl font-bold text-orange-600">{formatCurrency(change)}</div>
                       </div>
                     )}
-                  </div>
+                    
+                    {/* Amount in Words */}
+                    <div className="mt-4 space-y-1 text-sm">
+                      <div className="font-semibold">in partial/full payment of:</div>
+                      <div className="italic">{amountInWords(amountPaid)}</div>
+                      <div className="font-semibold mt-2">the sum of:</div>
+                      <div className="italic">{amountInWords(amountPaid)}</div>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -293,10 +387,10 @@ const CustomerReceipt = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t-2 border-gray-800 bg-gray-50">
+        <div className="p-3 border-t-2 border-gray-800 bg-gray-50">
           <div className="text-center text-xs text-gray-600">
             <p className="mb-1">Thank you for your payment!</p>
-            <p>This is an official receipt from Dolores Water District</p>
+            <p>This is an acknowledgement receipt from Dolores Water District</p>
           </div>
         </div>
       </div>
