@@ -585,7 +585,7 @@ const EncoderDashboard = () => {
                   onClick={() => setDuplicateBillWarning(null)}
                   className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold shadow-md hover:from-orange-600 hover:to-red-600 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
                 >
-                  Understood
+                  Okay
                 </button>
               </div>
             </div>
