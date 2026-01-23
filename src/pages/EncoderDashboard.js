@@ -156,32 +156,31 @@ const EncoderDashboard = () => {
     }
   };
 
-  // TEMPORARILY DISABLED: Check existing bill function
-  // const checkExistingBill = async (customerId) => {
-  //   try {
-  //     const res = await apiClient.get(`/billing/customer/${customerId}`);
-  //     if (res.data && res.data.length > 0) {
-  //       const currentDate = new Date();
-  //       const currentYear = currentDate.getFullYear();
-  //       const currentMonth = currentDate.getMonth() + 1;
-  //       
-  //       // Check if any bill exists for the current month
-  //       const existingBill = res.data.find(bill => {
-  //         if (!bill.created_at) return false;
-  //         const billDate = new Date(bill.created_at);
-  //         const billYear = billDate.getFullYear();
-  //         const billMonth = billDate.getMonth() + 1;
-  //         return billYear === currentYear && billMonth === currentMonth && bill.status !== 'Cancelled';
-  //       });
-  //       
-  //       return existingBill;
-  //     }
-  //     return null;
-  //   } catch (err) {
-  //     console.error("Error checking existing bills:", err);
-  //     return null;
-  //   }
-  // };
+  const checkExistingBill = async (customerId) => {
+    try {
+      const res = await apiClient.get(`/billing/customer/${customerId}`);
+      if (res.data && res.data.length > 0) {
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+        
+        // Check if any bill exists for the current month
+        const existingBill = res.data.find(bill => {
+          if (!bill.created_at) return false;
+          const billDate = new Date(bill.created_at);
+          const billYear = billDate.getFullYear();
+          const billMonth = billDate.getMonth() + 1;
+          return billYear === currentYear && billMonth === currentMonth && bill.status !== 'Cancelled';
+        });
+        
+        return existingBill;
+      }
+      return null;
+    } catch (err) {
+      console.error("Error checking existing bills:", err);
+      return null;
+    }
+  };
 
   const handleInputSubmit = async (e) => {
     e.preventDefault();
@@ -191,22 +190,22 @@ const EncoderDashboard = () => {
       return;
     }
     
-    // TEMPORARILY DISABLED: Check if a bill already exists for this customer this month
-    // const existingBill = await checkExistingBill(customer.id);
-    // if (existingBill) {
-    //   setDuplicateBillWarning({
-    //     billId: existingBill.bill_id || existingBill.id,
-    //     createdDate: new Date(existingBill.created_at).toLocaleDateString('en-US', { 
-    //       year: 'numeric', 
-    //       month: 'long', 
-    //       day: 'numeric' 
-    //     }),
-    //     customerName: customer.last_name && customer.first_name 
-    //       ? `${customer.last_name}, ${customer.first_name}` 
-    //       : customer.name
-    //   });
-    //   return;
-    // }
+    // Check if a bill already exists for this customer this month
+    const existingBill = await checkExistingBill(customer.id);
+    if (existingBill) {
+      setDuplicateBillWarning({
+        billId: existingBill.bill_id || existingBill.id,
+        createdDate: new Date(existingBill.created_at).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        customerName: customer.last_name && customer.first_name 
+          ? `${customer.last_name}, ${customer.first_name}` 
+          : customer.name
+      });
+      return;
+    }
     
     setPendingBill({
       customer,
