@@ -156,31 +156,32 @@ const EncoderDashboard = () => {
     }
   };
 
-  const checkExistingBill = async (customerId) => {
-    try {
-      const res = await apiClient.get(`/billing/customer/${customerId}`);
-      if (res.data && res.data.length > 0) {
-        const currentDate = new Date();
-        const currentYear = currentDate.getFullYear();
-        const currentMonth = currentDate.getMonth() + 1;
-        
-        // Check if any bill exists for the current month
-        const existingBill = res.data.find(bill => {
-          if (!bill.created_at) return false;
-          const billDate = new Date(bill.created_at);
-          const billYear = billDate.getFullYear();
-          const billMonth = billDate.getMonth() + 1;
-          return billYear === currentYear && billMonth === currentMonth && bill.status !== 'Cancelled';
-        });
-        
-        return existingBill;
-      }
-      return null;
-    } catch (err) {
-      console.error("Error checking existing bills:", err);
-      return null;
-    }
-  };
+  // TEMPORARILY DISABLED: Check existing bill function
+  // const checkExistingBill = async (customerId) => {
+  //   try {
+  //     const res = await apiClient.get(`/billing/customer/${customerId}`);
+  //     if (res.data && res.data.length > 0) {
+  //       const currentDate = new Date();
+  //       const currentYear = currentDate.getFullYear();
+  //       const currentMonth = currentDate.getMonth() + 1;
+  //       
+  //       // Check if any bill exists for the current month
+  //       const existingBill = res.data.find(bill => {
+  //         if (!bill.created_at) return false;
+  //         const billDate = new Date(bill.created_at);
+  //         const billYear = billDate.getFullYear();
+  //         const billMonth = billDate.getMonth() + 1;
+  //         return billYear === currentYear && billMonth === currentMonth && bill.status !== 'Cancelled';
+  //       });
+  //       
+  //       return existingBill;
+  //     }
+  //     return null;
+  //   } catch (err) {
+  //     console.error("Error checking existing bills:", err);
+  //     return null;
+  //   }
+  // };
 
   const handleInputSubmit = async (e) => {
     e.preventDefault();
