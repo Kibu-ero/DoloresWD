@@ -179,12 +179,28 @@ const CustomerReceipt = ({
   const formattedCustomerName = formatName(customer.first_name || '', customer.last_name || '');
   const receiptNumber = payment?.receipt_number || payment?.or_number || `RCPT-${billId}-${Date.now()}`;
   const paymentDate = payment?.payment_date || payment?.created_at || new Date().toISOString();
-  const amountPaid = payment ? (parseFloat(payment.amount_paid || payment.amount || 0) + parseFloat(payment.penalty_paid || payment.penalty || 0)) : 0;
+
+  // Amount that was actually applied to the bill (excluding change)
+  const appliedAmount = payment
+    ? (parseFloat(payment.amount_paid || payment.amount || 0) +
+       parseFloat(payment.penalty_paid || payment.penalty || 0))
+    : 0;
+
+  // Change that was given back to the customer (if any)
+  const storedChange = payment ? parseFloat(payment.change_given || 0) : 0;
+
+  // Actual cash the customer handed over = applied amount + change
+  const tenderedAmount = appliedAmount + (isNaN(storedChange) ? 0 : storedChange);
+
   const billAmount = parseFloat(bill.amount_due || bill.total_amount || 0);
   const penalty = parseFloat(bill.penalty || 0);
   const totalDue = billAmount + penalty;
-  // Use prop change if provided, otherwise calculate it
-  const change = propChange !== null ? parseFloat(propChange) : (amountPaid > totalDue ? amountPaid - totalDue : 0);
+
+  // Use prop change if provided, otherwise prefer stored change from payment,
+  // and finally fall back to calculating from tendered amount vs total due
+  const change = propChange !== null
+    ? parseFloat(propChange)
+    : (storedChange || (tenderedAmount > totalDue ? tenderedAmount - totalDue : 0));
 
   return (
     <div className={`bg-white receipt-wrapper ${isPrintable ? 'p-0' : 'p-6'} max-w-4xl mx-auto print:p-0 print:max-w-none`}>
@@ -363,7 +379,9 @@ const CustomerReceipt = ({
                   <>
                     <div className="mt-4 p-3 bg-green-100 border-2 border-green-500 rounded">
                       <div className="font-semibold text-green-800 mb-1">Amount Paid:</div>
-                      <div className="text-2xl font-bold text-green-700">{formatCurrency(amountPaid)}</div>
+                      <div className="text-2xl font-bold text-green-700">
+                        {formatCurrency(tenderedAmount || appliedAmount)}
+                      </div>
                     </div>
                     
                     {/* Change Box - Always show if payment exists */}
@@ -377,9 +395,9 @@ const CustomerReceipt = ({
                     {/* Amount in Words */}
                     <div className="mt-4 space-y-1 text-sm">
                       <div className="font-semibold">in partial/full payment of:</div>
-                      <div className="italic">{amountInWords(amountPaid)}</div>
+                      <div className="italic">{amountInWords(tenderedAmount || appliedAmount)}</div>
                       <div className="font-semibold mt-2">the sum of:</div>
-                      <div className="italic">{amountInWords(amountPaid)}</div>
+                      <div className="italic">{amountInWords(tenderedAmount || appliedAmount)}</div>
                     </div>
                   </>
                 )}
