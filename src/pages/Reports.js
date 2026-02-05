@@ -573,11 +573,15 @@ const Reports = () => {
     // Prepare optional column styles (e.g., for verbose Audit descriptions)
     const columnStyles = {};
     if (activeTab === 'audit') {
-      const descriptionIndex = Object.keys(data[0]).indexOf('description');
+      // Make the Description column wide so the full sentence fits on one line
+      const keys = Object.keys(data[0]);
+      const descriptionIndex = keys.indexOf('description');
       if (descriptionIndex >= 0) {
+        // Give description most of the width and keep text compact
         columnStyles[descriptionIndex] = {
-          cellWidth: 'wrap',
-          fontSize: 8
+          cellWidth: 140,     // wide column in landscape
+          fontSize: 8,
+          valign: 'top'
         };
       }
     }
