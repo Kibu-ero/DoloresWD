@@ -477,12 +477,18 @@ const Reports = () => {
     
     const rows = data.map(row => 
       Object.keys(data[0]).map(col => {
-        const value = row[col];
+        let value = row[col];
+
+        // Normalize any peso symbols in raw string values for ALL reports:
+        // jsPDF's core font renders ₱ as ±, so convert to plain "PHP ".
+        if (typeof value === 'string') {
+          value = value.replace(/₱\s*/g, 'PHP ');
+        }
         // Format values appropriately
         // Special handling for Audit Log descriptions: inject peso sign into "payment of 407.00" style text
         if (activeTab === 'audit' && col.toLowerCase() === 'description' && typeof value === 'string') {
-          // Use 'PHP' instead of the peso symbol to avoid weird ± rendering in PDFs
-          return value.replace(/(payment\s+of\s+)([+-]?\d+(?:\.\d+)?)/gi, (match, prefix, numStr) => {
+          // For audit descriptions, normalize patterns like "payment of ₱577.00" → "payment of PHP 577.00"
+          return value.replace(/(payment\s+of\s+)(?:PHP\s*)?(?:₱\s*)?([+-]?\d+(?:\.\d+)?)/gi, (match, prefix, numStr) => {
             const num = Number(numStr);
             if (isNaN(num)) return match;
             const formatted = num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
