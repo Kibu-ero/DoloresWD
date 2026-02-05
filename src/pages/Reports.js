@@ -379,23 +379,40 @@ const Reports = () => {
     // Use landscape orientation for all reports to give columns more horizontal space
     const isWideReport = true;
     const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
     
-    // Find the current report label
+    // --- Standard Header: Logo + System Title + Report Title ---
+    // Light gray header background strip
+    doc.setFillColor(243, 244, 246);
+    doc.rect(0, 0, pageWidth, 18, 'F');
+
+    // Try to load and render the Dolores WD logo
+    try {
+      const logoUrl = `${window.location.origin}/logodolores.png`;
+      // Synchronous image loading is not available inside jsPDF; rely on browser cache.
+      // If it fails, we silently continue with text-only header.
+      const img = new Image();
+      img.src = logoUrl;
+      doc.addImage(img, 'PNG', 18, 3, 12, 12);
+    } catch (_) {}
+
+    // System / organization name
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(31, 41, 55);
+    doc.text('DOLORES WATER DISTRICT - BILLINK REPORTS', pageWidth / 2, 8, { align: 'center' });
+
+    // Report title (per‑report label)
     const currentReport = availableReports.find(report => report.key === activeTab);
     const reportTitle = currentReport ? currentReport.label : `${activeTab} Report`;
-    
-    // Add title
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text(reportTitle, 20, 20);
-    
-    // Add subtitle with date range
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
+    doc.text(reportTitle, pageWidth / 2, 14, { align: 'center' });
+
+    // --- Meta line: period + generated on ---
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
     const dateRange = from && to ? `Period: ${from} to ${to}` : 'All Time';
-    doc.text(dateRange, 20, 30);
-    
-    // Add current date/time
     const currentDate = new Date().toLocaleDateString('en-PH', {
       year: 'numeric',
       month: 'long',
@@ -403,7 +420,8 @@ const Reports = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
-    doc.text(`Generated on: ${currentDate}`, 20, 36);
+    doc.text(dateRange, 20, 24);
+    doc.text(`Generated on: ${currentDate}`, pageWidth - 20, 24, { align: 'right' });
     
     // Prepare table data
     const columns = Object.keys(data[0]).map(col => {
@@ -517,7 +535,7 @@ const Reports = () => {
     
     // Add summary if applicable
     const summary = calculateSummary();
-    let startY = 45;
+    let startY = 32;
     
     if (summary && Object.keys(summary).length > 0) {
       doc.setFontSize(12);
@@ -552,7 +570,7 @@ const Reports = () => {
       startY += 10;
     }
     
-    // Add the table
+    // Add the main data table
     doc.autoTable({
       head: [columns],
       body: rows,
@@ -576,13 +594,52 @@ const Reports = () => {
         : { top: startY, right: 20, bottom: 20, left: 20 }
     });
     
-    // Add page number and footer
-    const finalY = doc.internal.pageSize.height - 15;
+    // --- Standard Footer: Signatories + Page footer ---
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let footerStartY = Math.min(doc.lastAutoTable.finalY + 10, pageHeight - 40);
+
+    // Signature blocks (Prepared by / Noted by) similar to Customer Ledger
+    const sigLeftX = pageWidth / 4;
+    const sigRightX = (pageWidth / 4) * 3;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    // Prepared by
+    doc.text('Prepared by:', sigLeftX, footerStartY, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    const preparedName = 'ANTONINA C. PURISIMA';
+    const preparedTitle = 'CASHIERING ASSISTANT';
+    const prepNameWidth = doc.getTextWidth(preparedName);
+    const prepNameY = footerStartY + 7;
+    doc.text(preparedName, sigLeftX, prepNameY, { align: 'center' });
+    doc.setLineWidth(0.3);
+    doc.line(sigLeftX - prepNameWidth / 2, prepNameY + 1.5, sigLeftX + prepNameWidth / 2, prepNameY + 1.5);
+    doc.setFontSize(9);
+    doc.text(preparedTitle, sigLeftX, prepNameY + 7, { align: 'center' });
+
+    // Noted by
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Noted by:', sigRightX, footerStartY, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    const notedName = 'MARITES E. VILLAREAL';
+    const notedTitle = 'ACCOUNTING PROCESSOR A';
+    const notedNameWidth = doc.getTextWidth(notedName);
+    const notedNameY = footerStartY + 7;
+    doc.text(notedName, sigRightX, notedNameY, { align: 'center' });
+    doc.setLineWidth(0.3);
+    doc.line(sigRightX - notedNameWidth / 2, notedNameY + 1.5, sigRightX + notedNameWidth / 2, notedNameY + 1.5);
+    doc.setFontSize(9);
+    doc.text(notedTitle, sigRightX, notedNameY + 7, { align: 'center' });
+
+    // Small page/footer text
+    const finalY = pageHeight - 8;
     doc.setFontSize(8);
     doc.setFont('helvetica', 'italic');
-    doc.text('Dolores Water District - Billing System', 20, finalY);
-    doc.text(`Page 1`, doc.internal.pageSize.width - 30, finalY, { align: 'right' });
-    
+    doc.text('Dolores Water District - Billink Reporting', 20, finalY);
+    doc.text(`Page 1`, pageWidth - 20, finalY, { align: 'right' });
+
     return doc;
   };
 
