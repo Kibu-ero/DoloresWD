@@ -405,9 +405,10 @@ const Reports = () => {
     
     // Prepare table data
     const columns = Object.keys(data[0]).map(col => {
-      // Convert column names to user-friendly labels (remove any currency symbols)
+      // Convert column names to user-friendly labels (remove any currency symbols and underscores)
       let label;
-      switch(col.toLowerCase()) {
+      const normalizedCol = col.toLowerCase();
+      switch(normalizedCol) {
         case 'date': label = 'Date'; break;
         case 'paymentcount': label = 'Payment Count'; break;
         case 'averageamount': label = 'Average Amount'; break;
@@ -418,6 +419,15 @@ const Reports = () => {
         case 'daysoverdue': label = 'Days Overdue'; break;
         case 'lastpayment': label = 'Last Payment'; break;
         case 'accountnumber': label = 'Account Number'; break;
+        case 'transaction_id': label = 'Transaction ID'; break;
+        case 'customer_id': label = 'Customer ID'; break;
+        case 'amount_paid': label = 'Amount Paid'; break;
+        case 'payment_date': label = 'Payment Date'; break;
+        case 'payment_method': label = 'Payment Method'; break;
+        case 'receipt_number': label = 'Receipt #'; break;
+        case 'customer_name': label = 'Customer Name'; break;
+        case 'meter_number': label = 'Meter Number'; break;
+        case 'transaction_type': label = 'Transaction Type'; break;
         case 'month': label = 'Month'; break;
         case 'totalrevenue': label = 'Total Revenue'; break;
         case 'collectedamount': label = 'Collected Amount'; break;
@@ -429,7 +439,16 @@ const Reports = () => {
         case 'unpaidbills': label = 'Unpaid Bills'; break;
         case 'averagebillamount': label = 'Average Bill Amount'; break;
         default: 
-          label = col.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+          // Humanize generic column names:
+          // - replace underscores with spaces
+          // - insert spaces before capital letters
+          // - normalize spacing and capitalize first letter
+          label = col
+            .replace(/_/g, ' ')
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .replace(/^./, str => str.toUpperCase());
           // Remove any currency symbols from the label
           label = label.replace(/\$\s*/g, '').replace(/₱\s*/g, '').trim();
       }
@@ -512,15 +531,13 @@ const Reports = () => {
         if (key.includes('count') || key.includes('quantity')) {
           // Format count as integer (no decimals, no currency)
           formattedValue = Math.round(Number(value)).toLocaleString('en-PH');
-        } else if (key.includes('amount') || key.includes('total') || key.includes('collected') || key.includes('billed')) {
-          // Format amounts without currency symbol, reduce zeros
+        } else if (key.includes('amount') || key.includes('total') || key.includes('collected') || key.includes('billed') || key.includes('paid')) {
+          // Format amounts with peso currency, reduce unnecessary decimals
           if (typeof value === 'number') {
-            // If it's a whole number, don't show decimals
-            if (value % 1 === 0) {
-              formattedValue = value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-            } else {
-              formattedValue = value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            }
+            const options = value % 1 === 0
+              ? { minimumFractionDigits: 0, maximumFractionDigits: 0 }
+              : { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+            formattedValue = `₱${value.toLocaleString('en-PH', options)}`;
           } else {
             formattedValue = value;
           }
@@ -691,7 +708,12 @@ const Reports = () => {
                   <tr>
                     {data[0] && Object.keys(data[0]).map((col, index) => {
                       // Clean column header - remove dollar signs and other currency symbols
-                      let headerText = col.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                      let headerText = col
+                        .replace(/_/g, ' ')
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                        .replace(/^./, str => str.toUpperCase());
                       headerText = headerText.replace(/\$\s*/g, '').replace(/₱\s*/g, '').trim();
                       return (
                         <th key={col} className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
