@@ -570,6 +570,18 @@ const Reports = () => {
       startY += 10;
     }
     
+    // Prepare optional column styles (e.g., for verbose Audit descriptions)
+    const columnStyles = {};
+    if (activeTab === 'audit') {
+      const descriptionIndex = Object.keys(data[0]).indexOf('description');
+      if (descriptionIndex >= 0) {
+        columnStyles[descriptionIndex] = {
+          cellWidth: 'wrap',
+          fontSize: 8
+        };
+      }
+    }
+
     // Add the main data table
     doc.autoTable({
       head: [columns],
@@ -585,18 +597,20 @@ const Reports = () => {
         fontStyle: 'bold',
         fontSize: isWideReport ? 8 : 9,
       },
+      columnStyles,
       alternateRowStyles: {
         fillColor: [245, 245, 245]
       },
-      // Slightly smaller side margins for wide tables
+      // Slightly smaller side margins for wide tables, with extra bottom margin
       margin: isWideReport
-        ? { top: startY, right: 10, bottom: 20, left: 10 }
-        : { top: startY, right: 20, bottom: 20, left: 20 }
+        ? { top: startY, right: 10, bottom: 35, left: 10 }
+        : { top: startY, right: 20, bottom: 35, left: 20 }
     });
     
     // --- Standard Footer: Signatories + Page footer ---
     const pageHeight = doc.internal.pageSize.getHeight();
-    let footerStartY = Math.min(doc.lastAutoTable.finalY + 10, pageHeight - 40);
+    // Fix footer position near the bottom so it never overlaps the table (last page only)
+    let footerStartY = pageHeight - 30;
 
     // Signature blocks (Prepared by / Noted by) similar to Customer Ledger
     const sigLeftX = pageWidth / 4;
@@ -633,12 +647,18 @@ const Reports = () => {
     doc.setFontSize(9);
     doc.text(notedTitle, sigRightX, notedNameY + 7, { align: 'center' });
 
-    // Small page/footer text
-    const finalY = pageHeight - 8;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.text('Dolores Water District - Billink Reporting', 20, finalY);
-    doc.text(`Page 1`, pageWidth - 20, finalY, { align: 'right' });
+    // Small page/footer text with correct page numbers on every page
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      const pw = doc.internal.pageSize.getWidth();
+      const ph = doc.internal.pageSize.getHeight();
+      const footerY = ph - 8;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.text('Dolores Water District - Billink Reporting', 20, footerY);
+      doc.text(`Page ${i} of ${pageCount}`, pw - 20, footerY, { align: 'right' });
+    }
 
     return doc;
   };
