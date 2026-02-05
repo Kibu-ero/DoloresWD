@@ -481,11 +481,12 @@ const Reports = () => {
         // Format values appropriately
         // Special handling for Audit Log descriptions: inject peso sign into "payment of 407.00" style text
         if (activeTab === 'audit' && col.toLowerCase() === 'description' && typeof value === 'string') {
+          // Use 'PHP' instead of the peso symbol to avoid weird ± rendering in PDFs
           return value.replace(/(payment\s+of\s+)([+-]?\d+(?:\.\d+)?)/gi, (match, prefix, numStr) => {
             const num = Number(numStr);
             if (isNaN(num)) return match;
             const formatted = num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            return `${prefix}₱${formatted}`;
+            return `${prefix}PHP ${formatted}`;
           });
         }
         if ((col.includes('date') || col.includes('created_at') || col.includes('updated_at') || col.includes('submitted_at') || col.includes('payment_date') || col.includes('due_date') || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value))) && value) {
@@ -552,12 +553,12 @@ const Reports = () => {
           // Format count as integer (no decimals, no currency)
           formattedValue = Math.round(Number(value)).toLocaleString('en-PH');
         } else if (key.includes('amount') || key.includes('total') || key.includes('collected') || key.includes('billed') || key.includes('paid')) {
-          // Format amounts with peso currency, reduce unnecessary decimals
+          // Format amounts with 'PHP' prefix (avoid peso symbol rendering as ±), reduce unnecessary decimals
           if (typeof value === 'number') {
             const options = value % 1 === 0
               ? { minimumFractionDigits: 0, maximumFractionDigits: 0 }
               : { minimumFractionDigits: 2, maximumFractionDigits: 2 };
-            formattedValue = `₱${value.toLocaleString('en-PH', options)}`;
+            formattedValue = `PHP ${value.toLocaleString('en-PH', options)}`;
           } else {
             formattedValue = value;
           }
