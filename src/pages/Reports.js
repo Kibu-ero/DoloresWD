@@ -376,7 +376,9 @@ const Reports = () => {
       return null;
     }
 
-    const doc = new jsPDF();
+    // Use landscape orientation for all reports to give columns more horizontal space
+    const isWideReport = true;
+    const doc = new jsPDF('l', 'mm', 'a4');
     
     // Find the current report label
     const currentReport = availableReports.find(report => report.key === activeTab);
@@ -556,18 +558,22 @@ const Reports = () => {
       body: rows,
       startY: startY,
       styles: {
-        fontSize: 9,
-        cellPadding: 3,
+        fontSize: isWideReport ? 8 : 9,
+        cellPadding: 2,
       },
       headStyles: {
         fillColor: [66, 139, 202], // Blue header
         textColor: 255,
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        fontSize: isWideReport ? 8 : 9,
       },
       alternateRowStyles: {
         fillColor: [245, 245, 245]
       },
-      margin: { top: startY, right: 20, bottom: 20, left: 20 }
+      // Slightly smaller side margins for wide tables
+      margin: isWideReport
+        ? { top: startY, right: 10, bottom: 20, left: 10 }
+        : { top: startY, right: 20, bottom: 20, left: 20 }
     });
     
     // Add page number and footer
