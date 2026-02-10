@@ -1,6 +1,7 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://my-backend-wmf9.onrender.com/api/$1" }
+    { "source": "/api/(.*)", "destination": "https://my-backend-mz4k.onrender.com/api/$1" }
   ]
 }
+
 
